@@ -16,7 +16,6 @@ EVM contracts are expensive to deploy. Brevity saves on deployment cost by putti
 Brevity gas: total = 240638, calldata = 46156, execution = 194482
 Solidity Test gas: total = 612735, deploy = 483672, execution = 129063
 ```
-
 ## Under the Hood
 Brevity Scripts (```.brv``` ) are transpiled into a Brevity Calldata Program that is passed to the [Interpreter](contracts/LibInterpreter.sol) as ```(uint8 memSize, Instruction[] memory instructions, Quantity[] memory quantities)```. 
 
@@ -26,10 +25,11 @@ Brevity Scripts (```.brv``` ) are transpiled into a Brevity Calldata Program tha
 
 The [Interpreter](contracts/LibInterpreter.sol) has a [minimal instruction set](contracts/LibInterpreter.sol#L13). Quantities do most of the syscalls for 0, 1, and 2 arg functions. 
 
+### Everything is a word
+Like [B](https://en.wikipedia.org/wiki/B_(programming_language)), Brevity has no data types, just words (byte32).
 
 
 ## Version 0.1 syntax
-
 ```
 // := means preprocessor directive
 // these are substituted in place and dont create instructions or quantities
@@ -52,6 +52,8 @@ CALL exchange2.swap(tokenB, receiveB, tokenA)
 var balAAfter = STATICCALL tokenA.balanceOf(this)
 if(balAAfter < minProfitA + balABefore) revert
 ```
+
+
 
 ## Legal
 

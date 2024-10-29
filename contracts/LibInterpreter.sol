@@ -7,7 +7,7 @@ library Interpreter {
      toAddress,
      gasLimit,
      fnSelector,
-     value, (ONLY for OPCODE_CALL. omitted for OPCODE_STATICCALL, OPCODE_DELEGATECALL)
+     [value if OPCODE_CALL, omitted if OPCODE_STATICCALL, OPCODE_DELEGATECALL)]
      ...calldataArgs (interpreted as Quantity)
     */
     uint8 public constant OPCODE_STATICCALL = 0;
@@ -129,20 +129,23 @@ library Interpreter {
             uint opcode = program[pc].opcode;
             bytes32[] memory args = program[pc].args;
             if (opcode < 3) {
+                uint offset = uint(args[0]) >> 128;
+                uint len = (uint(args[0]) << 128) >> 128;
+                require(offset + len <= memSize, "bad write dest");
                 // call, staticcall, delegatecall
                 // let callArgs = [registerWriteInfo, toBytes32(address), GAS]
                 address to = address(
                     uint160(_resolve(uint(args[1]), mem, quantities))
                 );
                 uint gasLimit = uint(args[2]);
-                bytes32 selector = args[3];
                 uint[] memory resolvedArgs;
                 // CALL has an additional value arg
                 // tmp is reused a few times to conserve stack size
                 // tmp here means index of last arg before calldata quantities
                 uint tmp = opcode == OPCODE_CALL ? 4 : 3;
                 resolvedArgs = new uint[](args.length - tmp);
-                resolvedArgs[0] = uint(selector);
+                // function selector. put in mem in first slot
+                resolvedArgs[0] = uint(args[3]);
                 for (uint i = tmp + 1; i < args.length; i++) {
                     resolvedArgs[i - tmp] = _resolve(
                         uint(args[i]),
@@ -151,9 +154,6 @@ library Interpreter {
                     );
                 }
 
-                uint offset = uint(args[0]) >> 128;
-                uint len = (uint(args[0]) << 128) >> 128;
-                require(offset + len <= memSize, "bad write dest");
                 // tmp will be assigned to success after call
                 if (opcode == OPCODE_STATICCALL) {
                     assembly {
