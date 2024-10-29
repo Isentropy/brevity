@@ -13,9 +13,10 @@ Brevity is in development and alpha. We welcome code review and design comments.
 ## But Why??
 EVM contracts are expensive to deploy. Brevity saves on deployment cost by putting code in the calldata and interpreting. **Brevity costs less to deploy, but more to run.** It's especially useful for simple workflows. For a simple arbitrage example in [Brevity](test/briefs/example.brv) and [Solidity](contracts/Arb.sol):
 ```
-Brevity gas: total = 240638, calldata = 46156, execution = 194482
-Solidity Test gas: total = 612735, deploy = 483672, execution = 129063
+Brevity gas: total = 214126, calldata = 46086, execution = 168040
+Solidity Test gas: total = 456990, deploy = 337652, execution = 119338
 ```
+
 ## Under the Hood
 Brevity Scripts (```.brv``` ) are transpiled into a Brevity Calldata Program that is passed to the [Interpreter](contracts/LibInterpreter.sol) as ```(uint8 memSize, Instruction[] memory instructions, Quantity[] memory quantities)```. 
 
