@@ -6,25 +6,23 @@ library Interpreter {
      returnMemAddressOffset: uint128, returnMemAddressLen: uint128
      toAddress,
      gasLimit,
-     value, (ONLY for OPCODE_CALL. omitted for OPCODE_STATICCALL, OPCODE_DELEGATECALL)
      fnSelector,
+     value, (ONLY for OPCODE_CALL. omitted for OPCODE_STATICCALL, OPCODE_DELEGATECALL)
      ...calldataArgs (interpreted as Quantity)
     */
     uint8 public constant OPCODE_STATICCALL = 0;
     uint8 public constant OPCODE_CALL = 1;
     uint8 public constant OPCODE_DELEGATECALL = 2;
     // set pc = branch if q != 0
-    // args: q (Quantity), branch 
+    // args: q (Quantity), branch
     uint8 public constant OPCODE_CMP_BRANCH = 3;
     // set pc = branch
-    // args: branch 
+    // args: branch
     uint8 public constant OPCODE_JUMP = 4;
     // opcodes above 128 refer to memAddress := opcode - 128
     // write q to mem[memAddress]
     // args: q (Quantity)
     uint8 public constant OPCODE_MSTORE_R0 = 128;
-
-
 
     /*
     if(qWord < BIT255) interpret as literal
@@ -60,7 +58,7 @@ library Interpreter {
     uint8 public constant QUANTITY_OP_SHR = 0x1C;
     uint8 public constant QUANTITY_ADDRESS_THIS = 0x30;
     uint8 public constant QUANTITY_BALANCE = 0x31;
-    
+
     struct Instruction {
         uint8 opcode;
         bytes32[] args;
@@ -77,10 +75,10 @@ library Interpreter {
         Quantity[] memory quantities
     ) internal view returns (uint) {
         //console.log('qIndex', qIndex);
-        if(qWord & BIT255_NOTLITERAL == 0) {
+        if (qWord & BIT255_NOTLITERAL == 0) {
             return qWord;
         }
-        if(qWord & BIT254_NOTMEM == 0) {
+        if (qWord & BIT254_NOTMEM == 0) {
             return mem[qWord ^ BIT255_NOTLITERAL];
         }
         // unset bits 255 and 254
@@ -90,10 +88,12 @@ library Interpreter {
         // dont need quantities[] to resolve:
         if (q.quantityType == QUANTITY_LITERAL) return uint(q.args[0]);
         // 0 arg OPs
-        if (q.quantityType == QUANTITY_ADDRESS_THIS) return uint(uint160(address(this)));
+        if (q.quantityType == QUANTITY_ADDRESS_THIS)
+            return uint(uint160(address(this)));
         // 1 arg OPs
         uint r1 = _resolve(uint(q.args[0]), mem, quantities);
-        if (q.quantityType == QUANTITY_BALANCE) return address(uint160(r1)).balance;
+        if (q.quantityType == QUANTITY_BALANCE)
+            return address(uint160(r1)).balance;
         // 2 arg OPs
         uint r2 = _resolve(uint(q.args[1]), mem, quantities);
         if (q.quantityType == QUANTITY_OP_ADD) return r1 + r2;
@@ -136,27 +136,30 @@ library Interpreter {
                 );
                 uint gasLimit = uint(args[2]);
                 bytes32 selector = args[3];
+                uint[] memory resolvedArgs;
                 // CALL has an additional value arg
-                uint callArgsEnd = opcode == OPCODE_CALL ? 4 : 3;
-                uint[] memory resolvedArgs = new uint[](
-                    args.length - callArgsEnd
-                );
+                // tmp is reused a few times to conserve stack size
+                // tmp here means index of last arg before calldata quantities
+                uint tmp = opcode == OPCODE_CALL ? 4 : 3;
+                resolvedArgs = new uint[](args.length - tmp);
                 resolvedArgs[0] = uint(selector);
-                for (uint i = callArgsEnd + 1; i < args.length; i++) {
-                    resolvedArgs[i - callArgsEnd] = _resolve(
+                for (uint i = tmp + 1; i < args.length; i++) {
+                    resolvedArgs[i - tmp] = _resolve(
                         uint(args[i]),
                         mem,
                         quantities
                     );
                 }
+
                 uint offset = uint(args[0]) >> 128;
                 uint len = (uint(args[0]) << 128) >> 128;
                 require(offset + len <= memSize, "bad write dest");
+                // tmp will be assigned to success after call
                 if (opcode == OPCODE_STATICCALL) {
                     assembly {
                         // start from args[4] - 8 bytes for selector
                         // gas, address, argsOffset, argsSize, retOffset, retSize
-                        callArgsEnd := staticcall(
+                        tmp := staticcall(
                             gasLimit,
                             to,
                             add(resolvedArgs, 60),
@@ -165,28 +168,28 @@ library Interpreter {
                             mul(len, 32)
                         )
                     }
-                } else if(opcode == OPCODE_CALL) {
-                    // len is reused here as VALUE to limit stack overgrowth
-                    len = _resolve(uint(args[4]), mem, quantities);
-                    //console.log('value', len);
+                } else if (opcode == OPCODE_CALL) {
+                    // tmp is reused here as VALUE to limit stack overgrowth
+                    tmp = _resolve(uint(args[4]), mem, quantities);
+                    //console.log("value", len);
                     assembly {
                         // start from args[4] - 8 bytes for selector
                         // gas, address, value, argsOffset, argsSize, retOffset, retSize
-                        callArgsEnd := call(
+                        tmp := call(
                             gasLimit,
                             to,
-                            len,
+                            tmp,
                             add(resolvedArgs, 60),
                             add(4, mul(sub(mload(resolvedArgs), 1), 32)),
                             add(add(mem, 32), mul(offset, 32)),
                             mul(len, 32)
                         )
-                    }                    
-                } else if(opcode == OPCODE_DELEGATECALL) {
+                    }
+                } else if (opcode == OPCODE_DELEGATECALL) {
                     assembly {
                         // start from args[4] - 8 bytes for selector
                         // gas, address, argsOffset, argsSize, retOffset, retSize
-                        callArgsEnd := delegatecall(
+                        tmp := delegatecall(
                             gasLimit,
                             to,
                             add(resolvedArgs, 60),
@@ -194,8 +197,9 @@ library Interpreter {
                             add(add(mem, 32), mul(offset, 32)),
                             mul(len, 32)
                         )
-                    }                    
+                    }
                 }
+                if(tmp == 0) revert("badCall");
 
                 //console.log("success", callArgsEnd);
             } else if (opcode == OPCODE_JUMP) {

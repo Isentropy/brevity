@@ -20,8 +20,6 @@ function brevityLoopProgram(n: number, toFoo: string): string {
   lines.push('i += 1')
   lines.push('goto lstart')
   lines.push('#lend')
-  lines.push(`var rslt = STATICCALL ${toFoo}.foo(i)`)
-
   return lines.join('\n')
 }
 
