@@ -1,0 +1,236 @@
+pragma solidity ^0.8.27;
+import "hardhat/console.sol";
+library Interpreter {
+    /* 
+     args:
+     returnMemAddressOffset: uint128, returnMemAddressLen: uint128
+     toAddress,
+     gasLimit,
+     value, (ONLY for OPCODE_CALL. omitted for OPCODE_STATICCALL, OPCODE_DELEGATECALL)
+     fnSelector,
+     ...calldataArgs (interpreted as Quantity)
+    */
+    uint8 public constant OPCODE_STATICCALL = 0;
+    uint8 public constant OPCODE_CALL = 1;
+    uint8 public constant OPCODE_DELEGATECALL = 2;
+    // set pc = branch if q != 0
+    // args: q (Quantity), branch 
+    uint8 public constant OPCODE_CMP_BRANCH = 3;
+    // set pc = branch
+    // args: branch 
+    uint8 public constant OPCODE_JUMP = 4;
+    // opcodes above 128 refer to memAddress := opcode - 128
+    // write q to mem[memAddress]
+    // args: q (Quantity)
+    uint8 public constant OPCODE_MSTORE_R0 = 128;
+
+
+
+    /*
+    if(qWord < BIT255) interpret as literal
+    else qWord ^= BIT255 //unset bit 255
+    
+    if (qWord < BIT254), interpret as mem[qWord]
+    else qWord ^= BIT254 //unset bit 254
+    
+    interpret as  _resolve(Quantities[qWord]) // evm builtin readonly fn calls
+    
+    // this allows mem and most literals to be encoded in 1 word
+    */
+    // BIT255 on means NOT literal
+    uint256 public constant BIT255_NOTLITERAL = 1 << 255;
+    // BIT254 on means NOT memory address
+    uint256 public constant BIT254_NOTMEM = 1 << 254;
+    uint8 public constant QUANTITY_LITERAL = 0;
+    uint8 public constant QUANTITY_OP_ADD = 1;
+    uint8 public constant QUANTITY_OP_MUL = 2;
+    uint8 public constant QUANTITY_OP_SUB = 3;
+    uint8 public constant QUANTITY_OP_DIV = 4;
+    uint8 public constant QUANTITY_OP_MOD = 6;
+    uint8 public constant QUANTITY_OP_LT = 0x10;
+    uint8 public constant QUANTITY_OP_GT = 0x11;
+    uint8 public constant QUANTITY_OP_EQ = 0x12;
+    //uint8 constant public QUANTITY_OP_ISZERO = 0x13;
+
+    uint8 public constant QUANTITY_OP_AND = 0x16;
+    uint8 public constant QUANTITY_OP_OR = 0x17;
+    uint8 public constant QUANTITY_OP_XOR = 0x18;
+    uint8 public constant QUANTITY_OP_NOT = 0x19;
+    uint8 public constant QUANTITY_OP_SHL = 0x1B;
+    uint8 public constant QUANTITY_OP_SHR = 0x1C;
+    uint8 public constant QUANTITY_ADDRESS_THIS = 0x30;
+    uint8 public constant QUANTITY_BALANCE = 0x31;
+    
+    struct Instruction {
+        uint8 opcode;
+        bytes32[] args;
+    }
+
+    struct Quantity {
+        uint quantityType;
+        bytes32[] args;
+    }
+
+    function _resolve(
+        uint qWord,
+        uint[] memory mem,
+        Quantity[] memory quantities
+    ) internal view returns (uint) {
+        //console.log('qIndex', qIndex);
+        if(qWord & BIT255_NOTLITERAL == 0) {
+            return qWord;
+        }
+        if(qWord & BIT254_NOTMEM == 0) {
+            return mem[qWord ^ BIT255_NOTLITERAL];
+        }
+        // unset bits 255 and 254
+        qWord ^= (BIT255_NOTLITERAL | BIT254_NOTMEM);
+
+        Quantity memory q = quantities[qWord];
+        // dont need quantities[] to resolve:
+        if (q.quantityType == QUANTITY_LITERAL) return uint(q.args[0]);
+        // 0 arg OPs
+        if (q.quantityType == QUANTITY_ADDRESS_THIS) return uint(uint160(address(this)));
+        // 1 arg OPs
+        uint r1 = _resolve(uint(q.args[0]), mem, quantities);
+        if (q.quantityType == QUANTITY_BALANCE) return address(uint160(r1)).balance;
+        // 2 arg OPs
+        uint r2 = _resolve(uint(q.args[1]), mem, quantities);
+        if (q.quantityType == QUANTITY_OP_ADD) return r1 + r2;
+        if (q.quantityType == QUANTITY_OP_MUL) return r1 * r2;
+        if (q.quantityType == QUANTITY_OP_SUB) return r1 - r2;
+        if (q.quantityType == QUANTITY_OP_DIV) return r1 / r2;
+        if (q.quantityType == QUANTITY_OP_MOD) return r1 % r2;
+        if (q.quantityType == QUANTITY_OP_LT) return r1 < r2 ? 1 : 0;
+        if (q.quantityType == QUANTITY_OP_GT) return r1 > r2 ? 1 : 0;
+        if (q.quantityType == QUANTITY_OP_EQ) return r1 == r2 ? 1 : 0;
+        if (q.quantityType == QUANTITY_OP_AND) return r1 & r2;
+        if (q.quantityType == QUANTITY_OP_OR) return r1 | r2;
+        if (q.quantityType == QUANTITY_OP_XOR) return r1 ^ r2;
+        if (q.quantityType == QUANTITY_OP_SHL) return r1 << r2;
+        if (q.quantityType == QUANTITY_OP_SHR) return r1 >> r2;
+        revert("unknown quantityType");
+    }
+
+    function _run(
+        uint8 memSize,
+        Instruction[] memory program,
+        Quantity[] memory quantities
+    ) internal {
+        uint pc = 0;
+        //uint steps = 0;
+        //uint gasBeforeStart = gasleft();
+        uint[] memory mem = new uint[](memSize);
+        //console.log('allocate registers gas', gasBeforeStart - gasleft());
+        while (pc < program.length) {
+            // console.log("step", steps);
+            //uint gasBefore = gasleft();
+            //steps++;
+            uint opcode = program[pc].opcode;
+            bytes32[] memory args = program[pc].args;
+            if (opcode < 3) {
+                // call, staticcall, delegatecall
+                // let callArgs = [registerWriteInfo, toBytes32(address), GAS]
+                address to = address(
+                    uint160(_resolve(uint(args[1]), mem, quantities))
+                );
+                uint gasLimit = uint(args[2]);
+                bytes32 selector = args[3];
+                // CALL has an additional value arg
+                uint callArgsEnd = opcode == OPCODE_CALL ? 4 : 3;
+                uint[] memory resolvedArgs = new uint[](
+                    args.length - callArgsEnd
+                );
+                resolvedArgs[0] = uint(selector);
+                for (uint i = callArgsEnd + 1; i < args.length; i++) {
+                    resolvedArgs[i - callArgsEnd] = _resolve(
+                        uint(args[i]),
+                        mem,
+                        quantities
+                    );
+                }
+                uint offset = uint(args[0]) >> 128;
+                uint len = (uint(args[0]) << 128) >> 128;
+                require(offset + len <= memSize, "bad write dest");
+                if (opcode == OPCODE_STATICCALL) {
+                    assembly {
+                        // start from args[4] - 8 bytes for selector
+                        // gas, address, argsOffset, argsSize, retOffset, retSize
+                        callArgsEnd := staticcall(
+                            gasLimit,
+                            to,
+                            add(resolvedArgs, 60),
+                            add(4, mul(sub(mload(resolvedArgs), 1), 32)),
+                            add(add(mem, 32), mul(offset, 32)),
+                            mul(len, 32)
+                        )
+                    }
+                } else if(opcode == OPCODE_CALL) {
+                    // len is reused here as VALUE to limit stack overgrowth
+                    len = _resolve(uint(args[4]), mem, quantities);
+                    //console.log('value', len);
+                    assembly {
+                        // start from args[4] - 8 bytes for selector
+                        // gas, address, value, argsOffset, argsSize, retOffset, retSize
+                        callArgsEnd := call(
+                            gasLimit,
+                            to,
+                            len,
+                            add(resolvedArgs, 60),
+                            add(4, mul(sub(mload(resolvedArgs), 1), 32)),
+                            add(add(mem, 32), mul(offset, 32)),
+                            mul(len, 32)
+                        )
+                    }                    
+                } else if(opcode == OPCODE_DELEGATECALL) {
+                    assembly {
+                        // start from args[4] - 8 bytes for selector
+                        // gas, address, argsOffset, argsSize, retOffset, retSize
+                        callArgsEnd := delegatecall(
+                            gasLimit,
+                            to,
+                            add(resolvedArgs, 60),
+                            add(4, mul(sub(mload(resolvedArgs), 1), 32)),
+                            add(add(mem, 32), mul(offset, 32)),
+                            mul(len, 32)
+                        )
+                    }                    
+                }
+
+                //console.log("success", callArgsEnd);
+            } else if (opcode == OPCODE_JUMP) {
+                uint dest = uint(args[0]);
+                //console.log("op", opcode, "gasUsed", gasBefore - gasleft());
+                pc = dest;
+                continue;
+            } else if (opcode == OPCODE_CMP_BRANCH) {
+                // args: quantityNum : *Quantity, to: uint
+                uint val = _resolve(uint(args[0]), mem, quantities);
+                //console.log('branch v = ', v);
+                if (val != 0) {
+                    //console.log("op", opcode, "gasUsed", gasBefore - gasleft());
+                    pc = uint(args[1]);
+                    continue;
+                }
+            } else if (opcode >= OPCODE_MSTORE_R0) {
+                // write to a register
+                // args: quantityNum : *Quantity
+                uint val = _resolve(uint(args[0]), mem, quantities);
+                mem[opcode - OPCODE_MSTORE_R0] = val;
+                //console.log('v = ', v);
+            } else {
+                revert("unknown opcode");
+            }
+            //console.log("op", opcode, "gasUsed", gasBefore - gasleft());
+            pc++;
+        }
+        printMem(mem);
+    }
+
+    function printMem(uint[] memory mem) public pure {
+        console.log("Mem Dump:");
+        for (uint i = 0; i < mem.length; i++) {
+            console.log(i, " = ", mem[i]);
+        }
+    }
+}

@@ -1,0 +1,25 @@
+// tokenA, tokenB, exchange1, exchange2 prepended by mocha
+
+// preprocessor directives. all strings
+amountA := 1000000000000000000
+minProfitA := 100000000000000000
+approve := approve(address,uint256)
+balanceOf := balanceOf(address)
+// tokenA, exactTokenAIn, tokenB, minTokenBOut
+swap := swap(address,uint256,address)
+
+var balABefore = STATICCALL tokenA.balanceOf(this)
+CALL tokenA.approve(exchange1, amountA)
+var balBBefore = STATICCALL tokenB.balanceOf(this)
+CALL exchange1.swap(tokenA, amountA, tokenB)
+var receiveB = STATICCALL tokenB.balanceOf(this)
+receiveB -= balBBefore
+CALL tokenB.approve(exchange2, receiveB)
+CALL exchange2.swap(tokenB, receiveB, tokenA)
+var balAAfter = STATICCALL tokenA.balanceOf(this)
+var profit = balAAfter - balABefore
+var bal = balance(this)
+if(balAAfter < minProfitA + balABefore) revert
+
+
+
