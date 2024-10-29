@@ -113,7 +113,7 @@ library Interpreter {
     }
 
     function _run(
-        uint8 memSize,
+        uint256 memSize,
         Instruction[] memory program,
         Quantity[] memory quantities
     ) internal {

@@ -11,7 +11,7 @@ const METATX_TYPES = {
         { name: 'args', type: 'bytes32[]' }
       ],
       Run: [
-      { name: 'memSize', type: 'uint8' },
+      { name: 'memSize', type: 'uint256' },
       { name: 'instructions', type: 'Instruction[]' },
       { name: 'quantities', type: 'Quantity[]' },
       { name: 'nonce', type: 'uint256' }

@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 contract BrevityInterpreter is Ownable, EIP712, Nonces {
     constructor() Ownable(msg.sender) EIP712("Brev", "1") {}
 
-    bytes32 private constant _RUN_TYPEHASH = keccak256("Run(uint8 memSize,Instruction[] instructions,Quantity[] quantities,uint256 nonce)Instruction(uint8 opcode,bytes32[] args)Quantity(uint256 quantityType,bytes32[] args)");
+    bytes32 private constant _RUN_TYPEHASH = keccak256("Run(uint256 memSize,Instruction[] instructions,Quantity[] quantities,uint256 nonce)Instruction(uint8 opcode,bytes32[] args)Quantity(uint256 quantityType,bytes32[] args)");
     bytes32 private constant _INSTRUCTION_TYPEHASH = keccak256("Instruction(uint8 opcode,bytes32[] args)");
     bytes32 private constant _QUANTITY_TYPEHASH = keccak256("Quantity(uint256 quantityType,bytes32[] args)");
 
