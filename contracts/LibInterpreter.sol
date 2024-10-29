@@ -224,7 +224,7 @@ library Interpreter {
             //console.log("op", opcode, "gasUsed", gasBefore - gasleft());
             pc++;
         }
-        printMem(mem);
+        //printMem(mem);
     }
 
     function printMem(uint[] memory mem) public pure {

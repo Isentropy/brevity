@@ -13,7 +13,7 @@ Brevity is in development and alpha. We welcome code review and design comments.
 ## But Why??
 EVM contracts are expensive to deploy. Brevity saves on deployment cost by putting code in the calldata and interpreting. **Brevity costs less to deploy, but more to run.** It's especially useful for simple workflows. For a simple arbitrage example in [Brevity](test/briefs/example.brv) and [Solidity](contracts/Arb.sol):
 ```
-Brevity gas: total = 251745, calldata = 46156, execution = 205589
+Brevity gas: total = 240638, calldata = 46156, execution = 194482
 Solidity Test gas: total = 612735, deploy = 483672, execution = 129063
 ```
 
@@ -24,7 +24,6 @@ Brevity scripts (```.brv``` ) are transpiled into a Brevity VM Program that is p
 - instructions: similar to a normal assembly instruction set. Some args are words that represent a ```Quantity```
 - quantites: LISP-like repsentations of byte32 words that can be computed. eg  ```123, (* 5 6), (+ mem[2] 5), address(this), msg.sender```. Literals, memory words, EVM readonly internal calls.
 
-
 The [Interpreter](contracts/LibInterpreter.sol) has a [minimal instruction set](contracts/LibInterpreter.sol#L13). Quantities do most of the syscalls for 0, 1, and 2 arg functions. 
 
 
@@ -33,7 +32,7 @@ The [Interpreter](contracts/LibInterpreter.sol) has a [minimal instruction set](
 
 ```
 // := means preprocessor directive
-// these are substituted in place of symbols and dont create instructions
+// these are substituted in place and dont create instructions or quantities
 amountA := 1000000000000000000
 minProfitA := 100000000000000000
 approve := approve(address,uint256)
