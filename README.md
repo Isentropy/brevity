@@ -20,14 +20,14 @@ Solidity Test gas: total = 456990, deploy = 337652, execution = 119338
 ## Under the Hood
 Brevity Scripts (```.brv``` ) are transpiled into a Brevity Calldata Program that is passed to the [Interpreter](contracts/LibInterpreter.sol) as ```(uint memSize, Instruction[] calldata instructions, Quantity[] memory quantities)```. 
 
-- memSize: Brevity abstracts the EVM stack and instead gives the coder access to a fixed size memory chunk of ```bytes32[memSize]``` called ```mem```
+- memSize: Brevity abstracts the EVM stack and instead gives the coder access to a fixed size memory chunk of ```uint256[memSize]``` called ```mem```
 - instructions: similar to a normal assembly instruction set. Some args are words that represent a ```Quantity```
-- quantites: A literal, mem pointer, or function that returns a byte32 word. Function are expressed internally with the opcode in prefix. eg  ```123, (* 5 6), (+ mem[2] 5), address(this), msg.sender```. Literals, memory words, EVM readonly internal calls. 
+- quantites: A literal, mem pointer, or function that returns a uint256 word. Function are expressed internally with the opcode in prefix. eg  ```123, (* 5 6), (+ mem[2] 5), address(this), msg.sender```
 
 The [Interpreter](contracts/LibInterpreter.sol) has a [minimal instruction set](contracts/LibInterpreter.sol#L13). Quantities do most of the syscalls for 0, 1, and 2 arg functions. 
 
 ### Everything is a word
-Like [B](https://en.wikipedia.org/wiki/B_(programming_language)), Brevity has no data types, just words (byte32).
+Like [B](https://en.wikipedia.org/wiki/B_(programming_language)), Brevity has no data types, just words (32 bytes).
 
 
 ## Version 0.1 syntax

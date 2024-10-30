@@ -127,7 +127,7 @@ library Interpreter {
             //uint gasBefore = gasleft();
             //steps++;
             uint opcode = program[pc].opcode;
-            bytes32[] memory args = program[pc].args;
+            bytes32[] calldata args = program[pc].args;
             if (opcode < 3) {
                 uint offset = uint(args[0]) >> 128;
                 uint len = (uint(args[0]) << 128) >> 128;
