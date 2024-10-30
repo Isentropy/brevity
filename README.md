@@ -13,8 +13,8 @@ Brevity is in development and alpha. We welcome code review and design comments.
 ## But Why??
 EVM contracts are expensive to deploy. Brevity saves on deployment cost by putting code in the calldata and interpreting. **Brevity costs less to deploy, but more to run.** It's especially useful for simple workflows. For a simple arbitrage example in [Brevity](test/briefs/example.brv) and [Solidity](contracts/Arb.sol):
 ```
-Brevity gas: total = 214126, calldata = 46086, execution = 168040
-Solidity Test gas: total = 456990, deploy = 337652, execution = 119338
+Brevity gas: total = 204504, calldata = 51443, execution = 153061
+Solidity Test gas: total = 463028, deploy = 343682, calldata = 23528, execution = 95818
 ```
 
 ## Under the Hood

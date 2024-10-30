@@ -85,30 +85,31 @@ library Interpreter {
         qWord ^= (BIT255_NOTLITERAL | BIT254_NOTMEM);
 
         Quantity memory q = quantities[qWord];
+        uint quantityType = q.quantityType;
         // dont need quantities[] to resolve:
-        if (q.quantityType == QUANTITY_LITERAL) return uint(q.args[0]);
+        if (quantityType == QUANTITY_LITERAL) return uint(q.args[0]);
         // 0 arg OPs
-        if (q.quantityType == QUANTITY_ADDRESS_THIS)
+        if (quantityType == QUANTITY_ADDRESS_THIS)
             return uint(uint160(address(this)));
         // 1 arg OPs
         uint r1 = _resolve(uint(q.args[0]), mem, quantities);
-        if (q.quantityType == QUANTITY_BALANCE)
+        if (quantityType == QUANTITY_BALANCE)
             return address(uint160(r1)).balance;
         // 2 arg OPs
         uint r2 = _resolve(uint(q.args[1]), mem, quantities);
-        if (q.quantityType == QUANTITY_OP_ADD) return r1 + r2;
-        if (q.quantityType == QUANTITY_OP_MUL) return r1 * r2;
-        if (q.quantityType == QUANTITY_OP_SUB) return r1 - r2;
-        if (q.quantityType == QUANTITY_OP_DIV) return r1 / r2;
-        if (q.quantityType == QUANTITY_OP_MOD) return r1 % r2;
-        if (q.quantityType == QUANTITY_OP_LT) return r1 < r2 ? 1 : 0;
-        if (q.quantityType == QUANTITY_OP_GT) return r1 > r2 ? 1 : 0;
-        if (q.quantityType == QUANTITY_OP_EQ) return r1 == r2 ? 1 : 0;
-        if (q.quantityType == QUANTITY_OP_AND) return r1 & r2;
-        if (q.quantityType == QUANTITY_OP_OR) return r1 | r2;
-        if (q.quantityType == QUANTITY_OP_XOR) return r1 ^ r2;
-        if (q.quantityType == QUANTITY_OP_SHL) return r1 << r2;
-        if (q.quantityType == QUANTITY_OP_SHR) return r1 >> r2;
+        if (quantityType == QUANTITY_OP_ADD) return r1 + r2;
+        if (quantityType == QUANTITY_OP_MUL) return r1 * r2;
+        if (quantityType == QUANTITY_OP_SUB) return r1 - r2;
+        if (quantityType == QUANTITY_OP_DIV) return r1 / r2;
+        if (quantityType == QUANTITY_OP_MOD) return r1 % r2;
+        if (quantityType == QUANTITY_OP_LT) return r1 < r2 ? 1 : 0;
+        if (quantityType == QUANTITY_OP_GT) return r1 > r2 ? 1 : 0;
+        if (quantityType == QUANTITY_OP_EQ) return r1 == r2 ? 1 : 0;
+        if (quantityType == QUANTITY_OP_AND) return r1 & r2;
+        if (quantityType == QUANTITY_OP_OR) return r1 | r2;
+        if (quantityType == QUANTITY_OP_XOR) return r1 ^ r2;
+        if (quantityType == QUANTITY_OP_SHL) return r1 << r2;
+        if (quantityType == QUANTITY_OP_SHR) return r1 >> r2;
         revert("unknown quantityType");
     }
 
