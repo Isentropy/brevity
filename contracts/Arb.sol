@@ -1,4 +1,3 @@
-// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.27;
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
@@ -19,5 +18,5 @@ contract Arb {
         exchange2.swap(address(tokenB), amountB, address(tokenA));
         require(tokenA.balanceOf(address(this)) > ABefore + minProfitA);
     }
-
+    function noop(IERC20 tokenA, IERC20 tokenB, uint amountA, uint minProfitA, ISwap exchange1, ISwap exchange2) public {}
 }

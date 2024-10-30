@@ -3,7 +3,7 @@ import { BrevityParserOutput } from "./brevityParser";
 import { Signer, BigNumberish } from 'ethers' 
 const METATX_TYPES = {
     Instruction : [
-        { name: 'opcode', type: 'uint8' },
+        { name: 'opcode', type: 'uint256' },
         { name: 'args', type: 'bytes32[]' }
       ],
       Quantity : [

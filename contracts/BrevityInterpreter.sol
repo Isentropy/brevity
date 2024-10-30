@@ -10,12 +10,12 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 contract BrevityInterpreter is Ownable, EIP712, Nonces {
     constructor() Ownable(msg.sender) EIP712("Brev", "1") {}
 
-    bytes32 private constant _RUN_TYPEHASH = keccak256("Run(uint256 memSize,Instruction[] instructions,Quantity[] quantities,uint256 nonce)Instruction(uint8 opcode,bytes32[] args)Quantity(uint256 quantityType,bytes32[] args)");
-    bytes32 private constant _INSTRUCTION_TYPEHASH = keccak256("Instruction(uint8 opcode,bytes32[] args)");
+    bytes32 private constant _RUN_TYPEHASH = keccak256("Run(uint256 memSize,Instruction[] instructions,Quantity[] quantities,uint256 nonce)Instruction(uint256 opcode,bytes32[] args)Quantity(uint256 quantityType,bytes32[] args)");
+    bytes32 private constant _INSTRUCTION_TYPEHASH = keccak256("Instruction(uint256 opcode,bytes32[] args)");
     bytes32 private constant _QUANTITY_TYPEHASH = keccak256("Quantity(uint256 quantityType,bytes32[] args)");
 
 
-    function run(uint8 memSize, Interpreter.Instruction[] calldata instructions, Interpreter.Quantity[] calldata quantities) public onlyOwner {
+    function run(uint memSize, Interpreter.Instruction[] calldata instructions, Interpreter.Quantity[] memory quantities) public  {
         Interpreter._run(memSize, instructions, quantities);
     }
     function _encodeInstructionsArray(Interpreter.Instruction[] calldata instrutions) internal pure returns (bytes32) {
@@ -27,7 +27,7 @@ contract BrevityInterpreter is Ownable, EIP712, Nonces {
         return keccak256(abi.encodePacked(slots));
     }
 
-    function _encodeQuantityArray(Interpreter.Quantity[] calldata quantities) internal pure returns (bytes32) {
+    function _encodeQuantityArray(Interpreter.Quantity[] memory quantities) internal pure returns (bytes32) {
         bytes32[] memory slots = new bytes32[](quantities.length);
         for(uint i=0; i<quantities.length; i++) {
             slots[i] = keccak256(abi.encode(_QUANTITY_TYPEHASH, quantities[i].quantityType, keccak256(abi.encodePacked(quantities[i].args))));
@@ -37,7 +37,7 @@ contract BrevityInterpreter is Ownable, EIP712, Nonces {
     }
 
     function runMeta(
-        uint8 memSize, Interpreter.Instruction[] calldata instructions, Interpreter.Quantity[] calldata quantities,
+        uint memSize, Interpreter.Instruction[] calldata instructions, Interpreter.Quantity[] memory quantities,
         bytes calldata sig) public {
 
         //arrays hashed per https://github.com/ethereum/EIPs/blob/master/EIPS/eip-712.md
@@ -49,7 +49,7 @@ contract BrevityInterpreter is Ownable, EIP712, Nonces {
         Interpreter._run(memSize, instructions, quantities);
     }
     
-    function noop(uint8 memSize, Interpreter.Instruction[] calldata program, Interpreter.Quantity[] calldata quantities) public {}
+    function noop(uint memSize, Interpreter.Instruction[] calldata program, Interpreter.Quantity[] memory quantities) public {}
 
     receive() payable external {}
 

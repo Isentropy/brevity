@@ -60,7 +60,7 @@ library Interpreter {
     uint8 public constant QUANTITY_BALANCE = 0x31;
 
     struct Instruction {
-        uint8 opcode;
+        uint opcode;
         bytes32[] args;
     }
 
@@ -114,7 +114,7 @@ library Interpreter {
 
     function _run(
         uint256 memSize,
-        Instruction[] memory program,
+        Instruction[] calldata program,
         Quantity[] memory quantities
     ) internal {
         uint pc = 0;
@@ -155,6 +155,7 @@ library Interpreter {
                 }
 
                 // tmp will be assigned to success after call
+                // result, if desired, written directly to mem
                 if (opcode == OPCODE_STATICCALL) {
                     assembly {
                         // start from args[4] - 8 bytes for selector
@@ -200,7 +201,7 @@ library Interpreter {
                     }
                 }
                 if(tmp == 0) revert("badCall");
-
+                delete resolvedArgs;
                 //console.log("success", callArgsEnd);
             } else if (opcode == OPCODE_JUMP) {
                 uint dest = uint(args[0]);

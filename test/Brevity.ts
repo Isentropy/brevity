@@ -107,14 +107,18 @@ describe("Brevity", function () {
       const arb = await Arb.deploy()
       const deployTx = arb.deploymentTransaction()
       if (!deployTx) throw Error("couldnt deploy Test")
-      const tr = await deployTx?.wait()
+      let tr = await deployTx?.wait()
       const gasTestDeploy = tr?.gasUsed
       await tokenA.mint(await arb.getAddress(), parseEther("100"))
       const minProfitA = '100000000000000000'
       let tx = await arb.arb(tokenAAddress, tokenBAddress, parseEther("1"),minProfitA, testAddress, testAddress)
-      const gasTestLoop = (await tx.wait())?.gasUsed
-      if (!gasTestDeploy || !gasTestLoop) throw Error("undef")
-      console.log(`Solidity Test gas: total = ${gasTestDeploy + gasTestLoop}, deploy = ${gasTestDeploy}, execution = ${gasTestLoop}`)
+      const gasTestArb = (await tx.wait())?.gasUsed
+      if (!gasTestDeploy || !gasTestArb) throw Error("undef")
+      tx = await arb.noop(tokenAAddress, tokenBAddress, parseEther("1"),minProfitA, testAddress, testAddress)
+      tr = await tx.wait()
+      if (!tr) throw Error()
+      const noopGas = tr.gasUsed
+      console.log(`Solidity Test gas: total = ${gasTestDeploy + gasTestArb}, deploy = ${gasTestDeploy}, calldata = ${noopGas}, execution = ${gasTestArb - noopGas}`)
       
     })
     it("MetaTx", async () => {
