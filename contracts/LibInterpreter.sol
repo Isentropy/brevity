@@ -72,7 +72,7 @@ library Interpreter {
     function _resolve(
         uint qWord,
         uint[] memory mem,
-        Quantity[] memory quantities
+        Quantity[] calldata quantities
     ) internal view returns (uint) {
         //console.log('qIndex', qIndex);
         if (qWord & BIT255_NOTLITERAL == 0) {
@@ -84,7 +84,7 @@ library Interpreter {
         // unset bits 255 and 254
         qWord ^= (BIT255_NOTLITERAL | BIT254_NOTMEM);
 
-        Quantity memory q = quantities[qWord];
+        Quantity calldata q = quantities[qWord];
         uint quantityType = q.quantityType;
         // dont need quantities[] to resolve:
         if (quantityType == QUANTITY_LITERAL) return uint(q.args[0]);
@@ -116,7 +116,7 @@ library Interpreter {
     function _run(
         uint256 memSize,
         Instruction[] calldata program,
-        Quantity[] memory quantities
+        Quantity[] calldata quantities
     ) internal {
         uint pc = 0;
         //uint steps = 0;
@@ -130,19 +130,11 @@ library Interpreter {
             uint opcode = program[pc].opcode;
             bytes32[] calldata args = program[pc].args;
             if (opcode < 3) {
-                uint offset = uint(args[0]) >> 128;
-                uint len = (uint(args[0]) << 128) >> 128;
-                require(offset + len <= memSize, "bad write dest");
-                // call, staticcall, delegatecall
-                // let callArgs = [registerWriteInfo, toBytes32(address), GAS]
-                address to = address(
-                    uint160(_resolve(uint(args[1]), mem, quantities))
-                );
-                uint gasLimit = uint(args[2]);
                 uint[] memory resolvedArgs;
-                // CALL has an additional value arg
+
                 // tmp is reused a few times to conserve stack size
                 // tmp here means index of last arg before calldata quantities
+                // CALL has an additional value arg
                 uint tmp = opcode == OPCODE_CALL ? 4 : 3;
                 resolvedArgs = new uint[](args.length - tmp);
                 // function selector. put in mem in first slot
@@ -154,6 +146,16 @@ library Interpreter {
                         quantities
                     );
                 }
+                uint offset = uint(args[0]) >> 128;
+                uint len = (uint(args[0]) << 128) >> 128;
+                require(offset + len <= memSize, "bad write dest");
+                // call, staticcall, delegatecall
+                // let callArgs = [registerWriteInfo, toBytes32(address), GAS]
+                address to = address(
+                    uint160(_resolve(uint(args[1]), mem, quantities))
+                );
+                uint gasLimit = uint(args[2]);
+
 
                 // tmp will be assigned to success after call
                 // result, if desired, written directly to mem
@@ -202,28 +204,30 @@ library Interpreter {
                     }
                 }
                 if(tmp == 0) revert("badCall");
-                delete resolvedArgs;
+                //delete resolvedArgs;
                 //console.log("success", callArgsEnd);
             } else if (opcode == OPCODE_JUMP) {
+                // args: dest
                 uint dest = uint(args[0]);
+                if(dest > program.length) revert("badJump");
                 //console.log("op", opcode, "gasUsed", gasBefore - gasleft());
                 pc = dest;
                 continue;
             } else if (opcode == OPCODE_CMP_BRANCH) {
-                // args: quantityNum : *Quantity, to: uint
+                // args: quantityNum : qWord, to: uint
                 uint val = _resolve(uint(args[0]), mem, quantities);
                 //console.log('branch v = ', v);
                 if (val != 0) {
                     //console.log("op", opcode, "gasUsed", gasBefore - gasleft());
-                    pc = uint(args[1]);
+                    uint dest = uint(args[1]);
+                    if(dest > program.length) revert("badJump");
+                    pc = dest;
                     continue;
                 }
             } else if (opcode >= OPCODE_MSTORE_R0) {
                 // write to a register
                 // args: quantityNum : *Quantity
-                uint val = _resolve(uint(args[0]), mem, quantities);
-                mem[opcode - OPCODE_MSTORE_R0] = val;
-                //console.log('v = ', v);
+                mem[opcode - OPCODE_MSTORE_R0] = _resolve(uint(args[0]), mem, quantities);
             } else {
                 revert("unknown opcode");
             }

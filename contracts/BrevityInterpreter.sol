@@ -15,7 +15,7 @@ contract BrevityInterpreter is Ownable, EIP712, Nonces {
     bytes32 private constant _QUANTITY_TYPEHASH = keccak256("Quantity(uint256 quantityType,bytes32[] args)");
 
 
-    function run(uint memSize, Interpreter.Instruction[] calldata instructions, Interpreter.Quantity[] memory quantities) public  {
+    function run(uint memSize, Interpreter.Instruction[] calldata instructions, Interpreter.Quantity[] calldata quantities) public  {
         Interpreter._run(memSize, instructions, quantities);
     }
     function _encodeInstructionsArray(Interpreter.Instruction[] calldata instrutions) internal pure returns (bytes32) {
@@ -27,7 +27,7 @@ contract BrevityInterpreter is Ownable, EIP712, Nonces {
         return keccak256(abi.encodePacked(slots));
     }
 
-    function _encodeQuantityArray(Interpreter.Quantity[] memory quantities) internal pure returns (bytes32) {
+    function _encodeQuantityArray(Interpreter.Quantity[] calldata quantities) internal pure returns (bytes32) {
         bytes32[] memory slots = new bytes32[](quantities.length);
         for(uint i=0; i<quantities.length; i++) {
             slots[i] = keccak256(abi.encode(_QUANTITY_TYPEHASH, quantities[i].quantityType, keccak256(abi.encodePacked(quantities[i].args))));
@@ -37,7 +37,7 @@ contract BrevityInterpreter is Ownable, EIP712, Nonces {
     }
 
     function runMeta(
-        uint memSize, Interpreter.Instruction[] calldata instructions, Interpreter.Quantity[] memory quantities,
+        uint memSize, Interpreter.Instruction[] calldata instructions, Interpreter.Quantity[] calldata quantities,
         bytes calldata sig) public {
 
         //arrays hashed per https://github.com/ethereum/EIPs/blob/master/EIPS/eip-712.md
@@ -49,7 +49,7 @@ contract BrevityInterpreter is Ownable, EIP712, Nonces {
         Interpreter._run(memSize, instructions, quantities);
     }
     
-    function noop(uint memSize, Interpreter.Instruction[] calldata program, Interpreter.Quantity[] memory quantities) public {}
+    function noop(uint memSize, Interpreter.Instruction[] calldata program, Interpreter.Quantity[] calldata quantities) public {}
 
     receive() payable external {}
 
