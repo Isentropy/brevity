@@ -3,11 +3,11 @@ import "hardhat/console.sol";
 library Interpreter {
     /* 
      args:
-     returnMemAddressOffset: uint128, returnMemAddressLen: uint128
+     returnMemAddressOffset: uint128, returnMemAddressLen: uint128 (packed as 1 uint256)
      toAddress,
      gasLimit,
      fnSelector,
-     [value if OPCODE_CALL, omitted if OPCODE_STATICCALL, OPCODE_DELEGATECALL)]
+     [value : Quantity if OPCODE_CALL, omitted if OPCODE_STATICCALL, OPCODE_DELEGATECALL)]
      ...calldataArgs (interpreted as Quantity)
     */
     uint8 public constant OPCODE_STATICCALL = 0;
@@ -175,7 +175,7 @@ library Interpreter {
                 } else if (opcode == OPCODE_CALL) {
                     // tmp is reused here as VALUE to limit stack overgrowth
                     tmp = _resolve(uint(args[4]), mem, quantities);
-                    //console.log("value", len);
+                    //console.log("value", tmp);
                     assembly {
                         // start from args[4] - 8 bytes for selector
                         // gas, address, value, argsOffset, argsSize, retOffset, retSize

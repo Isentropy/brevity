@@ -10,6 +10,14 @@ const config: HardhatUserConfig = {
         runs: 200
       }
     }
+  },
+  networks: {
+    hardhat: {
+      forking: {
+        url: 'https://rpc.ankr.com/eth',
+        blockNumber: 20000000
+      }
+    }
   }
 };
 

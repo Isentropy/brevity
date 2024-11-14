@@ -119,7 +119,6 @@ describe("Brevity", function () {
       if (!tr) throw Error()
       const noopGas = tr.gasUsed
       console.log(`Solidity Test gas: total = ${gasTestDeploy + gasTestArb}, deploy = ${gasTestDeploy}, calldata = ${noopGas}, execution = ${gasTestArb - noopGas}`)
-      
     })
     it("MetaTx", async () => {
       const { tokenA, tokenB, test, brevityParser, brevityInterpreter, owner, otherAccount } = await loadFixture(fixture);
@@ -144,6 +143,44 @@ describe("Brevity", function () {
       if(!tr) throw Error()
       console.log(`MetaTx gas: total = ${tr.gasUsed}`)
     })
+    /*
+    it("Uniswap.brv", async function () {
+      const { tokenA, tokenB, test, brevityParser, brevityInterpreter, owner, otherAccount } = await loadFixture(fixture);
+      const input = 'test/briefs/uniswapAddLiquidity.brv'
+      const tokenAAddress = await tokenA.getAddress()
+      const tokenBAddress = await tokenB.getAddress()
+      const bi = await brevityInterpreter.getAddress()
+      //
+      await owner.sendTransaction({ to: bi, value: parseEther('1') })
+      let prepend = `tokenA := ${tokenAAddress}\ntokenB := ${tokenBAddress}\n`
+
+//      const testAddress = await test.getAddress()
+//      prepend += `exchange1 := ${testAddress}\nexchange2 := ${testAddress}\n`
+      const inputText = prepend + fs.readFileSync(input, { encoding: 'utf-8' })
+      //console.log(inputText)
+      const o = brevityParser.parseBrevityScript(inputText)
+      //console.log(`${JSON.stringify(o, null, 2)}`)
+      await tokenA.mint(bi, parseEther("100"))
+      await testAndProfile(brevityInterpreter, o)
+      const Arb = await hre.ethers.getContractFactory("Arb");
+      const arb = await Arb.deploy()
+      const deployTx = arb.deploymentTransaction()
+      if (!deployTx) throw Error("couldnt deploy Test")
+      let tr = await deployTx?.wait()
+      const gasTestDeploy = tr?.gasUsed
+      await tokenA.mint(await arb.getAddress(), parseEther("100"))
+      const minProfitA = '100000000000000000'
+      let tx = await arb.arb(tokenAAddress, tokenBAddress, parseEther("1"),minProfitA, testAddress, testAddress)
+      const gasTestArb = (await tx.wait())?.gasUsed
+      if (!gasTestDeploy || !gasTestArb) throw Error("undef")
+      tx = await arb.noop(tokenAAddress, tokenBAddress, parseEther("1"),minProfitA, testAddress, testAddress)
+      tr = await tx.wait()
+      if (!tr) throw Error()
+      const noopGas = tr.gasUsed
+      console.log(`Solidity Test gas: total = ${gasTestDeploy + gasTestArb}, deploy = ${gasTestDeploy}, calldata = ${noopGas}, execution = ${gasTestArb - noopGas}`)
+    })
+    */
+
 
   })
 })
