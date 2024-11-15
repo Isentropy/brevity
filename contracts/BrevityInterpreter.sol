@@ -15,7 +15,7 @@ contract BrevityInterpreter is Ownable, EIP712, Nonces {
     bytes32 private constant _QUANTITY_TYPEHASH = keccak256("Quantity(uint256 quantityType,bytes32[] args)");
 
 
-    function run(uint memSize, Interpreter.Instruction[] calldata instructions, Interpreter.Quantity[] calldata quantities) public  {
+    function run(uint memSize, Interpreter.Instruction[] calldata instructions, Interpreter.Quantity[] calldata quantities) public payable {
         Interpreter._run(memSize, instructions, quantities);
     }
     function _encodeInstructionsArray(Interpreter.Instruction[] calldata instrutions) internal pure returns (bytes32) {

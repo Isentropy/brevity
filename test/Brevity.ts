@@ -3,7 +3,7 @@ import {
 } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import hre, { ethers } from "hardhat";
 import { BrevityParser, BrevityParserOutput } from "../tslib/brevityParser";
-import { dataLength, parseEther } from 'ethers'
+import { dataLength, parseEther, BigNumberish } from 'ethers'
 import * as fs from 'fs'
 import { BrevityInterpreter } from "../typechain-types";
 import { signMetaTx } from "../tslib/utils";
@@ -48,8 +48,8 @@ describe("Brevity", function () {
     return { loopTest, tokenA, tokenB, brevityParser, brevityInterpreter, owner, otherAccount, test };
   }
 
-  async function testAndProfile(brevityInterpreter: BrevityInterpreter, o: BrevityParserOutput) {
-    let tx = await brevityInterpreter.run(BigInt(o.memSize), o.instructions, o.quantities)
+  async function testAndProfile(brevityInterpreter: BrevityInterpreter, o: BrevityParserOutput, value : BigNumberish = BigInt(0)) {
+    let tx = await brevityInterpreter.run(BigInt(o.memSize), o.instructions, o.quantities, {value})
     let tr = await tx.wait()
     if (!tr) throw Error()
     //console.log(`${JSON.stringify(tx, null, 2)}`)
@@ -143,7 +143,7 @@ describe("Brevity", function () {
       if(!tr) throw Error()
       console.log(`MetaTx gas: total = ${tr.gasUsed}`)
     })
-    /*
+    
     it("Uniswap.brv", async function () {
       const { tokenA, tokenB, test, brevityParser, brevityInterpreter, owner, otherAccount } = await loadFixture(fixture);
       const input = 'test/briefs/uniswapAddLiquidity.brv'
@@ -157,29 +157,11 @@ describe("Brevity", function () {
 //      const testAddress = await test.getAddress()
 //      prepend += `exchange1 := ${testAddress}\nexchange2 := ${testAddress}\n`
       const inputText = prepend + fs.readFileSync(input, { encoding: 'utf-8' })
-      //console.log(inputText)
       const o = brevityParser.parseBrevityScript(inputText)
-      //console.log(`${JSON.stringify(o, null, 2)}`)
-      await tokenA.mint(bi, parseEther("100"))
-      await testAndProfile(brevityInterpreter, o)
-      const Arb = await hre.ethers.getContractFactory("Arb");
-      const arb = await Arb.deploy()
-      const deployTx = arb.deploymentTransaction()
-      if (!deployTx) throw Error("couldnt deploy Test")
-      let tr = await deployTx?.wait()
-      const gasTestDeploy = tr?.gasUsed
-      await tokenA.mint(await arb.getAddress(), parseEther("100"))
-      const minProfitA = '100000000000000000'
-      let tx = await arb.arb(tokenAAddress, tokenBAddress, parseEther("1"),minProfitA, testAddress, testAddress)
-      const gasTestArb = (await tx.wait())?.gasUsed
-      if (!gasTestDeploy || !gasTestArb) throw Error("undef")
-      tx = await arb.noop(tokenAAddress, tokenBAddress, parseEther("1"),minProfitA, testAddress, testAddress)
-      tr = await tx.wait()
-      if (!tr) throw Error()
-      const noopGas = tr.gasUsed
-      console.log(`Solidity Test gas: total = ${gasTestDeploy + gasTestArb}, deploy = ${gasTestDeploy}, calldata = ${noopGas}, execution = ${gasTestArb - noopGas}`)
+      console.log(JSON.stringify(o, null, 2))
+
+      await testAndProfile(brevityInterpreter, o, parseEther(".001"))      
     })
-    */
 
 
   })

@@ -49,15 +49,19 @@ library Interpreter {
     uint8 public constant QUANTITY_OP_GT = 0x11;
     uint8 public constant QUANTITY_OP_EQ = 0x12;
     //uint8 constant public QUANTITY_OP_ISZERO = 0x13;
-
     uint8 public constant QUANTITY_OP_AND = 0x16;
     uint8 public constant QUANTITY_OP_OR = 0x17;
     uint8 public constant QUANTITY_OP_XOR = 0x18;
     uint8 public constant QUANTITY_OP_NOT = 0x19;
     uint8 public constant QUANTITY_OP_SHL = 0x1B;
     uint8 public constant QUANTITY_OP_SHR = 0x1C;
+
     uint8 public constant QUANTITY_ADDRESS_THIS = 0x30;
     uint8 public constant QUANTITY_BALANCE = 0x31;
+    uint8 public constant QUANTITY_CALLER = 0x33;
+    uint8 public constant QUANTITY_CALLVALUE= 0x34;
+    uint8 public constant QUANTITY_BLOCKTIMESTAMP = 0x42;
+
 
     struct Instruction {
         uint opcode;
@@ -91,6 +95,13 @@ library Interpreter {
         // 0 arg OPs
         if (quantityType == QUANTITY_ADDRESS_THIS)
             return uint(uint160(address(this)));
+        if (quantityType == QUANTITY_CALLER)
+            return uint(uint160(address(msg.sender)));
+        if (quantityType == QUANTITY_BLOCKTIMESTAMP)
+            return block.timestamp;
+        if (quantityType == QUANTITY_CALLVALUE)
+            return msg.value;
+         
         // 1 arg OPs
         uint r1 = _resolve(uint(q.args[0]), mem, quantities);
         if (quantityType == QUANTITY_BALANCE)
@@ -146,6 +157,7 @@ library Interpreter {
                         quantities
                     );
                 }
+                //printMem(resolvedArgs);
                 uint offset = uint(args[0]) >> 128;
                 uint len = (uint(args[0]) << 128) >> 128;
                 require(offset + len <= memSize, "bad write dest");
@@ -175,7 +187,6 @@ library Interpreter {
                 } else if (opcode == OPCODE_CALL) {
                     // tmp is reused here as VALUE to limit stack overgrowth
                     tmp = _resolve(uint(args[4]), mem, quantities);
-                    //console.log("value", tmp);
                     assembly {
                         // start from args[4] - 8 bytes for selector
                         // gas, address, value, argsOffset, argsSize, retOffset, retSize
@@ -234,7 +245,7 @@ library Interpreter {
             //console.log("op", opcode, "gasUsed", gasBefore - gasleft());
             pc++;
         }
-        //printMem(mem);
+        printMem(mem);
     }
 
     function printMem(uint[] memory mem) public pure {

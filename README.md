@@ -18,7 +18,7 @@ Solidity Test gas: total = 463028, deploy = 343682, calldata = 23528, execution 
 ```
 
 ## Under the Hood
-Brevity Scripts (```.brv``` ) are transpiled into a Brevity Calldata Program that is passed to the [Interpreter](contracts/LibInterpreter.sol) as ```(uint memSize, Instruction[] calldata instructions, Quantity[] memory quantities)```. 
+Brevity Scripts (```.brv``` ) are transpiled into a Brevity Calldata Program that is passed to the [Interpreter](contracts/LibInterpreter.sol) as ```(uint memSize, Instruction[] calldata instructions, Quantity[] calldata quantities)```. 
 
 - memSize: Brevity abstracts the EVM stack and instead gives the coder access to a fixed size memory chunk of ```uint256[memSize]``` called ```mem```
 - instructions: similar to a normal assembly instruction set. Some args are words that represent a ```Quantity```

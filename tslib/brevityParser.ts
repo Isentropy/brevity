@@ -7,7 +7,6 @@ const OPCODE_CALL = 1;
 const OPCODE_DELEGATECALL = 2;
 const OPCODE_CMP_BRANCH = 3;
 const OPCODE_JUMP = 4;
-const OPCODE_STOREFN = 127;
 
 const OPCODE_MSTORE_R0 = 128;
 // const OPCODE_MSTORE_R1 = 129;
@@ -27,13 +26,15 @@ const QUANTITY_OP_EQ = 0x12;
 const QUANTITY_OP_AND = 0x16;
 const QUANTITY_OP_OR = 0x17;
 const QUANTITY_OP_XOR = 0x18;
-//const QUANTITY_OP_NOT = 0x19;
+const QUANTITY_OP_NOT = 0x19;
 const QUANTITY_OP_SHL = 0x1B;
 const QUANTITY_OP_SHR = 0x1C;
 const QUANTITY_ADDRESSTHIS = 0x30;
 const QUANTITY_BALANCE = 0x31;
+const QUANTITY_CALLER = 0x33;
+const QUANTITY_CALLVALUE = 0x34;
 
-const QUANTITY_BLOCKTIMESTAMP = 0x32;
+const QUANTITY_BLOCKTIMESTAMP = 0x42;
 
 //const QUANTITY_R0 = 128;
 const BIT255_NOTLITERAL = BigInt(1) << BigInt(255)
@@ -54,7 +55,9 @@ const KW_REVERT = 'revert'
 
 const ZeroArgQuantityKWs = new Map<string, number>([
     ['this', QUANTITY_ADDRESSTHIS],
-    ['block.timestamp', QUANTITY_BLOCKTIMESTAMP]
+    ['block.timestamp', QUANTITY_BLOCKTIMESTAMP],
+    ['msg.sender', QUANTITY_CALLER],
+    ['msg.value', QUANTITY_CALLVALUE]
 ]);
 
 const OneArgQuantityKWs = new Map<string, number>([
@@ -62,7 +65,7 @@ const OneArgQuantityKWs = new Map<string, number>([
 ]);
 
 const KWS: Set<string> = new Set<string>([... ZeroArgQuantityKWs.keys()].concat([...OneArgQuantityKWs.keys()] ).concat([KW_REVERT, KW_GOTO, KW_IF, KW_CALL, KW_STATICCALL, KW_DELEGATECALL, KW_VAR]))
-const OPS: Set<string> = new Set<string>(['==', '-', '/', '*', '+', '&', '|', '^', '<', '>', '<<', '>>'])
+const OPS: Set<string> = new Set<string>([ '!','==', '-', '/', '*', '+', '&', '|', '^', '<', '>', '<<', '>>'])
 
 
 export interface Instruction {
@@ -75,6 +78,11 @@ export interface Quantity {
     args: string[]
 }
 
+interface FnParams {
+    gasLimit? : string,
+    value? : string       
+}
+
 
 
 class ParsingContext {
@@ -85,6 +93,7 @@ class ParsingContext {
     quantites: Quantity[] = []
     lineNumber: number = 1
     quantityIndex(q: Quantity): bigint {
+        //console.log(`quantityIndex ${JSON.stringify(q, null, 2)}`)
         const k = JSON.stringify(q)
         let idx = this.quantityEncodedToIndex.get(k)
         if (typeof idx === 'number') return BigInt(idx) | BIT254_NOTMEM | BIT255_NOTLITERAL
@@ -200,7 +209,9 @@ export class BrevityParser {
 
     // parse Q, add to parsingContent, return  quantityIndex
     private parseQuantity(q: string, parsingContext: ParsingContext, dealias = true): bigint {
+        //console.log(`parseQuantity: ${q}`)
         q = q.trim()
+        if(q.length == 0) throw Error(`${parsingContext.lineNumber}: Error parsing quantity "${q}"`)
         const [opPos, op] = this.findFirstValidOpCharacter(q)
         if (opPos != -1) {
             const twoArg: Quantity = {
@@ -252,7 +263,9 @@ export class BrevityParser {
         return this.encodeLiteral(q, parsingContext)
     }
 
-    private parseFunctionCall(fn: string, parsingContext: ParsingContext, memWriteInfo: string = toBytes32(0), gasLimit = toBytes32(300000), value: bigint = BigInt(0)): Instruction {
+
+
+    private parseFunctionCall(fn: string, parsingContext: ParsingContext, memWriteInfo: string = toBytes32(0), gasLimit : BigNumberish = toBytes32(300000), value: string = "0"): Instruction {
         fn = fn.trim()
         const firstSpace = fn.indexOf(' ')
         if (firstSpace < 0) throw Error(`${parsingContext.lineNumber}: cant parse fn ${fn}`)
@@ -265,6 +278,17 @@ export class BrevityParser {
         else throw Error(`${parsingContext.lineNumber}: Unknown fn cmd ${cmd}`)
 
         let right = fn.substring(firstSpace).trim()
+        // value, gas, etc
+        let callParams : FnParams = {}
+        if(right.startsWith('{')) {
+            const lastBrace = right.indexOf('}')
+            callParams = JSON.parse(right.substring(0, lastBrace + 1))
+            if(callParams.value) value = callParams.value
+            if(callParams.gasLimit) gasLimit = callParams.gasLimit
+            
+            //console.log(`callParams: ${JSON.stringify(callParams)}`)
+            right = right.substring(lastBrace + 1)
+        }
         const firstPeriod = right.indexOf('.')
         let address = this.parseQuantity(right.substring(0, firstPeriod), parsingContext)
         let fnSelector: string
@@ -284,6 +308,7 @@ export class BrevityParser {
                 //rm ()
                 args = right.substring(dp + 2, right.length - 1)
             } else {
+                
                 // it is aliased address eg fooAlias := foo(arg1, arg2)
                 const firstParen = right.indexOf('(')
                 const alias = right.substring(0, firstParen)
@@ -295,15 +320,16 @@ export class BrevityParser {
             }
         }
         // args contains a comma separated string of unparsed Quantities
-        const fnArgs = args.split(',').map((arg) => { return toBytes32(this.parseQuantity(arg, parsingContext)) })
+        const fnArgs = args.trim().length == 0 ? [] : args.split(',').map((arg) => { return toBytes32(this.parseQuantity(arg, parsingContext)) })
         // takes: memWriteInfo(offset: uint128, len: uint128):uint, address: *Quantity, gas: uint, 
         // set memWriteInfo to 0 to not write to mem
-        let callArgs = [memWriteInfo, toBytes32(address), gasLimit, toBytes32(fnSelector)]
+        console.log(`gasLimit ${gasLimit}`)
+        let callArgs = [memWriteInfo, toBytes32(address), toBytes32(gasLimit), toBytes32(fnSelector)]
         switch (opcode) {
             case OPCODE_STATICCALL: break;
             case OPCODE_DELEGATECALL: break;
             case OPCODE_CALL:
-                callArgs.push(toBytes32(this.encodeLiteral(value, parsingContext)));
+                callArgs.push(toBytes32(this.parseQuantity(value, parsingContext)));
                 break;
             default: throw Error("unsupported")
         }
