@@ -158,7 +158,7 @@ describe("Brevity", function () {
 //      prepend += `exchange1 := ${testAddress}\nexchange2 := ${testAddress}\n`
       const inputText = prepend + fs.readFileSync(input, { encoding: 'utf-8' })
       const o = brevityParser.parseBrevityScript(inputText)
-      console.log(JSON.stringify(o, null, 2))
+      //console.log(JSON.stringify(o, null, 2))
 
       await testAndProfile(brevityInterpreter, o, parseEther(".001"))      
     })

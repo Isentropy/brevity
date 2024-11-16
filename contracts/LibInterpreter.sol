@@ -19,6 +19,11 @@ library Interpreter {
     // set pc = branch
     // args: branch
     uint8 public constant OPCODE_JUMP = 4;
+
+    // args: (offset : u128 , len :u128), topic {0, 4}
+    uint8 public constant OPCODE_LOG = 10;
+    // console.log all of mem for debugging. no args
+    uint8 public constant OPCODE_DUMPMEM = 11;
     // opcodes above 128 refer to memAddress := opcode - 128
     // write q to mem[memAddress]
     // args: q (Quantity)
@@ -239,18 +244,19 @@ library Interpreter {
                 // write to a register
                 // args: quantityNum : *Quantity
                 mem[opcode - OPCODE_MSTORE_R0] = _resolve(uint(args[0]), mem, quantities);
+            } else if (opcode == OPCODE_DUMPMEM) {
+                printMem(mem, 0, mem.length);
             } else {
                 revert("unknown opcode");
             }
             //console.log("op", opcode, "gasUsed", gasBefore - gasleft());
             pc++;
         }
-        printMem(mem);
     }
 
-    function printMem(uint[] memory mem) public pure {
+    function printMem(uint[] memory mem, uint from, uint to) public pure {
         console.log("Mem Dump:");
-        for (uint i = 0; i < mem.length; i++) {
+        for (uint i = from; i < to; i++) {
             console.log(i, " = ", mem[i]);
         }
     }

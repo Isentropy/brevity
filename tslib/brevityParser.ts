@@ -7,6 +7,8 @@ const OPCODE_CALL = 1;
 const OPCODE_DELEGATECALL = 2;
 const OPCODE_CMP_BRANCH = 3;
 const OPCODE_JUMP = 4;
+const OPCODE_LOG = 10;
+const OPCODE_DUMPMEM = 11;
 
 const OPCODE_MSTORE_R0 = 128;
 // const OPCODE_MSTORE_R1 = 129;
@@ -50,6 +52,7 @@ const KW_VAR = 'var'
 const KW_IF = 'if'
 const KW_GOTO = 'goto'
 const KW_REVERT = 'revert'
+const KW_DUMPMEM = 'dumpMem'
 
 //const RUN_SELECTOR = BrevityInterpreter__factory.createInterface().getFunction("run").selector
 
@@ -81,7 +84,7 @@ const TwoArgQuantityKWs = new Map<string, number>([
 ]);
 
 
-const KWS: Set<string> = new Set<string>([...ZeroArgQuantityKWs.keys()].concat([...OneArgQuantityKWs.keys()]).concat([...TwoArgQuantityKWs.keys()]).concat([KW_REVERT, KW_GOTO, KW_IF, KW_CALL, KW_STATICCALL, KW_DELEGATECALL, KW_VAR]))
+const KWS: Set<string> = new Set<string>([...ZeroArgQuantityKWs.keys()].concat([...OneArgQuantityKWs.keys()]).concat([...TwoArgQuantityKWs.keys()]).concat([KW_REVERT, KW_GOTO, KW_IF, KW_CALL, KW_STATICCALL, KW_DELEGATECALL, KW_VAR, KW_DUMPMEM]))
 
 
 export interface Instruction {
@@ -317,7 +320,7 @@ export class BrevityParser {
         const fnArgs = args.trim().length == 0 ? [] : args.split(',').map((arg) => { return toBytes32(this.parseQuantity(arg, parsingContext)) })
         // takes: memWriteInfo(offset: uint128, len: uint128):uint, address: *Quantity, gas: uint, 
         // set memWriteInfo to 0 to not write to mem
-        console.log(`gasLimit ${gasLimit}`)
+        //console.log(`gasLimit ${gasLimit}`)
         let callArgs = [memWriteInfo, toBytes32(address), toBytes32(gasLimit), toBytes32(fnSelector)]
         switch (opcode) {
             case OPCODE_STATICCALL: break;
@@ -381,6 +384,13 @@ export class BrevityParser {
                 this.checkNewSymbolName(sym, parsingContext)
                 parsingContext.jumppointNames.set(sym, instructions.length)
                 continue;
+            }
+            if(line.startsWith(KW_DUMPMEM)) {
+                instructions.push({
+                    opcode: OPCODE_DUMPMEM,
+                    args: []
+                })
+                continue
             }
             if (line.startsWith(KW_IF)) {
                 const lastBackParen = line.lastIndexOf(')')
