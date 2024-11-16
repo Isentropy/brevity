@@ -64,8 +64,24 @@ const OneArgQuantityKWs = new Map<string, number>([
     ['balance', QUANTITY_BALANCE]
 ]);
 
-const KWS: Set<string> = new Set<string>([... ZeroArgQuantityKWs.keys()].concat([...OneArgQuantityKWs.keys()] ).concat([KW_REVERT, KW_GOTO, KW_IF, KW_CALL, KW_STATICCALL, KW_DELEGATECALL, KW_VAR]))
-const OPS: Set<string> = new Set<string>([ '!','==', '-', '/', '*', '+', '&', '|', '^', '<', '>', '<<', '>>'])
+const TwoArgQuantityKWs = new Map<string, number>([
+    ['+', QUANTITY_OP_ADD],
+    ['*', QUANTITY_OP_MUL],
+    ['/', QUANTITY_OP_DIV],
+    ['-', QUANTITY_OP_SUB],
+    ['>', QUANTITY_OP_GT],
+    ['<', QUANTITY_OP_LT],
+    ['&', QUANTITY_OP_AND],
+    ['|', QUANTITY_OP_OR],
+    ['^', QUANTITY_OP_XOR],
+    ['<<', QUANTITY_OP_SHL],
+    ['>>', QUANTITY_OP_SHR],
+    ['%', QUANTITY_OP_MOD],
+    ['==', QUANTITY_OP_EQ]
+]);
+
+
+const KWS: Set<string> = new Set<string>([...ZeroArgQuantityKWs.keys()].concat([...OneArgQuantityKWs.keys()]).concat([...TwoArgQuantityKWs.keys()]).concat([KW_REVERT, KW_GOTO, KW_IF, KW_CALL, KW_STATICCALL, KW_DELEGATECALL, KW_VAR]))
 
 
 export interface Instruction {
@@ -79,8 +95,8 @@ export interface Quantity {
 }
 
 interface FnParams {
-    gasLimit? : string,
-    value? : string       
+    gasLimit?: string,
+    value?: string
 }
 
 
@@ -153,34 +169,12 @@ export class BrevityParser {
             }
             //TODO: only works for 1-2 char ops. consider trie if needed
             if (parentheses == 0) {
-                if (prevChar && OPS.has(prevChar + c)) return [i - 1, prevChar + c]
-                if (OPS.has(c)) return [i, c];
+                if (prevChar && TwoArgQuantityKWs.has(prevChar + c)) return [i - 1, prevChar + c]
+                if (TwoArgQuantityKWs.has(c)) return [i, c];
             }
             prevChar = c
         }
         return [-1, ''];
-    }
-
-
-    //TODO
-    private opCharToQuantityCode(q: string): number {
-        if (!OPS.has(q)) throw Error(`invalid op ${q}`)
-        switch (q) {
-            case '+': return QUANTITY_OP_ADD;
-            case '*': return QUANTITY_OP_MUL;
-            case '/': return QUANTITY_OP_DIV;
-            case '-': return QUANTITY_OP_SUB;
-            case '>': return QUANTITY_OP_GT;
-            case '<': return QUANTITY_OP_LT;
-            case '&': return QUANTITY_OP_AND;
-            case '|': return QUANTITY_OP_OR;
-            case '^': return QUANTITY_OP_XOR;
-            case '<<': return QUANTITY_OP_SHL;
-            case '>>': return QUANTITY_OP_SHR;
-            case '%': return QUANTITY_OP_MOD;
-            case '==': return QUANTITY_OP_EQ;
-        }
-        throw Error(`unknown op ${q}`)
     }
 
     private encodeJump(dest: number): Instruction {
@@ -211,11 +205,11 @@ export class BrevityParser {
     private parseQuantity(q: string, parsingContext: ParsingContext, dealias = true): bigint {
         //console.log(`parseQuantity: ${q}`)
         q = q.trim()
-        if(q.length == 0) throw Error(`${parsingContext.lineNumber}: Error parsing quantity "${q}"`)
+        if (q.length == 0) throw Error(`${parsingContext.lineNumber}: Error parsing quantity "${q}"`)
         const [opPos, op] = this.findFirstValidOpCharacter(q)
         if (opPos != -1) {
             const twoArg: Quantity = {
-                quantityType: this.opCharToQuantityCode(op),
+                quantityType: TwoArgQuantityKWs.get(op)!,
                 args: [toBytes32(this.parseQuantity(q.substring(0, opPos), parsingContext)), toBytes32(this.parseQuantity(q.substring(opPos + op.length, q.length), parsingContext))]
             }
             return parsingContext.quantityIndex(twoArg)
@@ -249,7 +243,7 @@ export class BrevityParser {
         }
         // 1 arg fns
         const firstParen = q.indexOf('(')
-        if(firstParen >= 0) {
+        if (firstParen >= 0) {
             const fnName = q.substring(0, firstParen)
             if (OneArgQuantityKWs.has(fnName)) {
                 // rm ()
@@ -265,7 +259,7 @@ export class BrevityParser {
 
 
 
-    private parseFunctionCall(fn: string, parsingContext: ParsingContext, memWriteInfo: string = toBytes32(0), gasLimit : BigNumberish = toBytes32(300000), value: string = "0"): Instruction {
+    private parseFunctionCall(fn: string, parsingContext: ParsingContext, memWriteInfo: string = toBytes32(0), gasLimit: BigNumberish = toBytes32(300000), value: string = "0"): Instruction {
         fn = fn.trim()
         const firstSpace = fn.indexOf(' ')
         if (firstSpace < 0) throw Error(`${parsingContext.lineNumber}: cant parse fn ${fn}`)
@@ -279,13 +273,13 @@ export class BrevityParser {
 
         let right = fn.substring(firstSpace).trim()
         // value, gas, etc
-        let callParams : FnParams = {}
-        if(right.startsWith('{')) {
+        let callParams: FnParams = {}
+        if (right.startsWith('{')) {
             const lastBrace = right.indexOf('}')
             callParams = JSON.parse(right.substring(0, lastBrace + 1))
-            if(callParams.value) value = callParams.value
-            if(callParams.gasLimit) gasLimit = callParams.gasLimit
-            
+            if (callParams.value) value = callParams.value
+            if (callParams.gasLimit) gasLimit = callParams.gasLimit
+
             //console.log(`callParams: ${JSON.stringify(callParams)}`)
             right = right.substring(lastBrace + 1)
         }
@@ -308,7 +302,7 @@ export class BrevityParser {
                 //rm ()
                 args = right.substring(dp + 2, right.length - 1)
             } else {
-                
+
                 // it is aliased address eg fooAlias := foo(arg1, arg2)
                 const firstParen = right.indexOf('(')
                 const alias = right.substring(0, firstParen)
@@ -356,9 +350,9 @@ export class BrevityParser {
     // pull op off the end of string
     private getEndingOp(s: string): string | undefined {
         if (s.length == 0) return undefined
-        if (s.length == 2 && OPS.has(s)) return s
+        if (s.length == 2 && TwoArgQuantityKWs.has(s)) return s
         const lc = s.charAt(s.length - 1)
-        if (OPS.has(lc)) return lc
+        if (TwoArgQuantityKWs.has(lc)) return lc
         return undefined
     }
 
@@ -475,7 +469,7 @@ export class BrevityParser {
                     let quantityEncoded = this.parseQuantity(right, parsingContext)
                     if (unaryOp) {
                         quantityEncoded = parsingContext.quantityIndex({
-                            quantityType: this.opCharToQuantityCode(unaryOp),
+                            quantityType: TwoArgQuantityKWs.get(unaryOp)!,
                             args: [toBytes32(BigInt(offset) | BIT255_NOTLITERAL), toBytes32(quantityEncoded)]
                         })
                     }
