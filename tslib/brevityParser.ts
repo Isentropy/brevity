@@ -210,14 +210,6 @@ export class BrevityParser {
         //console.log(`parseQuantity: ${q}`)
         q = q.trim()
         if (q.length == 0) throw Error(`${parsingContext.lineNumber}: Error parsing quantity "${q}"`)
-        for(let op of OneArgQuantityKWs.keys()) {
-            if(!q.startsWith(op)) continue
-            const oneArg: Quantity = {
-                quantityType: OneArgQuantityKWs.get(op)!,
-                args: [toBytes32(this.parseQuantity(q.substring(op.length), parsingContext))]
-            }
-            return parsingContext.quantityIndex(oneArg)
-        }
         
         const [opPos, op] = this.findFirstValidOpCharacter(q)
         if (opPos != -1) {
@@ -227,6 +219,22 @@ export class BrevityParser {
             }
             return parsingContext.quantityIndex(twoArg)
         }
+        /*
+         oneArg should go after 2 arg to enforce order of op
+         for ex
+         !a == b => (== (! a) b)
+         !(a == b) => (! (== a b)
+          findFirstValidOpCharacter checks for first 2arg op outside parens
+        */ 
+        for(let op of OneArgQuantityKWs.keys()) {
+            if(!q.startsWith(op)) continue
+            const oneArg: Quantity = {
+                quantityType: OneArgQuantityKWs.get(op)!,
+                args: [toBytes32(this.parseQuantity(q.substring(op.length), parsingContext))]
+            }
+            return parsingContext.quantityIndex(oneArg)
+        }
+
 
         // strip parentheses from arg
         if (q.startsWith('(')) {

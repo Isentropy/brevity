@@ -28,4 +28,6 @@ var tokenId, liquidity, amount0, amount1 = CALL {"gasLimit": "900000"} uniswapPo
 var tokenOwner = STATICCALL uniswapPositionManager.ownerOf(tokenId)
 // equivalent to if(!=) revert
 if(!(tokenOwner == this)) revert
+
+//var x = 1  + 1 + 1
 dumpMem
