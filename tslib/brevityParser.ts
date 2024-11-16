@@ -64,7 +64,8 @@ const ZeroArgQuantityKWs = new Map<string, number>([
 ]);
 
 const OneArgQuantityKWs = new Map<string, number>([
-    ['balance', QUANTITY_BALANCE]
+    ['balance', QUANTITY_BALANCE],
+    ['!', QUANTITY_OP_NOT],
 ]);
 
 const TwoArgQuantityKWs = new Map<string, number>([
@@ -209,6 +210,15 @@ export class BrevityParser {
         //console.log(`parseQuantity: ${q}`)
         q = q.trim()
         if (q.length == 0) throw Error(`${parsingContext.lineNumber}: Error parsing quantity "${q}"`)
+        for(let op of OneArgQuantityKWs.keys()) {
+            if(!q.startsWith(op)) continue
+            const oneArg: Quantity = {
+                quantityType: OneArgQuantityKWs.get(op)!,
+                args: [toBytes32(this.parseQuantity(q.substring(op.length), parsingContext))]
+            }
+            return parsingContext.quantityIndex(oneArg)
+        }
+        
         const [opPos, op] = this.findFirstValidOpCharacter(q)
         if (opPos != -1) {
             const twoArg: Quantity = {

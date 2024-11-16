@@ -66,7 +66,7 @@ library Interpreter {
     uint8 public constant QUANTITY_CALLER = 0x33;
     uint8 public constant QUANTITY_CALLVALUE= 0x34;
     uint8 public constant QUANTITY_BLOCKTIMESTAMP = 0x42;
-
+    uint256 constant MAXUINT256 = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
 
     struct Instruction {
         uint opcode;
@@ -109,8 +109,13 @@ library Interpreter {
          
         // 1 arg OPs
         uint r1 = _resolve(uint(q.args[0]), mem, quantities);
+        //console.log('r1', r1);
+
         if (quantityType == QUANTITY_BALANCE)
             return address(uint160(r1)).balance;
+        if (quantityType == QUANTITY_OP_NOT) {
+            return ~r1;
+        }
         // 2 arg OPs
         uint r2 = _resolve(uint(q.args[1]), mem, quantities);
         if (quantityType == QUANTITY_OP_ADD) return r1 + r2;
@@ -118,9 +123,9 @@ library Interpreter {
         if (quantityType == QUANTITY_OP_SUB) return r1 - r2;
         if (quantityType == QUANTITY_OP_DIV) return r1 / r2;
         if (quantityType == QUANTITY_OP_MOD) return r1 % r2;
-        if (quantityType == QUANTITY_OP_LT) return r1 < r2 ? 1 : 0;
-        if (quantityType == QUANTITY_OP_GT) return r1 > r2 ? 1 : 0;
-        if (quantityType == QUANTITY_OP_EQ) return r1 == r2 ? 1 : 0;
+        if (quantityType == QUANTITY_OP_LT) return r1 < r2 ? MAXUINT256 : 0;
+        if (quantityType == QUANTITY_OP_GT) return r1 > r2 ? MAXUINT256 : 0;
+        if (quantityType == QUANTITY_OP_EQ) return r1 == r2 ? MAXUINT256 : 0;
         if (quantityType == QUANTITY_OP_AND) return r1 & r2;
         if (quantityType == QUANTITY_OP_OR) return r1 | r2;
         if (quantityType == QUANTITY_OP_XOR) return r1 ^ r2;
