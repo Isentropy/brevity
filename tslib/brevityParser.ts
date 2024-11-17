@@ -210,7 +210,7 @@ export class BrevityParser {
         //console.log(`parseQuantity: ${q}`)
         q = q.trim()
         if (q.length == 0) throw Error(`${parsingContext.lineNumber}: Error parsing quantity "${q}"`)
-        
+
         const [opPos, op] = this.findFirstValidOpCharacter(q)
         if (opPos != -1) {
             const twoArg: Quantity = {
@@ -225,9 +225,9 @@ export class BrevityParser {
          !a == b => (== (! a) b)
          !(a == b) => (! (== a b)
           findFirstValidOpCharacter checks for first 2arg op outside parens
-        */ 
-        for(let op of OneArgQuantityKWs.keys()) {
-            if(!q.startsWith(op)) continue
+        */
+        for (let op of OneArgQuantityKWs.keys()) {
+            if (!q.startsWith(op)) continue
             const oneArg: Quantity = {
                 quantityType: OneArgQuantityKWs.get(op)!,
                 args: [toBytes32(this.parseQuantity(q.substring(op.length), parsingContext))]
@@ -403,7 +403,7 @@ export class BrevityParser {
                 parsingContext.jumppointNames.set(sym, instructions.length)
                 continue;
             }
-            if(line.startsWith(KW_DUMPMEM)) {
+            if (line.startsWith(KW_DUMPMEM)) {
                 instructions.push({
                     opcode: OPCODE_DUMPMEM,
                     args: []
@@ -441,72 +441,75 @@ export class BrevityParser {
                     return this.encodeJump(dest)
                 }
                 instructions.push(instLazy)
+                continue
             }
             if (this.isFunctionCall(line)) {
                 instructions.push(this.parseFunctionCall(line, parsingContext))
+                continue
             }
             const assignment = line.split('=')
-            if (assignment.length > 1) {
-                //assignment
-                let left = assignment[0].trim()
-                let offset = -1
-                let length = undefined
-                // something like +=
-                let unaryOp
-                if (left.startsWith(KW_VAR)) {
-                    //new vars
-                    const varsToDefine = left.substring(KW_VAR.length).trim().split(',')
-                    length = varsToDefine.length
-                    offset = memSize
-                    for (let i = 0; i < varsToDefine.length; i++) {
-                        const v = varsToDefine[i].trim()
-                        this.checkNewSymbolName(v, parsingContext)
-                        parsingContext.memAddressNames.set(v, memSize++)
-                    }
-                } else {
-                    // see if left ends with op as in x += 1
-                    unaryOp = this.getEndingOp(left)
-                    if (unaryOp) left = left.substring(0, left.length - unaryOp.length)
-                    // should already be defined and in incremental order
-                    const vars = left.trim().split(',')
-                    length = vars.length
-                    for (let i = 0; i < vars.length; i++) {
-                        const v = vars[i].trim()
-                        if (!parsingContext.memAddressNames.has(v)) throw Error(`${parsingContext.lineNumber}: mem address alias ${v} unknown `)
-                        const regnum = parsingContext.memAddressNames.get(v)
-                        if (typeof regnum === 'undefined') throw Error('huh')
-                        if (offset == -1) {
-                            offset = regnum
-                        } else if (regnum != offset + i) {
-                            throw Error(`${parsingContext.lineNumber}: mem address ${v} = ${regnum} expected to be in position ${offset + i}`)
-                        }
-                    }
-                }
-                //shouldnt happen
-                if (offset == -1) throw Error(`${parsingContext.lineNumber}: offset unknown`)
-                if (offset + length > this.config.maxMem) throw Error(`${parsingContext.lineNumber}: maxMem ${this.config.maxMem} exceeded`)
-                const right = assignment[1].trim()
-                if (this.isFunctionCall(right)) {
-                    // right side of = is function call
-                    const storeDirective = (BigInt(offset) << BigInt(128)) + BigInt(length)
-                    instructions.push(this.parseFunctionCall(right, parsingContext, toBytes32(storeDirective)))
+            if (assignment.length < 2) throw Error(`${parsingContext.lineNumber}: unknown line format:\n${line}`)
 
-                } else {
-                    // right side of = is Quantity
-                    if (length != 1) throw Error(`${parsingContext.lineNumber}: can only assign Quantity to 1 word`)
-                    let quantityEncoded = this.parseQuantity(right, parsingContext)
-                    if (unaryOp) {
-                        quantityEncoded = parsingContext.quantityIndex({
-                            quantityType: TwoArgQuantityKWs.get(unaryOp)!,
-                            args: [toBytes32(BigInt(offset) | BIT255_NOTLITERAL), toBytes32(quantityEncoded)]
-                        })
+            //assignment
+            let left = assignment[0].trim()
+            let offset = -1
+            let length = undefined
+            // something like +=
+            let unaryOp
+            if (left.startsWith(KW_VAR)) {
+                //new vars
+                const varsToDefine = left.substring(KW_VAR.length).trim().split(',')
+                length = varsToDefine.length
+                offset = memSize
+                for (let i = 0; i < varsToDefine.length; i++) {
+                    const v = varsToDefine[i].trim()
+                    this.checkNewSymbolName(v, parsingContext)
+                    parsingContext.memAddressNames.set(v, memSize++)
+                }
+            } else {
+                // see if left ends with op as in x += 1
+                unaryOp = this.getEndingOp(left)
+                if (unaryOp) left = left.substring(0, left.length - unaryOp.length)
+                // should already be defined and in incremental order
+                const vars = left.trim().split(',')
+                length = vars.length
+                for (let i = 0; i < vars.length; i++) {
+                    const v = vars[i].trim()
+                    if (!parsingContext.memAddressNames.has(v)) throw Error(`${parsingContext.lineNumber}: mem address alias ${v} unknown `)
+                    const regnum = parsingContext.memAddressNames.get(v)
+                    if (typeof regnum === 'undefined') throw Error('huh')
+                    if (offset == -1) {
+                        offset = regnum
+                    } else if (regnum != offset + i) {
+                        throw Error(`${parsingContext.lineNumber}: mem address ${v} = ${regnum} expected to be in position ${offset + i}`)
                     }
-                    instructions.push({
-                        opcode: (OPCODE_MSTORE_R0 + offset),
-                        args: [toBytes32(quantityEncoded)]
-                    })
                 }
             }
+            //shouldnt happen
+            if (offset == -1) throw Error(`${parsingContext.lineNumber}: offset unknown`)
+            if (offset + length > this.config.maxMem) throw Error(`${parsingContext.lineNumber}: maxMem ${this.config.maxMem} exceeded`)
+            const right = assignment[1].trim()
+            if (this.isFunctionCall(right)) {
+                // right side of = is function call
+                const storeDirective = (BigInt(offset) << BigInt(128)) + BigInt(length)
+                instructions.push(this.parseFunctionCall(right, parsingContext, toBytes32(storeDirective)))
+
+            } else {
+                // right side of = is Quantity
+                if (length != 1) throw Error(`${parsingContext.lineNumber}: can only assign Quantity to 1 word`)
+                let quantityEncoded = this.parseQuantity(right, parsingContext)
+                if (unaryOp) {
+                    quantityEncoded = parsingContext.quantityIndex({
+                        quantityType: TwoArgQuantityKWs.get(unaryOp)!,
+                        args: [toBytes32(BigInt(offset) | BIT255_NOTLITERAL), toBytes32(quantityEncoded)]
+                    })
+                }
+                instructions.push({
+                    opcode: (OPCODE_MSTORE_R0 + offset),
+                    args: [toBytes32(quantityEncoded)]
+                })
+            }
+
         }
         const resolved: Instruction[] = instructions.map((inst) => {
             if (inst instanceof Function) {
