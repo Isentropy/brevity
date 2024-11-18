@@ -31,29 +31,39 @@ Like [B](https://en.wikipedia.org/wiki/B_(programming_language)), Brevity has no
 
 
 ## Version 0.1 syntax
+Brevity has no code blocks. It's meant for simple workflows. You can:
+ - define preprocessor symbols: ``foo := foo(uint256)``
+ - ``CALL, STATICCALL (ie view) and DELEGATECALL  target.foo(123)`` using Quantity params. Instead of imporing ABIs, you define methods as preprocessor symbols.
+ - set memory words with arithmatic: ``var x = block.timestamp + 5``, ``x += 1``
+ - set jump points: ``#jp``
+ - do basic flow control: ``[if(...)]? [revert|goto jp]``
+ - do some basic debugging: ``dumpMem``
+
+If you need to do something exotic, you can DELEGATECALL to a library.  The basic functions are show below:
 ```
 // := means preprocessor directive
 // these are substituted in place and dont create instructions or quantities
-amountA := 1000000000000000000
-minProfitA := 100000000000000000
-approve := approve(address,uint256)
+usdc := 0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48
+exchange1 := 0x1111111111111111111111111111111111111111
+amountUsdc := 1000000
 balanceOf := balanceOf(address)
 swap := swap(address,uint256,address)
 
-// assign a new word in memory called balABefore
-var balABefore = STATICCALL tokenA.balanceOf(this)
-CALL tokenA.approve(exchange1, amountA)
-var balBBefore = STATICCALL tokenB.balanceOf(this)
-CALL exchange1.swap(tokenA, amountA, tokenB)
-var receiveB = STATICCALL tokenB.balanceOf(this)
-// reverts on overflow
-receiveB -= balBBefore
-CALL tokenB.approve(exchange2, receiveB)
-CALL exchange2.swap(tokenB, receiveB, tokenA)
-var balAAfter = STATICCALL tokenA.balanceOf(this)
-if(balAAfter < minProfitA + balABefore) revert
-```
+// static call balanceOf() and write to mem[0] (aka "balUsdc") 
+// if the output is multiple words, delclare more mem slots eg var a, b = STATICCALL foo.bar()
+var balUsdc = STATICCALL usdc.balanceOf(this)
+if(balUsdc < 100) revert
+CALL usdc.approve(exchange1, balUsdc)
 
+// simple loop
+var i = 0
+#lstart
+if(i > 9) goto lend
+i += 1
+goto lstart
+#lend
+```
+See [test examples](test/briefs/).
 
 
 ## Legal
