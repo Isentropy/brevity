@@ -43,6 +43,7 @@ const BIT255_NOTLITERAL = BigInt(1) << BigInt(255)
 const BIT254_NOTMEM = BigInt(1) << BigInt(254)
 // top bit unset
 const MAXINT_LITERAL = '0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
+const CONFIGFLAG_NO_DELEGATECALL = '0x0000000000000000000000000000000100000000000000000000000000000000'
 
 // reserved keywords
 const KW_CALL = 'CALL'
@@ -143,7 +144,7 @@ export interface BrevityParserConfig {
 }
 
 export interface BrevityParserOutput {
-    memSize: number,
+    config: bigint,
     instructions: Instruction[],
     quantities: Quantity[]
 }
@@ -517,7 +518,7 @@ export class BrevityParser {
             }
             return inst
         })
-        return { memSize: memSize, instructions: resolved, quantities: parsingContext.quantites }
+        return { config: BigInt(memSize) | BigInt(CONFIGFLAG_NO_DELEGATECALL), instructions: resolved, quantities: parsingContext.quantites }
     }
 
 

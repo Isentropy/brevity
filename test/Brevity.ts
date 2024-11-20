@@ -36,6 +36,12 @@ describe("Brevity", function () {
     const brevityInterpreter = await BrevityInterpreter.deploy();
     const OwnedBrevityInterpreterProxy = await hre.ethers.getContractFactory("OwnedBrevityInterpreterProxy");
     const proxy = await OwnedBrevityInterpreterProxy.deploy(owner.address, await brevityInterpreter.getAddress())
+
+    const deployTx = proxy.deploymentTransaction()
+    if (!deployTx) throw Error("couldnt deploy Proxy")
+    let tr = await deployTx?.wait()
+    const gasProxyDeploy = tr?.gasUsed
+    console.log(`proxy deploy gas = ${gasProxyDeploy}`)
     const Test = await hre.ethers.getContractFactory("Test");
     const TestToken = await hre.ethers.getContractFactory("TestToken");
     const LoopTest = await hre.ethers.getContractFactory("LoopTest");

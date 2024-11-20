@@ -3,7 +3,7 @@ pragma abicoder v2;
 import "hardhat/console.sol";
 library Brevity {
     //EIP712 metaTx functions
-    bytes32 internal constant _PROGRAM_TYPEHASH = keccak256("Program(uint256 memSize,Instruction[] instructions,Quantity[] quantities,uint256 nonce)Instruction(uint256 opcode,bytes32[] args)Quantity(uint256 quantityType,bytes32[] args)");
+    bytes32 internal constant _PROGRAM_TYPEHASH = keccak256("Program(uint256 config,Instruction[] instructions,Quantity[] quantities,uint256 nonce)Instruction(uint256 opcode,bytes32[] args)Quantity(uint256 quantityType,bytes32[] args)");
     bytes32 internal constant _INSTRUCTION_TYPEHASH = keccak256("Instruction(uint256 opcode,bytes32[] args)");
     bytes32 internal constant _QUANTITY_TYPEHASH = keccak256("Quantity(uint256 quantityType,bytes32[] args)");
     
@@ -91,6 +91,8 @@ library Brevity {
     uint8 public constant QUANTITY_CALLVALUE= 0x34;
     uint8 public constant QUANTITY_BLOCKTIMESTAMP = 0x42;
     uint256 constant MAXUINT256 = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+    uint256 constant LOW128BITSMASK = 0x00000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+    uint256 public constant CONFIGFLAG_NO_DELEGATECALL = 0x0000000000000000000000000000000100000000000000000000000000000000;
 
     struct Instruction {
         uint opcode;
@@ -103,7 +105,8 @@ library Brevity {
     }
 
     struct Program {
-        uint memSize;
+        // high 128 bits are flags, low 128 bits are memory size
+        uint config;
         Instruction[] instructions;
         Quantity[] quantities;
     }
@@ -165,7 +168,7 @@ library Brevity {
     }
 
     function _run(
-        uint memSize,
+        uint config,
         Instruction[] calldata instructions,
         Quantity[] calldata quantities
     ) internal {
@@ -173,7 +176,7 @@ library Brevity {
         //uint steps = 0;
         //uint gasBeforeStart = gasleft();
 
-        uint[] memory mem = new uint[](memSize);
+        uint[] memory mem = new uint[](config & LOW128BITSMASK);
         //console.log('allocate registers gas', gasBeforeStart - gasleft());
         while (pc < instructions.length) {
             // console.log("step", steps);
@@ -200,8 +203,8 @@ library Brevity {
                 }
                 //printMem(resolvedArgs);
                 uint offset = uint(args[0]) >> 128;
-                uint len = (uint(args[0]) << 128) >> 128;
-                require(offset + len <= memSize, "bad write dest");
+                uint len = uint(args[0]) & LOW128BITSMASK;
+                require(offset + len <= mem.length, "bad write dest");
                 // call, staticcall, delegatecall
                 // let callArgs = [registerWriteInfo, toBytes32(address), GAS]
                 address to = address(
@@ -242,6 +245,7 @@ library Brevity {
                         )
                     }
                 } else if (opcode == OPCODE_DELEGATECALL) {
+                    require(CONFIGFLAG_NO_DELEGATECALL & config == 0, "forbidden");
                     assembly {
                         // start from args[4] - 8 bytes for selector
                         // gas, address, argsOffset, argsSize, retOffset, retSize
