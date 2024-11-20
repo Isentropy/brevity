@@ -1,7 +1,7 @@
-import { BrevityInterpreter, IBrevityInterpreter, Nonces__factory } from "../typechain-types";
+import { OwnedBrevityInterpreter } from "../typechain-types";
 import { BrevityParserOutput } from "./brevityParser";
 import { Signer, BigNumberish } from 'ethers' 
-import { Nonces } from "../typechain-types";
+
 const METATX_TYPES = {
     Instruction : [
         { name: 'opcode', type: 'uint256' },
@@ -20,7 +20,7 @@ const METATX_TYPES = {
   }
 
 
-export async function signMetaTx(signer : Signer, brevityInterpreter : IBrevityInterpreter, chainId : BigNumberish, output : BrevityParserOutput) {
+export async function signMetaTx(signer : Signer, brevityInterpreter : OwnedBrevityInterpreter, chainId : BigNumberish, output : BrevityParserOutput) {
     const bi = await brevityInterpreter.getAddress()
     const domain = {
         name: 'Brev',
@@ -29,7 +29,7 @@ export async function signMetaTx(signer : Signer, brevityInterpreter : IBrevityI
         verifyingContract: bi
     }
     const signerAddress = await signer.getAddress()
-    const nonce = await Nonces__factory.connect(bi, signer).nonces(signerAddress)
+    const nonce = await brevityInterpreter.nonces(signerAddress)
     const v = {
         nonce,
         ...output

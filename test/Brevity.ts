@@ -5,7 +5,7 @@ import hre, { ethers } from "hardhat";
 import { BrevityParser, BrevityParserOutput } from "../tslib/brevityParser";
 import { dataLength, parseEther, BigNumberish } from 'ethers'
 import * as fs from 'fs'
-import { BrevityInterpreter, IBrevityInterpreter } from "../typechain-types";
+import { OwnedBrevityInterpreter__factory, IBrevityInterpreter } from "../typechain-types";
 import { signMetaTx } from "../tslib/utils";
 //hardhat default
 //const chainId = 31337
@@ -32,12 +32,13 @@ describe("Brevity", function () {
     // Contracts are deployed using the first signer/account by default
     const [owner, otherAccount] = await hre.ethers.getSigners();
 
-    const BrevityInterpreter = await hre.ethers.getContractFactory("BrevityInterpreter");
-    const brevityInterpreter = await BrevityInterpreter.deploy();
+    const OwnedBrevityInterpreter = await hre.ethers.getContractFactory("OwnedBrevityInterpreter");
+    let brevityInterpreter = await OwnedBrevityInterpreter.deploy(owner.address);
     const OwnedBrevityInterpreterProxy = await hre.ethers.getContractFactory("OwnedBrevityInterpreterProxy");
-    const proxy = await OwnedBrevityInterpreterProxy.deploy(owner.address, await brevityInterpreter.getAddress())
-
-    const deployTx = proxy.deploymentTransaction()
+    const proxy0 = await OwnedBrevityInterpreterProxy.deploy(await brevityInterpreter.getAddress())
+    const proxy = OwnedBrevityInterpreter__factory.connect(await proxy0.getAddress(), owner)
+    await proxy.setOwner(owner.address)
+    const deployTx = proxy0.deploymentTransaction()
     if (!deployTx) throw Error("couldnt deploy Proxy")
     let tr = await deployTx?.wait()
     const gasProxyDeploy = tr?.gasUsed
@@ -147,7 +148,7 @@ describe("Brevity", function () {
       
       const net = await owner.provider.getNetwork()
       const sig = await signMetaTx(owner, brevityInterpreter, net.chainId, o)
-      const tx=  await brevityInterpreter.runMeta(o, sig, 0, owner.address)
+      const tx=  await brevityInterpreter.runMeta(o, sig)
       const tr = await tx.wait()
       if(!tr) throw Error()
       console.log(`MetaTx gas: total = ${tr.gasUsed}`)
