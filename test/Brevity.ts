@@ -5,7 +5,7 @@ import hre, { ethers } from "hardhat";
 import { BrevityParser, BrevityParserOutput } from "../tslib/brevityParser";
 import { dataLength, parseEther, BigNumberish } from 'ethers'
 import * as fs from 'fs'
-import { BrevityInterpreter } from "../typechain-types";
+import { BrevityInterpreter, IBrevityInterpreter } from "../typechain-types";
 import { signMetaTx } from "../tslib/utils";
 //hardhat default
 //const chainId = 31337
@@ -34,6 +34,8 @@ describe("Brevity", function () {
 
     const BrevityInterpreter = await hre.ethers.getContractFactory("BrevityInterpreter");
     const brevityInterpreter = await BrevityInterpreter.deploy();
+    const OwnedBrevityInterpreterProxy = await hre.ethers.getContractFactory("OwnedBrevityInterpreterProxy");
+    const proxy = await OwnedBrevityInterpreterProxy.deploy(owner.address, await brevityInterpreter.getAddress())
     const Test = await hre.ethers.getContractFactory("Test");
     const TestToken = await hre.ethers.getContractFactory("TestToken");
     const LoopTest = await hre.ethers.getContractFactory("LoopTest");
@@ -45,17 +47,17 @@ describe("Brevity", function () {
     const brevityParser = new BrevityParser({
       maxMem: 100
     })
-    return { loopTest, tokenA, tokenB, brevityParser, brevityInterpreter, owner, otherAccount, test };
+    return { loopTest, tokenA, tokenB, brevityParser, brevityInterpreter: proxy, proxy, owner, otherAccount, test };
   }
 
-  async function testAndProfile(brevityInterpreter: BrevityInterpreter, o: BrevityParserOutput, value : BigNumberish = BigInt(0)) {
-    let tx = await brevityInterpreter.run(o.memSize, o.instructions, o.quantities, {value})
+  async function testAndProfile(brevityInterpreter: IBrevityInterpreter, o: BrevityParserOutput, value : BigNumberish = BigInt(0)) {
+    let tx = await brevityInterpreter.run(o, {value})
     let tr = await tx.wait()
     if (!tr) throw Error()
     //console.log(`${JSON.stringify(tx, null, 2)}`)
     //console.log(`${JSON.stringify(tr, null, 2)}`)
     const gasBrevityRun = tr.gasUsed
-    tx = await brevityInterpreter.noop(BigInt(o.memSize), o.instructions, o.quantities)
+    tx = await brevityInterpreter.noop(o)
     tr = await tx.wait()
     if (!tr) throw Error()
     const noopGas = tr.gasUsed
@@ -120,6 +122,7 @@ describe("Brevity", function () {
       const noopGas = tr.gasUsed
       console.log(`Solidity Test gas: total = ${gasTestDeploy + gasTestArb}, deploy = ${gasTestDeploy}, calldata = ${noopGas}, execution = ${gasTestArb - noopGas}`)
     })
+
     it("MetaTx", async () => {
       const { tokenA, tokenB, test, brevityParser, brevityInterpreter, owner, otherAccount } = await loadFixture(fixture);
       const input = 'test/briefs/example.brv'
@@ -138,7 +141,7 @@ describe("Brevity", function () {
       
       const net = await owner.provider.getNetwork()
       const sig = await signMetaTx(owner, brevityInterpreter, net.chainId, o)
-      const tx=  await brevityInterpreter.runMeta(o.memSize, o.instructions, o.quantities, sig)
+      const tx=  await brevityInterpreter.runMeta(o, sig, 0, owner.address)
       const tr = await tx.wait()
       if(!tr) throw Error()
       console.log(`MetaTx gas: total = ${tr.gasUsed}`)

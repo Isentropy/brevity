@@ -1,4 +1,4 @@
-import { BrevityInterpreter } from "../typechain-types";
+import { BrevityInterpreter, IBrevityInterpreter } from "../typechain-types";
 import { BrevityParserOutput } from "./brevityParser";
 import { Signer, BigNumberish } from 'ethers' 
 const METATX_TYPES = {
@@ -10,7 +10,7 @@ const METATX_TYPES = {
         { name: 'quantityType', type: 'uint256' },
         { name: 'args', type: 'bytes32[]' }
       ],
-      Run: [
+      Program: [
       { name: 'memSize', type: 'uint256' },
       { name: 'instructions', type: 'Instruction[]' },
       { name: 'quantities', type: 'Quantity[]' },
@@ -19,7 +19,7 @@ const METATX_TYPES = {
   }
 
 
-export async function signMetaTx(signer : Signer, brevityInterpreter : BrevityInterpreter, chainId : BigNumberish, output : BrevityParserOutput) {
+export async function signMetaTx(signer : Signer, brevityInterpreter : IBrevityInterpreter, chainId : BigNumberish, output : BrevityParserOutput) {
     const domain = {
         name: 'Brev',
         version: '1',
@@ -27,7 +27,8 @@ export async function signMetaTx(signer : Signer, brevityInterpreter : BrevityIn
         verifyingContract: await brevityInterpreter.getAddress()
     }
     const signerAddress = await signer.getAddress()
-    const nonce = await brevityInterpreter.nonces(signerAddress)
+    const nonce = 0
+    //await brevityInterpreter.nonces(signerAddress)
     const v = {
         nonce,
         ...output
