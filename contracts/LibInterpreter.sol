@@ -1,6 +1,29 @@
 pragma solidity ^0.8.27;
 import "hardhat/console.sol";
-library Interpreter {
+library Brevity {
+    //EIP712 metaTx functions
+    bytes32 internal constant _RUN_TYPEHASH = keccak256("Run(uint256 memSize,Instruction[] instructions,Quantity[] quantities,uint256 nonce)Instruction(uint256 opcode,bytes32[] args)Quantity(uint256 quantityType,bytes32[] args)");
+    bytes32 internal constant _INSTRUCTION_TYPEHASH = keccak256("Instruction(uint256 opcode,bytes32[] args)");
+    bytes32 internal constant _QUANTITY_TYPEHASH = keccak256("Quantity(uint256 quantityType,bytes32[] args)");
+    
+    function _encodeInstructionsArray(Brevity.Instruction[] calldata instructions) internal pure returns (bytes32) {
+        bytes32[] memory slots = new bytes32[](instructions.length);
+        for(uint i=0; i<instructions.length; i++) {
+            slots[i] = keccak256(abi.encode(Brevity._INSTRUCTION_TYPEHASH,  instructions[i].opcode, keccak256(abi.encodePacked(instructions[i].args))));
+        }
+        // no length
+        return keccak256(abi.encodePacked(slots));
+    }
+
+    function _encodeQuantityArray(Brevity.Quantity[] calldata quantities) internal pure returns (bytes32) {
+        bytes32[] memory slots = new bytes32[](quantities.length);
+        for(uint i=0; i<quantities.length; i++) {
+            slots[i] = keccak256(abi.encode(Brevity._QUANTITY_TYPEHASH, quantities[i].quantityType, keccak256(abi.encodePacked(quantities[i].args))));
+        }
+        // no length
+        return keccak256(abi.encodePacked(slots));
+    }
+
     /* 
      args:
      returnMemAddressOffset: uint128, returnMemAddressLen: uint128 (packed as 1 uint256)

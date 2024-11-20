@@ -49,7 +49,7 @@ describe("Brevity", function () {
   }
 
   async function testAndProfile(brevityInterpreter: BrevityInterpreter, o: BrevityParserOutput, value : BigNumberish = BigInt(0)) {
-    let tx = await brevityInterpreter.run(BigInt(o.memSize), o.instructions, o.quantities, {value})
+    let tx = await brevityInterpreter.run(o.memSize, o.instructions, o.quantities, {value})
     let tr = await tx.wait()
     if (!tr) throw Error()
     //console.log(`${JSON.stringify(tx, null, 2)}`)
