@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/Nonces.sol";
 
-// for testing only
 contract OwnedBrevityInterpreter is EIP712, Nonces, IBrevityInterpreter {
     uint public constant version = 1;
     event NewOwner(address indexed newOwner);
@@ -37,7 +36,7 @@ contract OwnedBrevityInterpreter is EIP712, Nonces, IBrevityInterpreter {
         _run(p);
     }
 
-    // DELEGATECALL must be disabled so that this storage (eg owner) isnt written to
+    // DELEGATECALL must be disabled so that this storage (eg owner, nonces) isnt written to
     function _run(Brevity.Program calldata p) internal {
         require(Brevity.CONFIGFLAG_NO_DELEGATECALL & p.config == Brevity.CONFIGFLAG_NO_DELEGATECALL);
         Brevity._run(p.config, p.instructions, p.quantities);

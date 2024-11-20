@@ -5,7 +5,7 @@ import hre, { ethers } from "hardhat";
 import { BrevityParser, BrevityParserOutput } from "../tslib/brevityParser";
 import { dataLength, parseEther, BigNumberish } from 'ethers'
 import * as fs from 'fs'
-import { OwnedBrevityInterpreter__factory, IBrevityInterpreter } from "../typechain-types";
+import { OwnedBrevityInterpreter__factory, IBrevityInterpreter, CloneFactory__factory } from "../typechain-types";
 import { signMetaTx } from "../tslib/utils";
 //hardhat default
 //const chainId = 31337
@@ -34,11 +34,13 @@ describe("Brevity", function () {
 
     const OwnedBrevityInterpreter = await hre.ethers.getContractFactory("OwnedBrevityInterpreter");
     let brevityInterpreter = await OwnedBrevityInterpreter.deploy(owner.address);
-    const OwnedBrevityInterpreterProxy = await hre.ethers.getContractFactory("OwnedBrevityInterpreterProxy");
-    const proxy0 = await OwnedBrevityInterpreterProxy.deploy(await brevityInterpreter.getAddress())
-    const proxy = OwnedBrevityInterpreter__factory.connect(await proxy0.getAddress(), owner)
-    await proxy.setOwner(owner.address)
-    const deployTx = proxy0.deploymentTransaction()
+    const CloneFactory = await hre.ethers.getContractFactory("CloneFactory");
+    const bi = await brevityInterpreter.getAddress()
+    const factory = await CloneFactory.deploy()
+    const salt = "0x0000000000000000000000000000000000000000000000000000000000000001"
+    const proxyAddress = await factory.predictDeterministicAddress(bi,  salt, owner.address)
+    const deployTx = await factory.cloneDeterministic(bi, salt, owner.address)
+    const proxy = OwnedBrevityInterpreter__factory.connect(proxyAddress, owner)
     if (!deployTx) throw Error("couldnt deploy Proxy")
     let tr = await deployTx?.wait()
     const gasProxyDeploy = tr?.gasUsed

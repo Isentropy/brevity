@@ -4,5 +4,4 @@ import './LibInterpreter.sol';
 
 interface IBrevityInterpreter  {
     function version() external pure returns (uint);
-
 }
