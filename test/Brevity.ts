@@ -149,8 +149,9 @@ describe("Brevity", function () {
       await tokenA.mint(bi, parseEther("100"))
       
       const net = await owner.provider.getNetwork()
-      const sig = await signMetaTx(owner, brevityInterpreter, net.chainId, o)
-      const tx=  await brevityInterpreter.runMeta(o, sig)
+      const deadline =  3600 + Math.floor(new Date().getTime()/1000)
+      const sig = await signMetaTx(owner, brevityInterpreter, net.chainId, o, deadline)
+      const tx=  await brevityInterpreter.runMeta(o, deadline, sig)
       const tr = await tx.wait()
       if(!tr) throw Error()
       console.log(`MetaTx gas: total = ${tr.gasUsed}`)

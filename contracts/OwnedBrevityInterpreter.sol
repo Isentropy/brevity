@@ -28,9 +28,11 @@ contract OwnedBrevityInterpreter is EIP712, Nonces, IBrevityInterpreter {
 
     function runMeta(
         Brevity.Program calldata p,
+        uint deadline,
         bytes calldata sig) public payable virtual {
         //arrays hashed per https://github.com/ethereum/EIPs/blob/master/EIPS/eip-712.md
-        bytes32 structHash = keccak256(abi.encode(Brevity._PROGRAM_TYPEHASH, p.config, Brevity._encodeInstructionsArray(p.instructions), Brevity._encodeQuantityArray(p.quantities), _useNonce(owner)));
+        require(deadline >= block.timestamp, "expired");
+        bytes32 structHash = keccak256(abi.encode(Brevity._PROGRAM_TYPEHASH, p.config, Brevity._encodeInstructionsArray(p.instructions), Brevity._encodeQuantityArray(p.quantities), _useNonce(owner), deadline));
         bytes32 hash = _hashTypedDataV4(structHash);
         require(owner == ECDSA.recover(hash, sig), "invalid signature");
         _run(p);

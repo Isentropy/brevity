@@ -3,7 +3,7 @@ pragma abicoder v2;
 import "hardhat/console.sol";
 library Brevity {
     //EIP712 metaTx functions
-    bytes32 internal constant _PROGRAM_TYPEHASH = keccak256("Program(uint256 config,Instruction[] instructions,Quantity[] quantities,uint256 nonce)Instruction(uint256 opcode,bytes32[] args)Quantity(uint256 quantityType,bytes32[] args)");
+    bytes32 internal constant _PROGRAM_TYPEHASH = keccak256("Program(uint256 config,Instruction[] instructions,Quantity[] quantities,uint256 nonce,uint256 deadline)Instruction(uint256 opcode,bytes32[] args)Quantity(uint256 quantityType,bytes32[] args)");
     bytes32 internal constant _INSTRUCTION_TYPEHASH = keccak256("Instruction(uint256 opcode,bytes32[] args)");
     bytes32 internal constant _QUANTITY_TYPEHASH = keccak256("Quantity(uint256 quantityType,bytes32[] args)");
     

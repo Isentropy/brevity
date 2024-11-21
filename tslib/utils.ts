@@ -15,12 +15,12 @@ const METATX_TYPES = {
       { name: 'config', type: 'uint256' },
       { name: 'instructions', type: 'Instruction[]' },
       { name: 'quantities', type: 'Quantity[]' },
-      { name: 'nonce', type: 'uint256' }
+      { name: 'nonce', type: 'uint256' },
+      { name: 'deadline', type: 'uint256' }
     ]
   }
 
-
-export async function signMetaTx(signer : Signer, brevityInterpreter : OwnedBrevityInterpreter, chainId : BigNumberish, output : BrevityParserOutput) {
+export async function signMetaTx(signer : Signer, brevityInterpreter : OwnedBrevityInterpreter, chainId : BigNumberish, output : BrevityParserOutput, deadline : number) {
     const bi = await brevityInterpreter.getAddress()
     const domain = {
         name: 'Brev',
@@ -31,6 +31,7 @@ export async function signMetaTx(signer : Signer, brevityInterpreter : OwnedBrev
     const signerAddress = await signer.getAddress()
     const nonce = await brevityInterpreter.nonces(signerAddress)
     const v = {
+        deadline,
         nonce,
         ...output
     }
