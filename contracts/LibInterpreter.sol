@@ -51,8 +51,8 @@ library Brevity {
      returnMemAddressOffset: uint128, returnMemAddressLen: uint128 (packed as 1 uint256)
      toAddress,
      gasLimit,
+     [value : Quantity if OPCODE_CALL, omitted if OPCODE_STATICCALL, OPCODE_DELEGATECALL)],
      fnSelector,
-     [value : Quantity if OPCODE_CALL, omitted if OPCODE_STATICCALL, OPCODE_DELEGATECALL)]
      ...calldataArgs (interpreted as Quantity)
     */
     uint8 public constant OPCODE_STATICCALL = 0;

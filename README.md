@@ -45,6 +45,7 @@ If you need to do something exotic, you can DELEGATECALL to a library.  The basi
 // these are substituted in place and dont create instructions or quantities
 usdc := 0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48
 exchange1 := 0x1111111111111111111111111111111111111111
+userA := 0x1111111111111111111111111111111111111112
 amountUsdc := 1000000
 balanceOf := balanceOf(address)
 swap := swap(address,uint256,address)
@@ -53,7 +54,11 @@ swap := swap(address,uint256,address)
 // if the output is multiple words, delclare more mem slots eg var a, b = STATICCALL foo.bar()
 var balUsdc = STATICCALL usdc.balanceOf(this)
 if(balUsdc < 100) revert
-CALL usdc.approve(exchange1, balUsdc)
+
+// same syntax for DELEGATECALL and STATIC CALL
+CALL {"gasLimit": "100000"} usdc.approve(exchange1, balUsdc)
+// SEND keyword sends native token only without calldata
+SEND {"value": "msg.value/10"} userA
 
 // simple loop
 var i = 0
