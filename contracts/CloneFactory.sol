@@ -8,10 +8,13 @@ interface SetOwner {
 
 contract CloneFactory {
 
+    event NewClone(address indexed owner, address indexed cloneAddress, address indexed implementation);
+
     function cloneDeterministic(address implementation, bytes32 salt, address owner) external returns (address) {
         bytes32 newSalt = keccak256(abi.encodePacked(salt, owner));
         address cloneAddress = Clones.cloneDeterministic(implementation, newSalt);
         SetOwner(cloneAddress).setOwner(owner);
+        emit NewClone(owner, cloneAddress, implementation);
         return cloneAddress;
     }
     

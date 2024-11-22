@@ -163,7 +163,6 @@ describe("Brevity", function () {
       const tokenAAddress = await tokenA.getAddress()
       const tokenBAddress = await tokenB.getAddress()
       const bi = await brevityInterpreter.getAddress()
-      //
       await owner.sendTransaction({ to: bi, value: parseEther('1') })
       let prepend = `tokenA := ${tokenAAddress}\ntokenB := ${tokenBAddress}\n`
 

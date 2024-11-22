@@ -1,0 +1,4 @@
+//var b1 = balance(msg.sender)
+//SEND {"value": "msg.value/10"} msg.sender
+//var b2 = balance(msg.sender)
+//b2 -= b1

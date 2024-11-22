@@ -47,6 +47,7 @@ const CONFIGFLAG_NO_DELEGATECALL = '0x000000000000000000000000000000010000000000
 
 // reserved keywords
 const KW_CALL = 'CALL'
+const KW_SEND = 'SEND'
 const KW_STATICCALL = 'STATICCALL'
 const KW_DELEGATECALL = 'DELEGATECALL'
 const KW_VAR = 'var'
@@ -86,7 +87,7 @@ const TwoArgQuantityKWs = new Map<string, number>([
 ]);
 
 
-const KWS: Set<string> = new Set<string>([...ZeroArgQuantityKWs.keys()].concat([...OneArgQuantityKWs.keys()]).concat([...TwoArgQuantityKWs.keys()]).concat([KW_REVERT, KW_GOTO, KW_IF, KW_CALL, KW_STATICCALL, KW_DELEGATECALL, KW_VAR, KW_DUMPMEM]))
+const KWS: Set<string> = new Set<string>([...ZeroArgQuantityKWs.keys()].concat([...OneArgQuantityKWs.keys()]).concat([...TwoArgQuantityKWs.keys()]).concat([KW_REVERT, KW_GOTO, KW_IF, KW_CALL, KW_SEND, KW_STATICCALL, KW_DELEGATECALL, KW_VAR, KW_DUMPMEM]))
 
 
 export interface Instruction {
@@ -144,7 +145,7 @@ export interface BrevityParserConfig {
 }
 
 export interface BrevityParserOutput {
-    config: bigint,
+    config: BigNumberish,
     instructions: Instruction[],
     quantities: Quantity[]
 }
@@ -289,6 +290,7 @@ export class BrevityParser {
         let opcode: number
 
         if (cmd == KW_CALL) opcode = OPCODE_CALL
+        else if (cmd == KW_SEND) opcode = OPCODE_CALL
         else if (cmd == KW_DELEGATECALL) opcode = OPCODE_DELEGATECALL
         else if (cmd == KW_STATICCALL) opcode = OPCODE_STATICCALL
         else throw Error(`${parsingContext.lineNumber}: Unknown fn cmd ${cmd}`)
@@ -301,64 +303,65 @@ export class BrevityParser {
             callParams = JSON.parse(right.substring(0, lastBrace + 1))
             if (callParams.value) value = callParams.value
             if (callParams.gasLimit) gasLimit = callParams.gasLimit
-
             //console.log(`callParams: ${JSON.stringify(callParams)}`)
             right = right.substring(lastBrace + 1)
         }
-        const firstPeriod = right.indexOf('.')
-        let address = this.parseQuantity(right.substring(0, firstPeriod), parsingContext)
-        let fnSelector: string
-        let args
-        right = right.substring(firstPeriod + 1)
-        if (right.startsWith('0x')) {
-            //eg address.0x12345678(arg1, arg2)
-            fnSelector = right.substring(0, 10)
-            // rm ()
-            args = right.substring(11, right.length - 1)
-        } else {
-            const dp = right.indexOf(')(')
-            if (dp >= 0) {
-                // function sig isnt aliased
-                const fnSig = right.substring(0, dp + 1)
-                fnSelector = FunctionFragment.from(fnSig).selector
-                //rm ()
-                args = right.substring(dp + 2, right.length - 1)
-            } else {
 
-                // it is aliased address eg fooAlias := foo(arg1, arg2)
-                const firstParen = right.indexOf('(')
-                const alias = right.substring(0, firstParen)
-                const fnSig = parsingContext.preprocessorSymbols.get(alias)
-                if (typeof fnSig === 'undefined') throw Error(`${parsingContext.lineNumber}: Cant decipher fnSig ${alias}. must define string with full signature`)
-                fnSelector = FunctionFragment.from(fnSig).selector
-                //rm ()
-                args = right.substring(firstParen + 1, right.length - 1)
+        let address
+        let fnSelector: string | undefined
+        let fnArgs: string[] | undefined
+        if(cmd == KW_SEND) {
+            address = this.parseQuantity(right.substring(0, right.length), parsingContext)
+        } else {
+            const firstPeriod = right.indexOf('.')
+            address = this.parseQuantity(right.substring(0, firstPeriod), parsingContext)
+            let args
+            right = right.substring(firstPeriod + 1)
+            if (right.startsWith('0x')) {
+                //eg address.0x12345678(arg1, arg2)
+                fnSelector = right.substring(0, 10)
+                // rm ()
+                args = right.substring(11, right.length - 1)
+            } else {
+                const dp = right.indexOf(')(')
+                if (dp >= 0) {
+                    // function sig isnt aliased
+                    const fnSig = right.substring(0, dp + 1)
+                    fnSelector = FunctionFragment.from(fnSig).selector
+                    //rm ()
+                    args = right.substring(dp + 2, right.length - 1)
+                } else {
+    
+                    // it is aliased address eg fooAlias := foo(arg1, arg2)
+                    const firstParen = right.indexOf('(')
+                    const alias = right.substring(0, firstParen)
+                    const fnSig = parsingContext.preprocessorSymbols.get(alias)
+                    if (typeof fnSig === 'undefined') throw Error(`${parsingContext.lineNumber}: Cant decipher fnSig ${alias}. must define string with full signature`)
+                    fnSelector = FunctionFragment.from(fnSig).selector
+                    //rm ()
+                    args = right.substring(firstParen + 1, right.length - 1)
+                }
+            }                
+            fnArgs = args.trim().length == 0 ? [] : args.split(',').map((arg) => { return toBytes32(this.parseQuantity(arg, parsingContext)) })
+        }
+
+        let callArgs = [memWriteInfo, toBytes32(address), toBytes32(gasLimit)]
+        if(opcode == OPCODE_CALL) callArgs.push(toBytes32(this.parseQuantity(value, parsingContext)))
+        if(fnSelector) {
+            callArgs.push(toBytes32(fnSelector))
+            if(fnArgs) {
+                callArgs = callArgs.concat(fnArgs)
             }
-        }
-        // args contains a comma separated string of unparsed Quantities
-        const fnArgs = args.trim().length == 0 ? [] : args.split(',').map((arg) => { return toBytes32(this.parseQuantity(arg, parsingContext)) })
-        // takes: memWriteInfo(offset: uint128, len: uint128):uint, address: *Quantity, gas: uint, 
-        // set memWriteInfo to 0 to not write to mem
-        //console.log(`gasLimit ${gasLimit}`)
-        let callArgs = [memWriteInfo, toBytes32(address), toBytes32(gasLimit), toBytes32(fnSelector)]
-        switch (opcode) {
-            case OPCODE_STATICCALL: break;
-            case OPCODE_DELEGATECALL: break;
-            case OPCODE_CALL:
-                callArgs.push(toBytes32(this.parseQuantity(value, parsingContext)));
-                break;
-            default: throw Error("unsupported")
-        }
-        const allArgs = callArgs.concat(fnArgs)
+        }   
         return {
             opcode,
-            args: allArgs
+            args: callArgs
         }
     }
 
 
     private isFunctionCall(s: string) {
-        return s.startsWith(KW_CALL) || s.startsWith(KW_DELEGATECALL) || s.startsWith(KW_STATICCALL)
+        return s.startsWith(KW_CALL) || s.startsWith(KW_DELEGATECALL) || s.startsWith(KW_STATICCALL) || s.startsWith(KW_SEND)
     }
 
     private checkNewSymbolName(sym: string, parsingContext: ParsingContext) {
@@ -518,7 +521,8 @@ export class BrevityParser {
             }
             return inst
         })
-        return { config: BigInt(memSize) | BigInt(CONFIGFLAG_NO_DELEGATECALL), instructions: resolved, quantities: parsingContext.quantites }
+        const config = toBytes32(BigInt(memSize) | BigInt(CONFIGFLAG_NO_DELEGATECALL))
+        return { config, instructions: resolved, quantities: parsingContext.quantites }
     }
 
 

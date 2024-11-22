@@ -3,23 +3,44 @@ pragma abicoder v2;
 import "hardhat/console.sol";
 library Brevity {
     //EIP712 metaTx functions
-    bytes32 internal constant _PROGRAM_TYPEHASH = keccak256("Program(uint256 config,Instruction[] instructions,Quantity[] quantities,uint256 nonce,uint256 deadline)Instruction(uint256 opcode,bytes32[] args)Quantity(uint256 quantityType,bytes32[] args)");
-    bytes32 internal constant _INSTRUCTION_TYPEHASH = keccak256("Instruction(uint256 opcode,bytes32[] args)");
-    bytes32 internal constant _QUANTITY_TYPEHASH = keccak256("Quantity(uint256 quantityType,bytes32[] args)");
-    
-    function _encodeInstructionsArray(Brevity.Instruction[] calldata instructions) internal pure returns (bytes32) {
+    bytes32 internal constant _PROGRAM_TYPEHASH =
+        keccak256(
+            "Program(uint256 config,Instruction[] instructions,Quantity[] quantities,uint256 nonce,uint256 deadline)Instruction(uint256 opcode,bytes32[] args)Quantity(uint256 quantityType,bytes32[] args)"
+        );
+    bytes32 internal constant _INSTRUCTION_TYPEHASH =
+        keccak256("Instruction(uint256 opcode,bytes32[] args)");
+    bytes32 internal constant _QUANTITY_TYPEHASH =
+        keccak256("Quantity(uint256 quantityType,bytes32[] args)");
+
+    function _encodeInstructionsArray(
+        Brevity.Instruction[] calldata instructions
+    ) internal pure returns (bytes32) {
         bytes32[] memory slots = new bytes32[](instructions.length);
-        for(uint i=0; i<instructions.length; i++) {
-            slots[i] = keccak256(abi.encode(Brevity._INSTRUCTION_TYPEHASH,  instructions[i].opcode, keccak256(abi.encodePacked(instructions[i].args))));
+        for (uint i = 0; i < instructions.length; i++) {
+            slots[i] = keccak256(
+                abi.encode(
+                    Brevity._INSTRUCTION_TYPEHASH,
+                    instructions[i].opcode,
+                    keccak256(abi.encodePacked(instructions[i].args))
+                )
+            );
         }
         // no length
         return keccak256(abi.encodePacked(slots));
     }
 
-    function _encodeQuantityArray(Brevity.Quantity[] calldata quantities) internal pure returns (bytes32) {
+    function _encodeQuantityArray(
+        Brevity.Quantity[] calldata quantities
+    ) internal pure returns (bytes32) {
         bytes32[] memory slots = new bytes32[](quantities.length);
-        for(uint i=0; i<quantities.length; i++) {
-            slots[i] = keccak256(abi.encode(Brevity._QUANTITY_TYPEHASH, quantities[i].quantityType, keccak256(abi.encodePacked(quantities[i].args))));
+        for (uint i = 0; i < quantities.length; i++) {
+            slots[i] = keccak256(
+                abi.encode(
+                    Brevity._QUANTITY_TYPEHASH,
+                    quantities[i].quantityType,
+                    keccak256(abi.encodePacked(quantities[i].args))
+                )
+            );
         }
         // no length
         return keccak256(abi.encodePacked(slots));
@@ -88,11 +109,14 @@ library Brevity {
     uint8 public constant QUANTITY_ADDRESS_THIS = 0x30;
     uint8 public constant QUANTITY_BALANCE = 0x31;
     uint8 public constant QUANTITY_CALLER = 0x33;
-    uint8 public constant QUANTITY_CALLVALUE= 0x34;
+    uint8 public constant QUANTITY_CALLVALUE = 0x34;
     uint8 public constant QUANTITY_BLOCKTIMESTAMP = 0x42;
-    uint256 constant MAXUINT256 = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-    uint256 constant LOW128BITSMASK = 0x00000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-    uint256 public constant CONFIGFLAG_NO_DELEGATECALL = 0x0000000000000000000000000000000100000000000000000000000000000000;
+    uint256 constant MAXUINT256 =
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+    uint256 constant LOW128BITSMASK =
+        0x00000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+    uint256 public constant CONFIGFLAG_NO_DELEGATECALL =
+        0x0000000000000000000000000000000100000000000000000000000000000000;
 
     struct Instruction {
         uint opcode;
@@ -135,11 +159,9 @@ library Brevity {
             return uint(uint160(address(this)));
         if (quantityType == QUANTITY_CALLER)
             return uint(uint160(address(msg.sender)));
-        if (quantityType == QUANTITY_BLOCKTIMESTAMP)
-            return block.timestamp;
-        if (quantityType == QUANTITY_CALLVALUE)
-            return msg.value;
-         
+        if (quantityType == QUANTITY_BLOCKTIMESTAMP) return block.timestamp;
+        if (quantityType == QUANTITY_CALLVALUE) return msg.value;
+
         // 1 arg OPs
         uint r1 = _resolve(uint(q.args[0]), mem, quantities);
         //console.log('r1', r1);
@@ -193,13 +215,15 @@ library Brevity {
                 uint tmp = opcode == OPCODE_CALL ? 4 : 3;
                 resolvedArgs = new uint[](args.length - tmp);
                 // function selector. put in mem in first slot
-                resolvedArgs[0] = uint(args[3]);
-                for (uint i = tmp + 1; i < args.length; i++) {
-                    resolvedArgs[i - tmp] = _resolve(
-                        uint(args[i]),
-                        mem,
-                        quantities
-                    );
+                if (resolvedArgs.length > 0) {
+                    resolvedArgs[0] = uint(args[tmp]);
+                    for (uint i = tmp + 1; i < args.length; i++) {
+                        resolvedArgs[i - tmp] = _resolve(
+                            uint(args[i]),
+                            mem,
+                            quantities
+                        );
+                    }
                 }
                 //printMem(resolvedArgs);
                 uint offset = uint(args[0]) >> 128;
@@ -211,7 +235,6 @@ library Brevity {
                     uint160(_resolve(uint(args[1]), mem, quantities))
                 );
                 uint gasLimit = uint(args[2]);
-
 
                 // tmp will be assigned to success after call
                 // result, if desired, written directly to mem
@@ -230,22 +253,32 @@ library Brevity {
                     }
                 } else if (opcode == OPCODE_CALL) {
                     // tmp is reused here as VALUE to limit stack overgrowth
-                    tmp = _resolve(uint(args[4]), mem, quantities);
-                    assembly {
-                        // start from args[4] - 8 bytes for selector
-                        // gas, address, value, argsOffset, argsSize, retOffset, retSize
-                        tmp := call(
-                            gasLimit,
-                            to,
-                            tmp,
-                            add(resolvedArgs, 60),
-                            add(4, mul(sub(mload(resolvedArgs), 1), 32)),
-                            add(add(mem, 32), mul(offset, 32)),
-                            mul(len, 32)
-                        )
+                    tmp = _resolve(uint(args[3]), mem, quantities);
+                    //if no function selector, it's just eth end wo data
+                    if (resolvedArgs.length == 0) {
+                        assembly {
+                            tmp := call(gasLimit, to, tmp, 0, 0, 0, 0)
+                        }
+                    } else {
+                        assembly {
+                            // start from args[4] - 8 bytes for selector
+                            // gas, address, value, argsOffset, argsSize, retOffset, retSize
+                            tmp := call(
+                                gasLimit,
+                                to,
+                                tmp,
+                                add(resolvedArgs, 60),
+                                add(4, mul(sub(mload(resolvedArgs), 1), 32)),
+                                add(add(mem, 32), mul(offset, 32)),
+                                mul(len, 32)
+                            )
+                        }
                     }
                 } else if (opcode == OPCODE_DELEGATECALL) {
-                    require(CONFIGFLAG_NO_DELEGATECALL & config == 0, "forbidden");
+                    require(
+                        CONFIGFLAG_NO_DELEGATECALL & config == 0,
+                        "forbidden"
+                    );
                     assembly {
                         // start from args[4] - 8 bytes for selector
                         // gas, address, argsOffset, argsSize, retOffset, retSize
@@ -259,13 +292,13 @@ library Brevity {
                         )
                     }
                 }
-                if(tmp == 0) revert("badCall");
+                if (tmp == 0) revert("badCall");
                 //delete resolvedArgs;
                 //console.log("success", callArgsEnd);
             } else if (opcode == OPCODE_JUMP) {
                 // args: dest
                 uint dest = uint(args[0]);
-                if(dest > instructions.length) revert("badJump");
+                if (dest > instructions.length) revert("badJump");
                 //console.log("op", opcode, "gasUsed", gasBefore - gasleft());
                 pc = dest;
                 continue;
@@ -276,14 +309,18 @@ library Brevity {
                 if (val != 0) {
                     //console.log("op", opcode, "gasUsed", gasBefore - gasleft());
                     uint dest = uint(args[1]);
-                    if(dest > instructions.length) revert("badJump");
+                    if (dest > instructions.length) revert("badJump");
                     pc = dest;
                     continue;
                 }
             } else if (opcode >= OPCODE_MSTORE_R0) {
                 // write to a register
                 // args: quantityNum : *Quantity
-                mem[opcode - OPCODE_MSTORE_R0] = _resolve(uint(args[0]), mem, quantities);
+                mem[opcode - OPCODE_MSTORE_R0] = _resolve(
+                    uint(args[0]),
+                    mem,
+                    quantities
+                );
             } else if (opcode == OPCODE_DUMPMEM) {
                 printMem(mem, 0, mem.length);
             } else {
