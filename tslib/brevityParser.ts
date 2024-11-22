@@ -42,8 +42,10 @@ const QUANTITY_BLOCKTIMESTAMP = 0x42;
 const BIT255_NOTLITERAL = BigInt(1) << BigInt(255)
 const BIT254_NOTMEM = BigInt(1) << BigInt(254)
 // top bit unset
-const MAXINT_LITERAL = '0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
+// const MAXINT_LITERAL = '0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
 const CONFIGFLAG_NO_DELEGATECALL = '0x0000000000000000000000000000000100000000000000000000000000000000'
+const JUMPDEST_RETURN = '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
+const JUMPDEST_REVERT = '0x0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
 
 // reserved keywords
 const KW_CALL = 'CALL'
@@ -54,6 +56,7 @@ const KW_VAR = 'var'
 const KW_IF = 'if'
 const KW_GOTO = 'goto'
 const KW_REVERT = 'revert'
+const KW_RETURN = 'return'
 const KW_DUMPMEM = 'dumpMem'
 
 //const RUN_SELECTOR = BrevityInterpreter__factory.createInterface().getFunction("run").selector
@@ -87,7 +90,7 @@ const TwoArgQuantityKWs = new Map<string, number>([
 ]);
 
 
-const KWS: Set<string> = new Set<string>([...ZeroArgQuantityKWs.keys()].concat([...OneArgQuantityKWs.keys()]).concat([...TwoArgQuantityKWs.keys()]).concat([KW_REVERT, KW_GOTO, KW_IF, KW_CALL, KW_SEND, KW_STATICCALL, KW_DELEGATECALL, KW_VAR, KW_DUMPMEM]))
+const KWS: Set<string> = new Set<string>([...ZeroArgQuantityKWs.keys()].concat([...OneArgQuantityKWs.keys()]).concat([...TwoArgQuantityKWs.keys()]).concat([KW_REVERT, KW_RETURN, KW_GOTO, KW_IF, KW_CALL, KW_SEND, KW_STATICCALL, KW_DELEGATECALL, KW_VAR, KW_DUMPMEM]))
 
 
 export interface Instruction {
@@ -183,7 +186,7 @@ export class BrevityParser {
         return [-1, ''];
     }
 
-    private encodeJump(dest: number): Instruction {
+    private encodeJump(dest: BigNumberish): Instruction {
         return {
             opcode: OPCODE_JUMP,
             args: [toBytes32(dest)]
@@ -419,12 +422,18 @@ export class BrevityParser {
                 //rm ()
                 const qWord = this.parseQuantity(line.substring(KW_IF.length + 1, lastBackParen), parsingContext)
                 let right = line.substring(lastBackParen + 1).trim()
+
+
                 if (right.startsWith(KW_REVERT)) {
-                    instructions.push(this.encodeBranchIfNonzero(qWord, MAXINT_LITERAL))
+                    instructions.push(this.encodeBranchIfNonzero(qWord, JUMPDEST_REVERT))
+                    continue
+                }
+
+                if (right.startsWith(KW_RETURN)) {
+                    instructions.push(this.encodeBranchIfNonzero(qWord, JUMPDEST_RETURN))
                     continue
                 }
                 if (!right.startsWith(KW_GOTO)) {
-                    const y = 1
                     throw Error(`${parsingContext.lineNumber}: missing 'goto' after 'if' `)
                 }
                 right = right.substring(KW_GOTO.length + 1).trim()
@@ -437,6 +446,17 @@ export class BrevityParser {
                 instructions.push(instLazy)
                 continue
             }
+
+            if (line.startsWith(KW_REVERT)) {
+                instructions.push(this.encodeJump(JUMPDEST_REVERT))
+                continue
+            }
+
+            if (line.startsWith(KW_RETURN)) {
+                instructions.push(this.encodeJump(JUMPDEST_RETURN))
+                continue
+            }
+
             if (line.startsWith(KW_GOTO)) {
                 const jumppoint = line.substring(KW_GOTO.length).trim()
                 const instLazy: LazyEncodeInstuction = (endContext: ParsingContext) => {

@@ -117,6 +117,10 @@ library Brevity {
         0x00000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
     uint256 public constant CONFIGFLAG_NO_DELEGATECALL =
         0x0000000000000000000000000000000100000000000000000000000000000000;
+    uint256 constant JUMPDEST_RETURN =
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+    uint256 constant JUMPDEST_REVERT =
+        0x0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
 
     struct Instruction {
         uint opcode;
@@ -298,10 +302,13 @@ library Brevity {
             } else if (opcode == OPCODE_JUMP) {
                 // args: dest
                 uint dest = uint(args[0]);
-                if (dest > instructions.length) revert("badJump");
-                //console.log("op", opcode, "gasUsed", gasBefore - gasleft());
-                pc = dest;
-                continue;
+                if (dest <= instructions.length) {
+                    pc = dest;
+                    continue;
+                }
+                if (dest == JUMPDEST_RETURN) return;
+                if (dest == JUMPDEST_REVERT) revert("reverted");
+                revert("badJump");
             } else if (opcode == OPCODE_CMP_BRANCH) {
                 // args: quantityNum : qWord, to: uint
                 uint val = _resolve(uint(args[0]), mem, quantities);
@@ -309,9 +316,13 @@ library Brevity {
                 if (val != 0) {
                     //console.log("op", opcode, "gasUsed", gasBefore - gasleft());
                     uint dest = uint(args[1]);
-                    if (dest > instructions.length) revert("badJump");
-                    pc = dest;
-                    continue;
+                    if (dest <= instructions.length) {
+                        pc = dest;
+                        continue;
+                    }
+                    if (dest == JUMPDEST_RETURN) return;
+                    if (dest == JUMPDEST_REVERT) revert("reverted");
+                    revert("badJump");
                 }
             } else if (opcode >= OPCODE_MSTORE_R0) {
                 // write to a register

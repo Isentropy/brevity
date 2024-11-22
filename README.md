@@ -29,9 +29,11 @@ The [Interpreter](contracts/LibInterpreter.sol) has a [minimal instruction set](
 ### Everything is a word
 Like [B](https://en.wikipedia.org/wiki/B_(programming_language)), Brevity has no data types, just words (32 bytes).
 
+### Simple Workflows
+Brevity is meant for simple workflows. You can CALL, STATICCALL and DELEGATECALL to other libraries. 
 
 ## Version 0.1 syntax
-Brevity has no code blocks. It's meant for simple workflows. You can:
+Brevity has no code blocks. Each line exists on it's own. You can:
  - define preprocessor symbols: ``foo := foo(uint256)``
  - ``CALL, STATICCALL (ie view) and DELEGATECALL  target.foo(123)`` using Quantity params. Instead of imporing ABIs, you define methods as preprocessor symbols.
  - set memory words with arithmatic: ``var x = block.timestamp + 5``, ``x += 1``
@@ -39,7 +41,7 @@ Brevity has no code blocks. It's meant for simple workflows. You can:
  - do basic flow control: ``[if(...)]? [revert|goto jp]``
  - do some basic debugging: ``dumpMem``
 
-If you need to do something exotic, you can DELEGATECALL to a library.  The basic functions are show below:
+The basic functions are show below:
 ```
 // := means preprocessor directive
 // these are substituted in place and dont create instructions or quantities
