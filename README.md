@@ -58,7 +58,7 @@ var balUsdc = STATICCALL usdc.balanceOf(this)
 if(balUsdc < 100) revert
 
 // same syntax for DELEGATECALL and STATIC CALL
-CALL {"gasLimit": "100000"} usdc.approve(exchange1, balUsdc)
+CALL usdc.approve(exchange1, balUsdc)
 // SEND keyword sends native token only without calldata
 SEND {"value": "msg.value/10"} userA
 
