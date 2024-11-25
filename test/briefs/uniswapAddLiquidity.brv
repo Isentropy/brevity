@@ -25,7 +25,7 @@ CALL weth.approve(uniswapRouter, wethAmt)
 var usdcBal = CALL uniswapRouter.exactInputSingle(weth, usdc, fee, this, wethAmt, 1, 0)
 CALL weth.approve(uniswapPositionManager, wethAmt)
 CALL usdc.approve(uniswapPositionManager, usdcBal)
-var tokenId, liquidity, amount0, amount1 = CALL {"gasLimit": "900000"} uniswapPositionManager.mint(usdc, weth, fee, tickLower, tickUpper, usdcBal, wethAmt, 0, 0, this, block.timestamp)
+var tokenId, liquidity, amount0, amount1 = CALL uniswapPositionManager.mint(usdc, weth, fee, tickLower, tickUpper, usdcBal, wethAmt, 0, 0, this, block.timestamp)
 var tokenOwner = STATICCALL uniswapPositionManager.ownerOf(tokenId)
 // equivalent to if(!=) revert
 if(!(tokenOwner == this)) revert

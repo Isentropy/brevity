@@ -104,7 +104,6 @@ export interface Quantity {
 }
 
 interface FnParams {
-    gasLimit?: string,
     value?: string
 }
 
@@ -285,7 +284,7 @@ export class BrevityParser {
 
 
 
-    private parseFunctionCall(fn: string, parsingContext: ParsingContext, memWriteInfo: string = toBytes32(0), gasLimit: BigNumberish = toBytes32(300000), value: string = "0"): Instruction {
+    private parseFunctionCall(fn: string, parsingContext: ParsingContext, memWriteInfo: string = toBytes32(0), value: string = "0"): Instruction {
         fn = fn.trim()
         const firstSpace = fn.indexOf(' ')
         if (firstSpace < 0) throw Error(`${parsingContext.lineNumber}: cant parse fn ${fn}`)
@@ -305,7 +304,6 @@ export class BrevityParser {
             const lastBrace = right.indexOf('}')
             callParams = JSON.parse(right.substring(0, lastBrace + 1))
             if (callParams.value) value = callParams.value
-            if (callParams.gasLimit) gasLimit = callParams.gasLimit
             //console.log(`callParams: ${JSON.stringify(callParams)}`)
             right = right.substring(lastBrace + 1)
         }
@@ -348,7 +346,7 @@ export class BrevityParser {
             fnArgs = args.trim().length == 0 ? [] : args.split(',').map((arg) => { return toBytes32(this.parseQuantity(arg, parsingContext)) })
         }
 
-        let callArgs = [memWriteInfo, toBytes32(address), toBytes32(gasLimit)]
+        let callArgs = [memWriteInfo, toBytes32(address)]
         if(opcode == OPCODE_CALL) callArgs.push(toBytes32(this.parseQuantity(value, parsingContext)))
         if(fnSelector) {
             callArgs.push(toBytes32(fnSelector))

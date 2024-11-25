@@ -50,7 +50,6 @@ library Brevity {
      args:
      returnMemAddressOffset: uint128, returnMemAddressLen: uint128 (packed as 1 uint256)
      toAddress,
-     gasLimit,
      [value : Quantity if OPCODE_CALL, omitted if OPCODE_STATICCALL, OPCODE_DELEGATECALL)],
      fnSelector,
      ...calldataArgs (interpreted as Quantity)
@@ -216,7 +215,7 @@ library Brevity {
                 // tmp is reused a few times to conserve stack size
                 // tmp here means index of last arg before calldata quantities
                 // CALL has an additional value arg
-                uint tmp = opcode == OPCODE_CALL ? 4 : 3;
+                uint tmp = opcode == OPCODE_CALL ? 3 : 2;
                 resolvedArgs = new uint[](args.length - tmp);
                 // function selector. put in mem in first slot
                 if (resolvedArgs.length > 0) {
@@ -238,7 +237,6 @@ library Brevity {
                 address to = address(
                     uint160(_resolve(uint(args[1]), mem, quantities))
                 );
-                uint gasLimit = uint(args[2]);
 
                 // tmp will be assigned to success after call
                 // result, if desired, written directly to mem
@@ -247,7 +245,7 @@ library Brevity {
                         // start from args[4] - 8 bytes for selector
                         // gas, address, argsOffset, argsSize, retOffset, retSize
                         tmp := staticcall(
-                            gasLimit,
+                            sub(gas(), 10000),
                             to,
                             add(resolvedArgs, 60),
                             add(4, mul(sub(mload(resolvedArgs), 1), 32)),
@@ -257,18 +255,18 @@ library Brevity {
                     }
                 } else if (opcode == OPCODE_CALL) {
                     // tmp is reused here as VALUE to limit stack overgrowth
-                    tmp = _resolve(uint(args[3]), mem, quantities);
+                    tmp = _resolve(uint(args[2]), mem, quantities);
                     //if no function selector, it's just eth end wo data
                     if (resolvedArgs.length == 0) {
                         assembly {
-                            tmp := call(gasLimit, to, tmp, 0, 0, 0, 0)
+                            tmp := call(sub(gas(), 10000), to, tmp, 0, 0, 0, 0)
                         }
                     } else {
                         assembly {
                             // start from args[4] - 8 bytes for selector
                             // gas, address, value, argsOffset, argsSize, retOffset, retSize
                             tmp := call(
-                                gasLimit,
+                                sub(gas(), 10000),
                                 to,
                                 tmp,
                                 add(resolvedArgs, 60),
@@ -287,7 +285,7 @@ library Brevity {
                         // start from args[4] - 8 bytes for selector
                         // gas, address, argsOffset, argsSize, retOffset, retSize
                         tmp := delegatecall(
-                            gasLimit,
+                            sub(gas(), 10000),
                             to,
                             add(resolvedArgs, 60),
                             add(4, mul(sub(mload(resolvedArgs), 1), 32)),
