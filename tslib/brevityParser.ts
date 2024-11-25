@@ -43,7 +43,7 @@ const BIT255_NOTLITERAL = BigInt(1) << BigInt(255)
 const BIT254_NOTMEM = BigInt(1) << BigInt(254)
 // top bit unset
 // const MAXINT_LITERAL = '0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
-const CONFIGFLAG_NO_DELEGATECALL = '0x0000000000000000000000000000000100000000000000000000000000000000'
+export const CONFIGFLAG_NO_DELEGATECALL = BigInt('0x0000000000000000000000000000000100000000000000000000000000000000')
 const JUMPDEST_RETURN = '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
 const JUMPDEST_REVERT = '0x0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
 
@@ -107,6 +107,10 @@ interface FnParams {
     value?: string
 }
 
+export function configFlagRequireVersion( v: number ) : bigint {
+    return BigInt(v) << BigInt(64)
+}
+
 
 
 class ParsingContext {
@@ -143,7 +147,9 @@ function toBytes32(n: BigNumberish): string {
 }
 
 export interface BrevityParserConfig {
-    maxMem: number
+    maxMem: number,
+    // these will be ORed with the memsize
+    configFlags?: bigint
 }
 
 export interface BrevityParserOutput {
@@ -539,7 +545,7 @@ export class BrevityParser {
             }
             return inst
         })
-        const config = toBytes32(BigInt(memSize) | BigInt(CONFIGFLAG_NO_DELEGATECALL))
+        const config = toBytes32(BigInt(memSize) | (this.config.configFlags ? this.config.configFlags : BigInt(0)))
         return { config, instructions: resolved, quantities: parsingContext.quantites }
     }
 

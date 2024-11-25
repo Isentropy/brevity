@@ -2,10 +2,10 @@ import {
   loadFixture,
 } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import hre, { ethers } from "hardhat";
-import { BrevityParser, BrevityParserOutput } from "../tslib/brevityParser";
+import { BrevityParser, BrevityParserOutput, CONFIGFLAG_NO_DELEGATECALL, configFlagRequireVersion } from "../tslib/brevityParser";
 import { dataLength, parseEther, BigNumberish } from 'ethers'
 import * as fs from 'fs'
-import { OwnedBrevityInterpreter__factory, IBrevityInterpreter, CloneFactory__factory } from "../typechain-types";
+import { OwnedBrevityInterpreter__factory, IBrevityInterpreter, CloneFactory__factory, OwnedBrevityInterpreter } from "../typechain-types";
 import { signMetaTx } from "../tslib/utils";
 //hardhat default
 //const chainId = 31337
@@ -54,12 +54,13 @@ describe("Brevity", function () {
     const tokenB = await TestToken.deploy()
 
     const brevityParser = new BrevityParser({
-      maxMem: 100
+      maxMem: 100,
+      configFlags: CONFIGFLAG_NO_DELEGATECALL | configFlagRequireVersion(1)
     })
     return { loopTest, tokenA, tokenB, brevityParser, brevityInterpreter: proxy, proxy, owner, otherAccount, test };
   }
 
-  async function testAndProfile(brevityInterpreter: IBrevityInterpreter, o: BrevityParserOutput, value : BigNumberish = BigInt(0)) {
+  async function testAndProfile(brevityInterpreter: OwnedBrevityInterpreter, o: BrevityParserOutput, value : BigNumberish = BigInt(0)) {
     let tx = await brevityInterpreter.run(o, {value})
     let tr = await tx.wait()
     if (!tr) throw Error()
@@ -171,7 +172,6 @@ describe("Brevity", function () {
       const inputText = prepend + fs.readFileSync(input, { encoding: 'utf-8' })
       const o = brevityParser.parseBrevityScript(inputText)
       //console.log(JSON.stringify(o, null, 2))
-
       await testAndProfile(brevityInterpreter, o, parseEther(".001"))      
     })
 

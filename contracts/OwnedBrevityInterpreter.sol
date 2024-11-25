@@ -40,7 +40,7 @@ contract OwnedBrevityInterpreter is EIP712, Nonces, IBrevityInterpreter {
 
     // DELEGATECALL must be disabled so that this storage (eg owner, nonces) isnt written to
     function _run(Brevity.Program calldata p) internal {
-        require(Brevity.CONFIGFLAG_NO_DELEGATECALL & p.config == Brevity.CONFIGFLAG_NO_DELEGATECALL);
+        require(Brevity.CONFIGFLAG_NO_DELEGATECALL & p.config == Brevity.CONFIGFLAG_NO_DELEGATECALL, "mustDisableDelegateCall");
         Brevity._run(p.config, p.instructions, p.quantities);
     }
 

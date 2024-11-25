@@ -1,6 +1,7 @@
 pragma solidity ^0.8.27;
 pragma abicoder v2;
 import "hardhat/console.sol";
+import "./IBrevityInterpreter.sol";
 library Brevity {
     //EIP712 metaTx functions
     bytes32 internal constant _PROGRAM_TYPEHASH =
@@ -110,16 +111,20 @@ library Brevity {
     uint8 public constant QUANTITY_CALLER = 0x33;
     uint8 public constant QUANTITY_CALLVALUE = 0x34;
     uint8 public constant QUANTITY_BLOCKTIMESTAMP = 0x42;
-    uint256 constant MAXUINT256 =
-        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-    uint256 constant LOW128BITSMASK =
-        0x00000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-    uint256 public constant CONFIGFLAG_NO_DELEGATECALL =
-        0x0000000000000000000000000000000100000000000000000000000000000000;
+
     uint256 constant JUMPDEST_RETURN =
         0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
     uint256 constant JUMPDEST_REVERT =
         0x0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+
+    uint256 constant MAXUINT256 =
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+    uint256 constant LOW128BITSMASK =
+        0x00000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+    uint256 constant LOW64BITSMASK =
+        0x000000000000000000000000000000000000000000000000FFFFFFFFFFFFFFFF;
+    uint256 constant CONFIGFLAG_NO_DELEGATECALL =
+        0x0000000000000000000000000000000100000000000000000000000000000000;
 
     struct Instruction {
         uint opcode;
@@ -192,6 +197,21 @@ library Brevity {
         revert("unknown quantityType");
     }
 
+    error WrongBrevityVersion(uint expected, uint found);
+    error NotPermitted(uint pc, uint opcode);
+    error Reverted(uint pc);
+    error CallFailed(uint pc);
+    error BadJump(uint pc, uint jumpDest);
+
+    function _checkBrevityVersion(uint foundVersion) internal view {
+        if(foundVersion == 0) return;
+        uint version = IBrevityInterpreter(address(this)).version();
+        if(foundVersion != version) revert WrongBrevityVersion(version, foundVersion);
+    }
+    /*
+    config is: uint128 flags, uint64 requiredBrevityVersion (or 0 for none), uint64 memSize 
+    */
+
     function _run(
         uint config,
         Instruction[] calldata instructions,
@@ -200,8 +220,8 @@ library Brevity {
         uint pc = 0;
         //uint steps = 0;
         //uint gasBeforeStart = gasleft();
-
-        uint[] memory mem = new uint[](config & LOW128BITSMASK);
+        _checkBrevityVersion((config >> 64) & LOW64BITSMASK);
+        uint[] memory mem = new uint[](config & LOW64BITSMASK);
         //console.log('allocate registers gas', gasBeforeStart - gasleft());
         while (pc < instructions.length) {
             // console.log("step", steps);
@@ -231,7 +251,7 @@ library Brevity {
                 //printMem(resolvedArgs);
                 uint offset = uint(args[0]) >> 128;
                 uint len = uint(args[0]) & LOW128BITSMASK;
-                require(offset + len <= mem.length, "bad write dest");
+                if(offset + len > mem.length) revert NotPermitted(pc, opcode);
                 // call, staticcall, delegatecall
                 // let callArgs = [registerWriteInfo, toBytes32(address), GAS]
                 address to = address(
@@ -277,10 +297,7 @@ library Brevity {
                         }
                     }
                 } else if (opcode == OPCODE_DELEGATECALL) {
-                    require(
-                        CONFIGFLAG_NO_DELEGATECALL & config == 0,
-                        "forbidden"
-                    );
+                    if(CONFIGFLAG_NO_DELEGATECALL & config != 0) revert NotPermitted(pc, opcode);
                     assembly {
                         // start from args[4] - 8 bytes for selector
                         // gas, address, argsOffset, argsSize, retOffset, retSize
@@ -294,7 +311,7 @@ library Brevity {
                         )
                     }
                 }
-                if (tmp == 0) revert("badCall");
+                if (tmp == 0) revert CallFailed(pc);
                 //delete resolvedArgs;
                 //console.log("success", callArgsEnd);
             } else if (opcode == OPCODE_JUMP) {
@@ -305,8 +322,8 @@ library Brevity {
                     continue;
                 }
                 if (dest == JUMPDEST_RETURN) return;
-                if (dest == JUMPDEST_REVERT) revert("reverted");
-                revert("badJump");
+                if (dest == JUMPDEST_REVERT) revert Reverted(pc);
+                revert BadJump(pc, dest);
             } else if (opcode == OPCODE_CMP_BRANCH) {
                 // args: quantityNum : qWord, to: uint
                 uint val = _resolve(uint(args[0]), mem, quantities);
@@ -319,8 +336,8 @@ library Brevity {
                         continue;
                     }
                     if (dest == JUMPDEST_RETURN) return;
-                    if (dest == JUMPDEST_REVERT) revert("reverted");
-                    revert("badJump");
+                    if (dest == JUMPDEST_REVERT) revert Reverted(pc);
+                    revert BadJump(pc, dest);
                 }
             } else if (opcode >= OPCODE_MSTORE_R0) {
                 // write to a register
@@ -333,7 +350,7 @@ library Brevity {
             } else if (opcode == OPCODE_DUMPMEM) {
                 printMem(mem, 0, mem.length);
             } else {
-                revert("unknown opcode");
+                revert NotPermitted(pc, opcode);
             }
             //console.log("op", opcode, "gasUsed", gasBefore - gasleft());
             pc++;
