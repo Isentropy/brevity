@@ -27,10 +27,10 @@ Brevity Scripts (```.brv``` ) are transpiled into a Brevity Calldata Program tha
 The [Interpreter](contracts/LibInterpreter.sol) has a [minimal instruction set](contracts/LibInterpreter.sol#L13). Quantities do most of the syscalls for 0, 1, and 2 arg functions. 
 
 ### Everything is a word
-Like [B](https://en.wikipedia.org/wiki/B_(programming_language)), Brevity has no data types, just words (32 bytes).
+Like [B](https://en.wikipedia.org/wiki/B_(programming_language)), Brevity has no data types, just words (uint256). Arithmatic operations are all unsigned. You can use 2's compliment representations of signed ints, but arithmatic doesnt yet support signed.
 
-### Simple Workflows
-Brevity is meant for simple workflows. You can CALL, STATICCALL and DELEGATECALL to other libraries. 
+### Philosophy
+Brevity is meant to save gas on simple workflows. It's deliberately bare bones.  You can CALL and STATICCALL, manipulate memory, and do flow control. See [OwnedBrevityInterpreter](contracts/OwnedBrevityInterpreter.sol) for an example of a brevity interpreter contract that is owned by user or multisig.
 
 ## Version 0.1 syntax
 Brevity has no code blocks. Each line exists on it's own. You can:

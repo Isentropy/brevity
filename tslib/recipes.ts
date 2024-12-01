@@ -3,6 +3,8 @@ import { BrevityParser } from './brevityParser'
 
 const SELECTOR_IERC20_approve = FunctionFragment.from('approve(address,uint256)').selector
 const SELECTOR_IERC20_transfer = FunctionFragment.from('transfer(address,uint256)').selector
+export const SELECTOR_IERC20_balanceOf = FunctionFragment.from('balanceOf(address)').selector
+export const SELECTOR_IERC721_ownerOf = FunctionFragment.from('ownerOf(uint256)').selector
 
 
 function genRandomHex(size: number) { 
@@ -15,7 +17,7 @@ export function erc20Approve(erc20: string, spender : string, amount : BigNumber
     return `CALL ${erc20}.${SELECTOR_IERC20_approve}(${spender}, ${amount})`
 }
 
-export function transfer(erc20: string, to : string, amount : BigNumberish) : string {
+export function erc20transfer(erc20: string, to : string, amount : BigNumberish) : string {
     return `CALL ${erc20}.${SELECTOR_IERC20_transfer}(${to}, ${amount})`
 }
 
