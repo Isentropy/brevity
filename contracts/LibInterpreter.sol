@@ -130,8 +130,10 @@ library Brevity {
         0x00000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
     uint256 constant LOW64BITSMASK =
         0x000000000000000000000000000000000000000000000000FFFFFFFFFFFFFFFF;
-    uint256 constant CONFIGFLAG_NO_DELEGATECALL =
-        0x0000000000000000000000000000000100000000000000000000000000000000;
+    
+    // DELEGATECALL disabled by default
+    //uint256 constant CONFIGFLAG_NO_DELEGATECALL =
+    //    0x0000000000000000000000000000000100000000000000000000000000000000;
 
     struct Instruction {
         uint opcode;
@@ -299,7 +301,11 @@ library Brevity {
                         }
                     }
                 } else if (opcode == OPCODE_DELEGATECALL) {
-                    if(CONFIGFLAG_NO_DELEGATECALL & config != 0) revert NotPermitted(pc, opcode);
+                    revert NotPermitted(pc, opcode);
+                    /*
+                    // DELEGATECALL disabled until there's a good use case. 
+                    // Brevity script shouldn't directly manipulate this' storage
+
                     assembly {
                         // start from args[4] - 8 bytes for selector
                         // gas, address, argsOffset, argsSize, retOffset, retSize
@@ -312,6 +318,7 @@ library Brevity {
                             mul(len, 32)
                         )
                     }
+                    */
                 }
                 if (tmp == 0) revert CallFailed(pc);
                 //delete resolvedArgs;

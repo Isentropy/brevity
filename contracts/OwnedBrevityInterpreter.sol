@@ -23,7 +23,7 @@ contract OwnedBrevityInterpreter is EIP712, Nonces, IBrevityInterpreter {
 
     function run(Brevity.Program calldata p) public payable {
         require(owner == msg.sender, "notOwner");
-        _run(p);
+        Brevity._run(p.config, p.instructions, p.quantities);
     }
 
     function runMeta(
@@ -35,12 +35,6 @@ contract OwnedBrevityInterpreter is EIP712, Nonces, IBrevityInterpreter {
         bytes32 structHash = keccak256(abi.encode(Brevity._PROGRAM_TYPEHASH, p.config, Brevity._encodeInstructionsArray(p.instructions), Brevity._encodeQuantityArray(p.quantities), _useNonce(owner), deadline));
         bytes32 hash = _hashTypedDataV4(structHash);
         require(owner == ECDSA.recover(hash, sig), "invalid signature");
-        _run(p);
-    }
-
-    // DELEGATECALL must be disabled so that this storage (eg owner, nonces) isnt written to
-    function _run(Brevity.Program calldata p) internal {
-        require(Brevity.CONFIGFLAG_NO_DELEGATECALL & p.config == Brevity.CONFIGFLAG_NO_DELEGATECALL, "mustDisableDelegateCall");
         Brevity._run(p.config, p.instructions, p.quantities);
     }
 

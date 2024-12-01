@@ -2,7 +2,7 @@ import {
   loadFixture,
 } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import hre, { ethers } from "hardhat";
-import { BrevityParser, BrevityParserOutput, CONFIGFLAG_NO_DELEGATECALL, configFlagRequireVersion } from "../tslib/brevityParser";
+import { BrevityParser, BrevityParserOutput, configFlagRequireVersion } from "../tslib/brevityParser";
 import { dataLength, parseEther, BigNumberish } from 'ethers'
 import * as fs from 'fs'
 import { OwnedBrevityInterpreter__factory, IBrevityInterpreter, CloneFactory__factory, OwnedBrevityInterpreter } from "../typechain-types";
@@ -55,7 +55,7 @@ describe("Brevity", function () {
 
     const brevityParser = new BrevityParser({
       maxMem: 100,
-      configFlags: CONFIGFLAG_NO_DELEGATECALL | configFlagRequireVersion(1)
+      configFlags: configFlagRequireVersion(1)
     })
     return { loopTest, tokenA, tokenB, brevityParser, brevityInterpreter: proxy, proxy, owner, otherAccount, test };
   }

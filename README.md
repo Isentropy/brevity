@@ -30,15 +30,18 @@ The [Interpreter](contracts/LibInterpreter.sol) has a [minimal instruction set](
 Like [B](https://en.wikipedia.org/wiki/B_(programming_language)), Brevity has no data types, just words (uint256). Arithmatic operations are all unsigned. You can use 2's compliment representations of signed ints, but arithmatic doesnt yet support signed.
 
 ### Philosophy
-Brevity is meant to save gas on simple workflows. It's deliberately bare bones.  You can CALL and STATICCALL, manipulate memory, and do flow control. See [OwnedBrevityInterpreter](contracts/OwnedBrevityInterpreter.sol) for an example of a brevity interpreter contract that is owned by user or multisig.
+Brevity is meant to save gas on simple workflows. It's deliberately bare bones.  You can CALL and STATICCALL, manipulate memory, and do flow control. **Brevity has no operations to directly manipulate storage.** It can only manipulate storage via CALLs to exposed functions. 
+
+### Usage
+See [OwnedBrevityInterpreter](contracts/OwnedBrevityInterpreter.sol) for an example of a brevity interpreter contract that can be used only by an owner.
 
 ## Version 0.1 syntax
 Brevity has no code blocks. Each line exists on it's own. You can:
  - define preprocessor symbols: ``foo := foo(uint256)``
- - ``CALL, STATICCALL (ie view) and DELEGATECALL  target.foo(123)`` using Quantity params. Instead of imporing ABIs, you define methods as preprocessor symbols.
+ - ``CALL, STATICCALL (ie view) target.foo(123)`` using Quantity params. Instead of importing ABIs, you define function selectors in preprocessor symbols.
  - set memory words with arithmatic: ``var x = block.timestamp + 5``, ``x += 1``
- - set jump points: ``#jp``
- - do basic flow control: ``[if(...)]? [revert|goto jp]``
+ - set jump points: ``#myJumpPoint``
+ - do basic flow control: ``[if(...)]? [revert|goto myJumpPoint|return]``
  - do some basic debugging: ``dumpMem``
 
 The basic functions are show below:
