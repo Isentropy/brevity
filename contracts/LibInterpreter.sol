@@ -47,6 +47,13 @@ library Brevity {
         return keccak256(abi.encodePacked(slots));
     }
 
+    error WrongBrevityVersion(uint expected, uint found);
+    error NotPermitted(uint pc, uint opcode);
+    error Reverted(uint pc);
+    error CallFailed(uint pc);
+    error BadJump(uint pc, uint jumpDest);
+
+
     /* 
      args:
      returnMemAddressOffset: uint128, returnMemAddressLen: uint128 (packed as 1 uint256)
@@ -197,11 +204,6 @@ library Brevity {
         revert("unknown quantityType");
     }
 
-    error WrongBrevityVersion(uint expected, uint found);
-    error NotPermitted(uint pc, uint opcode);
-    error Reverted(uint pc);
-    error CallFailed(uint pc);
-    error BadJump(uint pc, uint jumpDest);
 
     function _checkBrevityVersion(uint foundVersion) internal view {
         if(foundVersion == 0) return;

@@ -1,11 +1,24 @@
-import { FunctionFragment } from 'ethers'
+import { BigNumberish, FunctionFragment } from 'ethers'
 import { BrevityParser } from './brevityParser'
+
+const SELECTOR_IERC20_approve = FunctionFragment.from('approve(address,uint256)').selector
+const SELECTOR_IERC20_transfer = FunctionFragment.from('transfer(address,uint256)').selector
+
 
 function genRandomHex(size: number) { 
     return [...Array(size)].map(() => Math.floor(Math.random() * 16).toString(16)).join('')
 }
 // recipes that take brevityScript as 1st input arg modify the script
 // recipes that dont brevityScript as 1st input are snippets that can be inserted
+
+export function erc20Approve(erc20: string, spender : string, amount : BigNumberish) : string {
+    return `CALL ${erc20}.${SELECTOR_IERC20_approve}(${spender}, ${amount})`
+}
+
+export function transfer(erc20: string, to : string, amount : BigNumberish) : string {
+    return `CALL ${erc20}.${SELECTOR_IERC20_transfer}(${to}, ${amount})`
+}
+
 
 export function requireERC20Increase(brevityScript: string, erc20Address: string, requiredIncrease: bigint, tmpVarName: string | null = null): string {
     const preBalVar = `bal_${erc20Address}_pre_${genRandomHex(6)}`
