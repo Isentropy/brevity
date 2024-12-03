@@ -2,7 +2,8 @@ pragma solidity ^0.8.27;
 pragma abicoder v2;
 import "hardhat/console.sol";
 import "./IBrevityInterpreter.sol";
-library Brevity {
+abstract contract BrevityInterpreter is IBrevityInterpreter {
+
     //EIP712 metaTx functions
     bytes32 internal constant _PROGRAM_TYPEHASH =
         keccak256(
@@ -14,13 +15,13 @@ library Brevity {
         keccak256("Quantity(uint256 quantityType,bytes32[] args)");
 
     function _encodeInstructionsArray(
-        Brevity.Instruction[] calldata instructions
+        Instruction[] calldata instructions
     ) internal pure returns (bytes32) {
         bytes32[] memory slots = new bytes32[](instructions.length);
         for (uint i = 0; i < instructions.length; i++) {
             slots[i] = keccak256(
                 abi.encode(
-                    Brevity._INSTRUCTION_TYPEHASH,
+                    _INSTRUCTION_TYPEHASH,
                     instructions[i].opcode,
                     keccak256(abi.encodePacked(instructions[i].args))
                 )
@@ -31,13 +32,13 @@ library Brevity {
     }
 
     function _encodeQuantityArray(
-        Brevity.Quantity[] calldata quantities
+        Quantity[] calldata quantities
     ) internal pure returns (bytes32) {
         bytes32[] memory slots = new bytes32[](quantities.length);
         for (uint i = 0; i < quantities.length; i++) {
             slots[i] = keccak256(
                 abi.encode(
-                    Brevity._QUANTITY_TYPEHASH,
+                    _QUANTITY_TYPEHASH,
                     quantities[i].quantityType,
                     keccak256(abi.encodePacked(quantities[i].args))
                 )
@@ -62,24 +63,24 @@ library Brevity {
      fnSelector,
      ...calldataArgs (interpreted as Quantity)
     */
-    uint8 public constant OPCODE_STATICCALL = 0;
-    uint8 public constant OPCODE_CALL = 1;
-    uint8 public constant OPCODE_DELEGATECALL = 2;
+    uint8 constant OPCODE_STATICCALL = 0;
+    uint8 constant OPCODE_CALL = 1;
+    uint8 constant OPCODE_DELEGATECALL = 2;
     // set pc = branch if q != 0
     // args: q (Quantity), branch
-    uint8 public constant OPCODE_CMP_BRANCH = 3;
+    uint8 constant OPCODE_CMP_BRANCH = 3;
     // set pc = branch
     // args: branch
-    uint8 public constant OPCODE_JUMP = 4;
+    uint8 constant OPCODE_JUMP = 4;
 
     // args: (offset : u128 , len :u128), topic {0, 4}
-    uint8 public constant OPCODE_LOG = 10;
+    uint8 constant OPCODE_LOG = 10;
     // console.log all of mem for debugging. no args
-    uint8 public constant OPCODE_DUMPMEM = 11;
+    uint8 constant OPCODE_DUMPMEM = 11;
     // opcodes above 128 refer to memAddress := opcode - 128
     // write q to mem[memAddress]
     // args: q (Quantity)
-    uint8 public constant OPCODE_MSTORE_R0 = 128;
+    uint8 constant OPCODE_MSTORE_R0 = 128;
 
     /*
     if(qWord < BIT255) interpret as literal
@@ -93,31 +94,31 @@ library Brevity {
     // this allows mem and most literals to be encoded in 1 word
     */
     // BIT255 on means NOT literal
-    uint256 public constant BIT255_NOTLITERAL = 1 << 255;
+    uint256 constant BIT255_NOTLITERAL = 1 << 255;
     // BIT254 on means NOT memory address
-    uint256 public constant BIT254_NOTMEM = 1 << 254;
-    uint8 public constant QUANTITY_LITERAL = 0;
-    uint8 public constant QUANTITY_OP_ADD = 1;
-    uint8 public constant QUANTITY_OP_MUL = 2;
-    uint8 public constant QUANTITY_OP_SUB = 3;
-    uint8 public constant QUANTITY_OP_DIV = 4;
-    uint8 public constant QUANTITY_OP_MOD = 6;
-    uint8 public constant QUANTITY_OP_LT = 0x10;
-    uint8 public constant QUANTITY_OP_GT = 0x11;
-    uint8 public constant QUANTITY_OP_EQ = 0x12;
+    uint256 constant BIT254_NOTMEM = 1 << 254;
+    uint8 constant QUANTITY_LITERAL = 0;
+    uint8 constant QUANTITY_OP_ADD = 1;
+    uint8 constant QUANTITY_OP_MUL = 2;
+    uint8 constant QUANTITY_OP_SUB = 3;
+    uint8 constant QUANTITY_OP_DIV = 4;
+    uint8 constant QUANTITY_OP_MOD = 6;
+    uint8 constant QUANTITY_OP_LT = 0x10;
+    uint8 constant QUANTITY_OP_GT = 0x11;
+    uint8 constant QUANTITY_OP_EQ = 0x12;
     //uint8 constant public QUANTITY_OP_ISZERO = 0x13;
-    uint8 public constant QUANTITY_OP_AND = 0x16;
-    uint8 public constant QUANTITY_OP_OR = 0x17;
-    uint8 public constant QUANTITY_OP_XOR = 0x18;
-    uint8 public constant QUANTITY_OP_NOT = 0x19;
-    uint8 public constant QUANTITY_OP_SHL = 0x1B;
-    uint8 public constant QUANTITY_OP_SHR = 0x1C;
+    uint8 constant QUANTITY_OP_AND = 0x16;
+    uint8 constant QUANTITY_OP_OR = 0x17;
+    uint8 constant QUANTITY_OP_XOR = 0x18;
+    uint8 constant QUANTITY_OP_NOT = 0x19;
+    uint8 constant QUANTITY_OP_SHL = 0x1B;
+    uint8 constant QUANTITY_OP_SHR = 0x1C;
 
-    uint8 public constant QUANTITY_ADDRESS_THIS = 0x30;
-    uint8 public constant QUANTITY_BALANCE = 0x31;
-    uint8 public constant QUANTITY_CALLER = 0x33;
-    uint8 public constant QUANTITY_CALLVALUE = 0x34;
-    uint8 public constant QUANTITY_BLOCKTIMESTAMP = 0x42;
+    uint8 constant QUANTITY_ADDRESS_THIS = 0x30;
+    uint8 constant QUANTITY_BALANCE = 0x31;
+    uint8 constant QUANTITY_CALLER = 0x33;
+    uint8 constant QUANTITY_CALLVALUE = 0x34;
+    uint8 constant QUANTITY_BLOCKTIMESTAMP = 0x42;
 
     uint256 constant JUMPDEST_RETURN =
         0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
@@ -212,6 +213,9 @@ library Brevity {
         uint version = IBrevityInterpreter(address(this)).version();
         if(foundVersion != version) revert WrongBrevityVersion(version, foundVersion);
     }
+
+    function _onCall(address to, uint value, uint[] memory resolvedArgs) internal {}
+
     /*
     config is: uint128 flags, uint64 requiredBrevityVersion (or 0 for none), uint64 memSize 
     */
@@ -281,6 +285,7 @@ library Brevity {
                     // tmp is reused here as VALUE to limit stack overgrowth
                     tmp = _resolve(uint(args[2]), mem, quantities);
                     //if no function selector, it's just eth end wo data
+                    _onCall(to, tmp, resolvedArgs);
                     if (resolvedArgs.length == 0) {
                         assembly {
                             tmp := call(sub(gas(), 10000), to, tmp, 0, 0, 0, 0)

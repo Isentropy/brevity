@@ -1,12 +1,12 @@
 pragma solidity ^0.8.27;
 
-import './IBrevityInterpreter.sol';
+import './BrevityInterpreter.sol';
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/Nonces.sol";
 
-contract OwnedBrevityInterpreter is EIP712, Nonces, IBrevityInterpreter {
+contract OwnedBrevityInterpreter is EIP712, Nonces, BrevityInterpreter {
     uint public constant version = 1;
     event NewOwner(address indexed newOwner);
 
@@ -21,25 +21,25 @@ contract OwnedBrevityInterpreter is EIP712, Nonces, IBrevityInterpreter {
         emit NewOwner(owner_);
     }
 
-    function run(Brevity.Program calldata p) public payable {
+    function run(Program calldata p) public payable {
         require(owner == msg.sender, "notOwner");
-        Brevity._run(p.config, p.instructions, p.quantities);
+        _run(p.config, p.instructions, p.quantities);
     }
 
     function runMeta(
-        Brevity.Program calldata p,
+        Program calldata p,
         uint deadline,
         bytes calldata sig) public payable virtual {
         //arrays hashed per https://github.com/ethereum/EIPs/blob/master/EIPS/eip-712.md
         require(deadline >= block.timestamp, "expired");
-        bytes32 structHash = keccak256(abi.encode(Brevity._PROGRAM_TYPEHASH, p.config, Brevity._encodeInstructionsArray(p.instructions), Brevity._encodeQuantityArray(p.quantities), _useNonce(owner), deadline));
+        bytes32 structHash = keccak256(abi.encode(_PROGRAM_TYPEHASH, p.config, _encodeInstructionsArray(p.instructions), _encodeQuantityArray(p.quantities), _useNonce(owner), deadline));
         bytes32 hash = _hashTypedDataV4(structHash);
         require(owner == ECDSA.recover(hash, sig), "invalid signature");
-        Brevity._run(p.config, p.instructions, p.quantities);
+        _run(p.config, p.instructions, p.quantities);
     }
 
     
-    function noop(Brevity.Program calldata p) public payable {}
+    function noop(Program calldata p) public payable {}
 
     receive() payable external {}
 
