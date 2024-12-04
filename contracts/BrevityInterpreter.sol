@@ -214,7 +214,7 @@ abstract contract BrevityInterpreter is IBrevityInterpreter {
         if(foundVersion != version) revert WrongBrevityVersion(version, foundVersion);
     }
 
-    function _onCall(address to, uint value, uint[] memory resolvedArgs) internal {}
+    function _onCall(address to, uint value, uint[] memory resolvedArgs) internal virtual {}
 
     /*
     config is: uint128 flags, uint64 requiredBrevityVersion (or 0 for none), uint64 memSize 
