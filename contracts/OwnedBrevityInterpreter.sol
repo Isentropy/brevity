@@ -8,7 +8,16 @@ import "@openzeppelin/contracts/utils/Nonces.sol";
 
 contract OwnedBrevityInterpreter is EIP712, Nonces, BrevityInterpreter {
     uint public constant version = 1;
+
     event NewOwner(address indexed newOwner);
+    error NotOwner();
+    error OwnerAlreadySet();
+    error TransferFailed(address erc20, address from, address to, uint amount);
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, NotOwner());
+        _;
+    }
 
     address public owner;
     constructor(address owner_) EIP712("Brev", "1") {
@@ -16,13 +25,13 @@ contract OwnedBrevityInterpreter is EIP712, Nonces, BrevityInterpreter {
     }
 
     function setOwner(address owner_) public {
-        require(owner == address(0), "ownerAlreadySet");
+        require(owner == address(0), OwnerAlreadySet());
         owner = owner_;
         emit NewOwner(owner_);
     }
 
     function run(Program calldata p) external payable {
-        require(owner == msg.sender, "notOwner");
+        require(owner == msg.sender, NotOwner());
         _run(p.config, p.instructions, p.quantities);
     }
 
@@ -36,6 +45,31 @@ contract OwnedBrevityInterpreter is EIP712, Nonces, BrevityInterpreter {
         bytes32 hash = _hashTypedDataV4(structHash);
         require(owner == ECDSA.recover(hash, sig), "invalid signature");
         _run(p.config, p.instructions, p.quantities);
+    }
+
+    function withdraw(address token, uint amount) public onlyOwner {
+        _withdraw(token, amount);
+    }
+
+    function withdrawAll(address token) public onlyOwner {
+        uint bal = this.withdrawableBalance(token);
+        _withdraw(token, bal);
+    }
+
+    function withdrawableBalance(address token) public virtual view returns (uint256) {
+        if (token == address(0)) return address(this).balance;
+        else return IERC20(token).balanceOf(address(this));
+    }
+
+    function _withdraw(address token, uint amountBeforeFees) internal virtual {
+        if (token == address(0)) {
+            payable(owner).transfer(amountBeforeFees);
+        } else {
+            require(
+                IERC20(token).transfer(owner, amountBeforeFees),
+                TransferFailed(token, address(this), owner, amountBeforeFees)
+            );
+        }
     }
 
     
