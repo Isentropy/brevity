@@ -172,17 +172,17 @@ export class BrevityParser {
         let prevChar
         for (let i = 0; i < s.length; i++) {
             const c = s.charAt(i)
-            if (c == '(') {
+            if (c === '(') {
                 parentheses++
                 continue;
             }
-            if (c == ')') {
+            if (c === ')') {
                 parentheses--
                 if (parentheses < 0) throw Error(`Error parsing quantity "${s}: ')' without '('`)
                 continue;
             }
             //TODO: only works for 1-2 char ops. consider trie if needed
-            if (parentheses == 0) {
+            if (parentheses === 0) {
                 if (prevChar && TwoArgQuantityKWs.has(prevChar + c)) return [i - 1, prevChar + c]
                 if (TwoArgQuantityKWs.has(c)) return [i, c];
             }
@@ -219,10 +219,10 @@ export class BrevityParser {
     private parseQuantity(q: string, parsingContext: ParsingContext, dealias = true): bigint {
         //console.log(`parseQuantity: ${q}`)
         q = q.trim()
-        if (q.length == 0) throw Error(`${parsingContext.lineNumber}: Error parsing quantity "${q}"`)
+        if (q.length === 0) throw Error(`${parsingContext.lineNumber}: Error parsing quantity "${q}"`)
 
         const [opPos, op] = this.findFirstValidOpCharacter(q)
-        if (opPos != -1) {
+        if (opPos !== -1) {
             const twoArg: Quantity = {
                 quantityType: TwoArgQuantityKWs.get(op)!,
                 args: [toBytes32(this.parseQuantity(q.substring(0, opPos), parsingContext)), toBytes32(this.parseQuantity(q.substring(opPos + op.length, q.length), parsingContext))]
@@ -232,8 +232,8 @@ export class BrevityParser {
         /*
          oneArg should go after 2 arg to enforce order of op
          for ex
-         !a == b => (== (! a) b)
-         !(a == b) => (! (== a b)
+         !a === b => (=== (! a) b)
+         !(a === b) => (! (=== a b)
           findFirstValidOpCharacter checks for first 2arg op outside parens
         */
         for (let op of OneArgQuantityKWs.keys()) {
@@ -297,10 +297,10 @@ export class BrevityParser {
         const cmd = fn.substring(0, firstSpace)
         let opcode: number
 
-        if (cmd == KW_CALL) opcode = OPCODE_CALL
-        else if (cmd == KW_SEND) opcode = OPCODE_CALL
-        else if (cmd == KW_DELEGATECALL) opcode = OPCODE_DELEGATECALL
-        else if (cmd == KW_STATICCALL) opcode = OPCODE_STATICCALL
+        if (cmd === KW_CALL) opcode = OPCODE_CALL
+        else if (cmd === KW_SEND) opcode = OPCODE_CALL
+        else if (cmd === KW_DELEGATECALL) opcode = OPCODE_DELEGATECALL
+        else if (cmd === KW_STATICCALL) opcode = OPCODE_STATICCALL
         else throw Error(`${parsingContext.lineNumber}: Unknown fn cmd ${cmd}`)
 
         let right = fn.substring(firstSpace).trim()
@@ -317,7 +317,7 @@ export class BrevityParser {
         let address
         let fnSelector: string | undefined
         let fnArgs: string[] | undefined
-        if(cmd == KW_SEND) {
+        if(cmd === KW_SEND) {
             address = this.parseQuantity(right.substring(0, right.length), parsingContext)
         } else {
             const firstPeriod = right.indexOf('.')
@@ -349,11 +349,11 @@ export class BrevityParser {
                     args = right.substring(firstParen + 1, right.length - 1)
                 }
             }                
-            fnArgs = args.trim().length == 0 ? [] : args.split(',').map((arg) => { return toBytes32(this.parseQuantity(arg, parsingContext)) })
+            fnArgs = args.trim().length === 0 ? [] : args.split(',').map((arg) => { return toBytes32(this.parseQuantity(arg, parsingContext)) })
         }
 
         let callArgs = [memWriteInfo, toBytes32(address)]
-        if(opcode == OPCODE_CALL) callArgs.push(toBytes32(this.parseQuantity(value, parsingContext)))
+        if(opcode === OPCODE_CALL) callArgs.push(toBytes32(this.parseQuantity(value, parsingContext)))
         if(fnSelector) {
             callArgs.push(toBytes32(fnSelector))
             if(fnArgs) {
@@ -381,8 +381,8 @@ export class BrevityParser {
 
     // pull op off the end of string
     private getEndingOp(s: string): string | undefined {
-        if (s.length == 0) return undefined
-        if (s.length == 2 && TwoArgQuantityKWs.has(s)) return s
+        if (s.length === 0) return undefined
+        if (s.length === 2 && TwoArgQuantityKWs.has(s)) return s
         const lc = s.charAt(s.length - 1)
         if (TwoArgQuantityKWs.has(lc)) return lc
         return undefined
@@ -398,7 +398,7 @@ export class BrevityParser {
         for (; parsingContext.lineNumber <= lines.length; parsingContext.lineNumber++) {
             const line = lines[parsingContext.lineNumber - 1].trim()
             //comment
-            if (line.startsWith('//') || line == '') continue;
+            if (line.startsWith('//') || line === '') continue;
             const pp = line.split(':=')
             //preprocessor directive
             if (pp.length > 1) {
@@ -506,15 +506,15 @@ export class BrevityParser {
                     if (!parsingContext.memAddressNames.has(v)) throw Error(`${parsingContext.lineNumber}: mem address alias ${v} unknown `)
                     const regnum = parsingContext.memAddressNames.get(v)
                     if (typeof regnum === 'undefined') throw Error('huh')
-                    if (offset == -1) {
+                    if (offset === -1) {
                         offset = regnum
-                    } else if (regnum != offset + i) {
+                    } else if (regnum !== offset + i) {
                         throw Error(`${parsingContext.lineNumber}: mem address ${v} = ${regnum} expected to be in position ${offset + i}`)
                     }
                 }
             }
             //shouldnt happen
-            if (offset == -1) throw Error(`${parsingContext.lineNumber}: offset unknown`)
+            if (offset === -1) throw Error(`${parsingContext.lineNumber}: offset unknown`)
             if (offset + length > this.config.maxMem) throw Error(`${parsingContext.lineNumber}: maxMem ${this.config.maxMem} exceeded`)
             const right = assignment[1].trim()
             if (this.isFunctionCall(right)) {
@@ -524,7 +524,7 @@ export class BrevityParser {
 
             } else {
                 // right side of = is Quantity
-                if (length != 1) throw Error(`${parsingContext.lineNumber}: can only assign Quantity to 1 word`)
+                if (length !== 1) throw Error(`${parsingContext.lineNumber}: can only assign Quantity to 1 word`)
                 let quantityEncoded = this.parseQuantity(right, parsingContext)
                 if (unaryOp) {
                     quantityEncoded = parsingContext.quantityIndex({
