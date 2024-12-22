@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BrevityInterpreter, IERC20, OwnedBrevityInterpreter } from "./brevity/typechain-types"
+import { BrevityInterpreter, IERC20, OwnedBrevityInterpreter } from "./typechain-types"
 import BlockExplorerLink from "./BlockExplorerLink";
 import { dataSlice, Filter, FunctionFragment, id, toBeHex, ZeroAddress } from "ethers";
 import TokenBalance from "./TokenBalance";

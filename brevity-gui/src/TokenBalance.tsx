@@ -1,7 +1,7 @@
 import { Provider, ZeroAddress } from "ethers";
 import { useState } from "react";
-import { IERC20__factory } from "./brevity/typechain-types";
-import { OwnedBrevityInterpreter } from "./brevity/typechain-types/contracts/OwnedBrevityInterpreter";
+import { IERC20__factory } from "./typechain-types";
+import { OwnedBrevityInterpreter } from "./typechain-types/contracts/OwnedBrevityInterpreter";
 
 interface Props {
     holderAddress: string,

@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import logo from './logo.svg';
 import './App.css';
 import { BrowserProvider, JsonRpcProvider, parseEther, Provider, WeiPerEther } from 'ethers';
-import { OwnedBrevityInterpreter, OwnedBrevityInterpreter__factory } from './brevity/typechain-types';
+import { OwnedBrevityInterpreter, OwnedBrevityInterpreter__factory } from './typechain-types';
 import { useSDK } from '@metamask/sdk-react';
-import { BrevityParser, BrevityParserConfig, BrevityParserOutput } from './brevity/tslib/brevityParser';
+import { BrevityParser, BrevityParserConfig, BrevityParserOutput } from './tslib/brevityParser';
 import BlockExplorerLink from './BlockExplorerLink';
 import BrevityInterpreterStats from './BrevityInterpreterStats';
 const QUERY_PARAM_BREVITY_ADDRESS = 'b'
