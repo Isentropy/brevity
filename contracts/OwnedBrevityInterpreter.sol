@@ -56,18 +56,24 @@ contract OwnedBrevityInterpreter is EIP712, Nonces, BrevityInterpreter {
         _withdraw(token, bal);
     }
 
+    function withdrawAllMulti(address[] calldata tokens) public onlyOwner {
+        for(uint i=0; i < tokens.length; i++) {
+            withdrawAll(tokens[i]);
+        }
+    }
+
     function withdrawableBalance(address token) public virtual view returns (uint256) {
         if (token == address(0)) return address(this).balance;
         else return IERC20(token).balanceOf(address(this));
     }
 
-    function _withdraw(address token, uint amountBeforeFees) internal virtual {
+    function _withdraw(address token, uint amount) internal virtual {
         if (token == address(0)) {
-            payable(owner).transfer(amountBeforeFees);
+            payable(owner).transfer(amount);
         } else {
             require(
-                IERC20(token).transfer(owner, amountBeforeFees),
-                TransferFailed(token, address(this), owner, amountBeforeFees)
+                IERC20(token).transfer(owner, amount),
+                TransferFailed(token, address(this), owner, amount)
             );
         }
     }
