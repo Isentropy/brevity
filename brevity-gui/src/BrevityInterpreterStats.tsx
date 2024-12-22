@@ -31,7 +31,7 @@ function BrevityInterpreterStats(interpreter : OwnedBrevityInterpreter) {
             setUniqueTokens([ZeroAddress, ...new Set(logs.map((log) => { return log.address }))])
         })
     })
-    return <div>
+    return <div className="brevityStats">
         <h3>Brevity Interpreter Info</h3>
         {address && (
             <div>
