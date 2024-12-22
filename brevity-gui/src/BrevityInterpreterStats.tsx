@@ -48,7 +48,7 @@ function BrevityInterpreterStats(interpreter : OwnedBrevityInterpreter) {
             Owner: {BlockExplorerLink(owner)}
             </div>
         )}
-        <h5> Token Holdings </h5>
+        <h4> Token Holdings </h4>
         <table>
           <tbody>
             <tr>
