@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { BrevityInterpreter, IERC20, OwnedBrevityInterpreter } from "./typechain-types"
+import { OwnedBrevityInterpreter } from "./typechain-types"
 import BlockExplorerLink from "./BlockExplorerLink";
-import { dataSlice, Filter, FunctionFragment, id, toBeHex, ZeroAddress } from "ethers";
+import { Filter, id, toBeHex, ZeroAddress } from "ethers";
 import TokenBalance from "./TokenBalance";
 
 function BrevityInterpreterStats(interpreter : OwnedBrevityInterpreter) {

@@ -12,8 +12,6 @@ function Runner(p: Props) {
     const [compiledProgram, setCompiledProgram] = useState<BrevityParserOutput>();
     const [gasEstimate, setGasEstimate] = useState<bigint>();
 
-    if(p.initialScript) (document.getElementById("brevScript")! as HTMLTextAreaElement).value = p.initialScript
-
     const sendTx = async () => {
         p.interpreter.run(compiledProgram!).then((tx) => {
             //window.location.reload()
@@ -41,7 +39,7 @@ function Runner(p: Props) {
 
     return (
     <div className="brevityRunner">
-        <textarea id="brevScript" cols={80} rows={20}></textarea>
+        <textarea id="brevScript" cols={80} rows={20} defaultValue={p.initialScript}></textarea>
         <br></br>
         <button style={{ padding: 10, margin: 10 }} onClick={compile}>
             Compile
