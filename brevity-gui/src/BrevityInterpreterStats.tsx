@@ -10,13 +10,13 @@ function BrevityInterpreterStats(interpreter : OwnedBrevityInterpreter) {
     const [owner, setOwner] = useState<string>();
     const [uniqueTokens, setUniqueTokens] = useState<string[]>();
 
-    interpreter.version().then((v)=>{
+    if(!version) interpreter.version().then((v)=>{
         setVersion(v)
     })
-    interpreter.owner().then((o)=>{
+    if(!owner) interpreter.owner().then((o)=>{
         setOwner(o)
     })
-    interpreter.getAddress().then((a)=> {
+    if(!address) interpreter.getAddress().then((a)=> {
         setAddress(a)
 
         const filter : Filter = {
