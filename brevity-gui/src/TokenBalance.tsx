@@ -1,7 +1,6 @@
-import { Provider, ZeroAddress } from "ethers";
 import { useState } from "react";
-import { IERC20__factory } from "./typechain-types";
 import { OwnedBrevityInterpreter } from "./typechain-types/contracts/OwnedBrevityInterpreter";
+import BlockExplorerLink from "./BlockExplorerLink";
 
 interface Props {
     holderAddress: string,
@@ -11,24 +10,12 @@ interface Props {
 }
 
 function TokenBalance(p: Props) {
-    const provider = p.interpreter.runner!.provider!
+    //const provider = p.interpreter.runner!.provider!
     const [balance, setBalance] = useState<bigint>();
-    const [tokenName, setTokenName] = useState<string>();
 
-    if (!tokenName) {
-        if (p.tokenAddress == ZeroAddress) {
-            setTokenName("Native Token")
-            provider.getBalance(p.holderAddress).then((bal) => {
-                setBalance(bal)
-            })
-        } else {
-            setTokenName(p.tokenAddress)
-            //console.log(`p ${JSON.stringify(p)}`)
-            IERC20__factory.connect(p.tokenAddress, provider).balanceOf(p.holderAddress).then((bal) => {
-                setBalance(bal)
-            })
-        }
-    }
+    p.interpreter.withdrawableBalance(p.tokenAddress).then((bal) => {
+        setBalance(bal)
+    })
 
     const withdraw = async () => {
         const amount = (document.getElementById("withdrawAmount") as HTMLInputElement).value
@@ -40,7 +27,7 @@ function TokenBalance(p: Props) {
     }
 
     return <tr>
-        <td>{tokenName && (tokenName)}</td>
+        <td>{BlockExplorerLink(p.tokenAddress)}</td>
         <td style={{ textAlign: "right" }}>{balance?.toString() && (balance?.toString())}</td>
         <td>{p.withdrawToAddress && (<button onClick={withdraw}>Withdraw to Owner</button>)}</td>
         <td>{p.withdrawToAddress && (<input id="withdrawAmount" defaultValue={balance?.toString()}></input>)}</td>
