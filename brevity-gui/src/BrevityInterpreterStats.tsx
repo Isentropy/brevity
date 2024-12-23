@@ -32,7 +32,7 @@ function BrevityInterpreterStats(interpreter : OwnedBrevityInterpreter) {
         })
     })
     return <div className="brevityStats">
-        <h3>Brevity Interpreter Info</h3>
+        <h3>Brevity Interpreter Info:</h3>
         {address && (
             <div>
             Address: {BlockExplorerLink(address)}
@@ -48,7 +48,7 @@ function BrevityInterpreterStats(interpreter : OwnedBrevityInterpreter) {
             Owner: {BlockExplorerLink(owner)}
             </div>
         )}
-        <h4> Token Holdings </h4>
+        <h4>Token Holdings:</h4>
         <table>
           <tbody>
             <tr>

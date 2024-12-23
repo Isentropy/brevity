@@ -5,11 +5,14 @@ import { OwnedBrevityInterpreter } from "./typechain-types";
 interface Props {
     interpreter: OwnedBrevityInterpreter
     account?: string
+    initialScript?: string
 }
 
 function Runner(p: Props) {
     const [compiledProgram, setCompiledProgram] = useState<BrevityParserOutput>();
     const [gasEstimate, setGasEstimate] = useState<bigint>();
+
+    if(p.initialScript) (document.getElementById("brevScript")! as HTMLTextAreaElement).value = p.initialScript
 
     const sendTx = async () => {
         p.interpreter.run(compiledProgram!).then((tx) => {
