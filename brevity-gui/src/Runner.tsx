@@ -5,7 +5,7 @@ import { OwnedBrevityInterpreter } from "./typechain-types";
 interface Props {
     interpreter: OwnedBrevityInterpreter
     account?: string
-    initialScript?: string
+    script?: string
 }
 
 function Runner(p: Props) {
@@ -17,7 +17,14 @@ function Runner(p: Props) {
             //window.location.reload()
         })
     }
-
+//    console.log(`p.script ${p.script}`);
+//    (document.getElementById("brevScript")! as HTMLTextAreaElement).defaultValue = p.script!
+    const reset = async () => {
+        if(!p.script) return
+        const bs = document.getElementById("brevScript")! as HTMLTextAreaElement
+        bs.value = p.script
+    }
+    
     const compile = async () => {
         try {
             setCompiledProgram(undefined)
@@ -39,8 +46,11 @@ function Runner(p: Props) {
 
     return (
     <div className="brevityRunner">
-        <textarea id="brevScript" cols={80} rows={20} defaultValue={p.initialScript}></textarea>
+        <textarea id="brevScript" cols={80} rows={20} defaultValue={p.script}></textarea>
         <br></br>
+        <button style={{ padding: 10, margin: 10 }} onClick={reset}>
+            Reset
+        </button>
         <button style={{ padding: 10, margin: 10 }} onClick={compile}>
             Compile
         </button>

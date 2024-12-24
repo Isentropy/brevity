@@ -6,6 +6,8 @@ import { useSDK } from '@metamask/sdk-react';
 import BlockExplorerLink from './BlockExplorerLink';
 import BrevityInterpreterStats from './BrevityInterpreterStats';
 import Runner from './Runner';
+import { Script } from 'vm';
+import ScriptSelector, { ScriptAndDesc } from './ScriptSelector';
 const QUERY_PARAM_BREVITY_ADDRESS = 'b'
 const DEFAULT_BREVITY_INTERPRETER = '0xD47a39886638936a1e7c091101Fca97bEFf50Ae2'
 
@@ -14,6 +16,17 @@ interface Window {
   location: any
 }
 declare var window: Window
+
+const SCRIPTS: ScriptAndDesc[] = [
+    {
+        desc: "script1",
+        script: "//heresf ssdf sdf sdf sf sf asfsf dfsdf fd \n//yoyoy\n"
+    },
+    {
+        desc: "script2",
+        script: "//22heresf ssdf sdf sdf sf sf asfsf dfsdf fd \n//yoyoy\n"
+    },
+]
 
 function App() {
 
@@ -24,7 +37,8 @@ function App() {
 
   const [interpreter, setInterpreter] = useState<OwnedBrevityInterpreter>(OwnedBrevityInterpreter__factory.connect(interpreterAddress, defaultProvider));
   const [account, setAccount] = useState<string>();
-  
+  const [script, setScript] = useState<string>("// enter script\n");
+
   const { sdk, connected, connecting, chainId } = useSDK();
   
   const connect = async () => {
@@ -58,7 +72,9 @@ function App() {
         </div>
       )}
       <br></br>
-      <Runner interpreter={interpreter} account={account}></Runner>
+      <ScriptSelector callback={setScript} scripts={SCRIPTS} optionsLength={10}></ScriptSelector>
+      <br></br>
+      <Runner interpreter={interpreter} account={account} script={script}></Runner>
       {interpreter && BrevityInterpreterStats(interpreter)}
     </div>
   );
