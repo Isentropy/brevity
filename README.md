@@ -9,7 +9,7 @@ Brevity is a language, similar in syntax to Solidity, that is transpiled to an E
 Brevity is in development and alpha. We welcome code review and design comments.
 
 ## But Why?
- - **All-in-One General Purpose Contract** Uses can deploy their own Brevity Interpreter contract that is Owned by them. The contract can run arbitrary workflows without needing to deploy more code.
+ - **All-in-One General Purpose Contract** Users can deploy their own Brevity Interpreter contract that is Owned by them. The contract can run arbitrary workflows without needing to deploy more code. Deployment using [Clone pattern](https://github.com/Isentropy/brevity/blob/777be66f6ead630e099292367bb40fb3665029d0/contracts/CloneFactory.sol#L15) is supported, and costs less than 100000 gas.
  - **Guardrails**: Brevity supports a [hook to EVM CALLs](https://github.com/Isentropy/brevity/blob/0b533d446eb8a56cbf7a6e2773f6e78df921b703/contracts/BrevityInterpreter.sol#L219C21-L219C32) that can be used to apply restrictons on which external methods are called. 
  - **Metering**: Transactions can be metered by adding custom hooks.
  - **MetaTransactions**: Brevity calls can be submitted as EIP712 metaTxs, enabling Brevity Interpreters to be controlled by wallets that hold no tokens.
