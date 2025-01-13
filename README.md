@@ -4,18 +4,21 @@ Copyright 2024 Isentropy LLC. All Rights Reserved
 
 NOT LICENSED
 
-
-
-Brevity is a language, similar in syntax to Solidity, that is transpiled to an EVM transaction and run on a smart contract interpreter. Because Brevity is interpreted, it doesn't need to deploy new smart contracts to implement new workflows. This can result in substantial **gas savings** vs writing and deploying new EVM contracts. Deploying EVM code costs around 200 gas/byte, whereas calldata costs 4-16 gas/byte. Brevity calls can also be submitted as EIP712 metaTxs.
+Brevity is a language, similar in syntax to Solidity, that is transpiled to an EVM transaction and run on a smart contract interpreter. Because Brevity is interpreted, it doesn't need to deploy new smart contracts to implement new workflows.  
 
 Brevity is in development and alpha. We welcome code review and design comments.
 
-## But Why??
-EVM contracts are expensive to deploy. Brevity saves on deployment cost by putting code in the calldata and interpreting. **Brevity costs less to deploy, but more to run.** It's especially useful for simple workflows. For a simple arbitrage example in [Brevity](test/briefs/example.brv) and [Solidity](contracts/Arb.sol):
+## But Why?
+ - **All-in-One General Purpose Contract** Uses can deploy their own Brevity Interpreter contract that is Owned by them. The contract can run arbitrary workflows without needing to deploy more code.
+ - **Guardrails**: Brevity supports a [hook to EVM CALLs](https://github.com/Isentropy/brevity/blob/0b533d446eb8a56cbf7a6e2773f6e78df921b703/contracts/BrevityInterpreter.sol#L219C21-L219C32) that can be used to apply restrictons on which external methods are called. 
+ - **Metering**: Transactions can be metered by adding custom hooks.
+ - **MetaTransactions**: Brevity calls can be submitted as EIP712 metaTxs, enabling Brevity Interpreters to be controlled by wallets that hold no tokens.
+ - **Gas Saving**: EVM contracts are expensive to deploy relative to calldata. Deploying EVM code costs around 200 gas/byte, whereas calldata costs 4-16 gas/byte. Brevity saves on deployment cost by putting code in the calldata and interpreting. For a simple arbitrage example in [Brevity](test/briefs/example.brv) and [Solidity](contracts/Arb.sol):
 ```
 Brevity gas: total = 204504, calldata = 51443, execution = 153061
 Solidity Test gas: total = 463028, deploy = 343682, calldata = 23528, execution = 95818
 ```
+Generally Brevity saves gas on workflows that are not reused. 
 
 ## Under the Hood
 Brevity Scripts (```.brv``` ) are transpiled into a Brevity Calldata Program that is passed to the [Interpreter](contracts/LibInterpreter.sol) as ```(uint memSize, Instruction[] calldata instructions, Quantity[] calldata quantities)```. 
@@ -33,7 +36,7 @@ Like [B](https://en.wikipedia.org/wiki/B_(programming_language)), Brevity has no
 Brevity is meant to save gas on simple workflows. It's deliberately bare bones.  You can CALL and STATICCALL, manipulate memory, and do flow control. **Brevity has no operations to directly manipulate storage.** It can only manipulate storage via CALLs to exposed functions. 
 
 ### Usage
-See [OwnedBrevityInterpreter](contracts/OwnedBrevityInterpreter.sol) for an example of a brevity interpreter contract that can be used only by an owner.
+See [OwnedBrevityInterpreter](contracts/OwnedBrevityInterpreter.sol) for an example of a Brevity Interpreter contract that can be used only by an owner.
 
 ## Version 0.1 syntax
 Brevity has no code blocks. Each line exists on it's own. You can:
