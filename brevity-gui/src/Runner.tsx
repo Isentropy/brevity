@@ -34,7 +34,8 @@ function Runner(p: Props) {
             const compiler = new BrevityParser(config)
             const script = (document.getElementById("brevScript")! as HTMLTextAreaElement).value
             const compiled = compiler.parseBrevityScript(script)
-            p.interpreter.run.estimateGas(compiled).then((estimate) => {
+            console.log('successfully compiled program:\n' + JSON.stringify(compiled, null, 2))
+            if(p.account) p.interpreter.run.estimateGas(compiled).then((estimate) => {
                 setGasEstimate(estimate)
             })
             setCompiledProgram(compiled)
