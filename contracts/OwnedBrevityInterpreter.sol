@@ -30,7 +30,7 @@ contract OwnedBrevityInterpreter is EIP712, Nonces, BrevityInterpreter {
         emit NewOwner(owner_);
     }
 
-    function run(Program calldata p) external payable {
+    function run(Program calldata p) external payable virtual override {
         require(owner == msg.sender, NotOwner());
         _run(p.config, p.instructions, p.quantities);
     }
@@ -38,7 +38,7 @@ contract OwnedBrevityInterpreter is EIP712, Nonces, BrevityInterpreter {
     function runMeta(
         Program calldata p,
         uint deadline,
-        bytes calldata sig) external payable virtual {
+        bytes calldata sig) external payable virtual override {
         //arrays hashed per https://github.com/ethereum/EIPs/blob/master/EIPS/eip-712.md
         require(deadline >= block.timestamp, "expired");
         bytes32 structHash = keccak256(abi.encode(_PROGRAM_TYPEHASH, p.config, _encodeInstructionsArray(p.instructions), _encodeQuantityArray(p.quantities), _useNonce(owner), deadline));

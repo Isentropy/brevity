@@ -1,6 +1,10 @@
 {
-  "name": "brevity",
-  "version": "0.1",
+  "name": "@isentropy/brevity-lang",
+  "version": "0.0.1",
+  "repository": "https://github.com/Isentropy/brevity.git",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "hardhat": "^2.22.12"
@@ -9,4 +13,5 @@
     "@openzeppelin/contracts": "^5.0.2",
     "ethers": "^6.13.4"
   }
+
 }

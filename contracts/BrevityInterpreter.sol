@@ -40,14 +40,6 @@ abstract contract BrevityInterpreter is IBrevityInterpreter {
         return keccak256(abi.encodePacked(slots));
     }
 
-    error WrongBrevityVersion(uint expected, uint found);
-    error NotPermitted(uint pc, uint opcode);
-    error Reverted(uint pc);
-    error CallFailed(uint pc);
-    error BadJump(uint pc, uint jumpDest);
-
-
-
     uint256 constant JUMPDEST_RETURN =
         0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
     uint256 constant JUMPDEST_REVERT =
@@ -64,22 +56,6 @@ abstract contract BrevityInterpreter is IBrevityInterpreter {
     //uint256 constant CONFIGFLAG_NO_DELEGATECALL =
     //    0x0000000000000000000000000000000100000000000000000000000000000000;
 
-    struct Instruction {
-        uint opcode;
-        bytes32[] args;
-    }
-
-    struct Quantity {
-        uint quantityType;
-        bytes32[] args;
-    }
-
-    struct Program {
-        // high 128 bits are flags, low 128 bits are memory size
-        uint config;
-        Instruction[] instructions;
-        Quantity[] quantities;
-    }
 
     function _resolve(
         uint qWord,

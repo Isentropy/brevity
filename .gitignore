@@ -2,6 +2,7 @@ yarn.lock
 build
 node_modules
 .env
+.npmrc
 
 # Hardhat files
 /cache
