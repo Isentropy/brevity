@@ -178,7 +178,7 @@ export interface CloneFactory extends BaseContract {
       sig: BytesLike
     ],
     [string],
-    "nonpayable"
+    "payable"
   >;
 
   predictDeterministicAddress: TypedContractMethod<
@@ -210,7 +210,7 @@ export interface CloneFactory extends BaseContract {
       sig: BytesLike
     ],
     [string],
-    "nonpayable"
+    "payable"
   >;
   getFunction(
     nameOrSignature: "predictDeterministicAddress"

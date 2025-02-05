@@ -32,11 +32,11 @@ contract CloneFactory {
         return cloneAddress;
     }
 
-    function cloneIfNeededThenRun(address implementation, bytes32 salt, address owner, Program memory p, uint deadline, bytes memory sig) public returns (address) {
+    function cloneIfNeededThenRun(address implementation, bytes32 salt, address owner, Program memory p, uint deadline, bytes memory sig) public payable returns (address) {
         bytes32 newSalt = keccak256(abi.encodePacked(salt, owner));
-        address clone = Clones.predictDeterministicAddress(implementation, newSalt, address(this));
+        address payable clone = payable(Clones.predictDeterministicAddress(implementation, newSalt, address(this)));
         if(!isContract(clone)) cloneDeterministic(implementation, salt, owner);
-        IBrevityInterpreter(clone).runMeta(p, deadline, sig);
+        IBrevityInterpreter(clone).runMeta{value: msg.value}(p, deadline, sig);
         return clone;
     }
     
