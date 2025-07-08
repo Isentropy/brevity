@@ -94,6 +94,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IBrevityInterpreter__factory>;
     getContractFactory(
+      name: "NoncesBytes32",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.NoncesBytes32__factory>;
+    getContractFactory(
       name: "OwnedBrevityInterpreter",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.OwnedBrevityInterpreter__factory>;
@@ -227,6 +231,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IBrevityInterpreter>;
     getContractAt(
+      name: "NoncesBytes32",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.NoncesBytes32>;
+    getContractAt(
       name: "OwnedBrevityInterpreter",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -348,6 +357,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IBrevityInterpreter>;
     deployContract(
+      name: "NoncesBytes32",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.NoncesBytes32>;
+    deployContract(
       name: "OwnedBrevityInterpreter",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.OwnedBrevityInterpreter>;
@@ -480,6 +493,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IBrevityInterpreter>;
+    deployContract(
+      name: "NoncesBytes32",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.NoncesBytes32>;
     deployContract(
       name: "OwnedBrevityInterpreter",
       args: any[],

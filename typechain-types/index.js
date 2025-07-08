@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TestToken__factory = exports.TestCoin__factory = exports.Test__factory = exports.MintableERC20__factory = exports.LoopTest__factory = exports.ISwap__factory = exports.Arb__factory = exports.OwnedBrevityInterpreter__factory = exports.IBrevityInterpreter__factory = exports.SetOwner__factory = exports.CloneFactory__factory = exports.BrevityInterpreter__factory = exports.Strings__factory = exports.ShortStrings__factory = exports.Nonces__factory = exports.Math__factory = exports.EIP712__factory = exports.ECDSA__factory = exports.IERC20__factory = exports.IERC20Metadata__factory = exports.ERC20Burnable__factory = exports.ERC20__factory = exports.Clones__factory = exports.IERC5267__factory = exports.IERC721Errors__factory = exports.IERC20Errors__factory = exports.IERC1155Errors__factory = exports.Ownable__factory = exports.factories = void 0;
+exports.TestToken__factory = exports.TestCoin__factory = exports.Test__factory = exports.MintableERC20__factory = exports.LoopTest__factory = exports.ISwap__factory = exports.Arb__factory = exports.OwnedBrevityInterpreter__factory = exports.NoncesBytes32__factory = exports.IBrevityInterpreter__factory = exports.SetOwner__factory = exports.CloneFactory__factory = exports.BrevityInterpreter__factory = exports.Strings__factory = exports.ShortStrings__factory = exports.Nonces__factory = exports.Math__factory = exports.EIP712__factory = exports.ECDSA__factory = exports.IERC20__factory = exports.IERC20Metadata__factory = exports.ERC20Burnable__factory = exports.ERC20__factory = exports.Clones__factory = exports.IERC5267__factory = exports.IERC721Errors__factory = exports.IERC20Errors__factory = exports.IERC1155Errors__factory = exports.Ownable__factory = exports.factories = void 0;
 exports.factories = __importStar(require("./factories"));
 var Ownable__factory_1 = require("./factories/@openzeppelin/contracts/access/Ownable__factory");
 Object.defineProperty(exports, "Ownable__factory", { enumerable: true, get: function () { return Ownable__factory_1.Ownable__factory; } });
@@ -65,6 +65,8 @@ var SetOwner__factory_1 = require("./factories/contracts/CloneFactory.sol/SetOwn
 Object.defineProperty(exports, "SetOwner__factory", { enumerable: true, get: function () { return SetOwner__factory_1.SetOwner__factory; } });
 var IBrevityInterpreter__factory_1 = require("./factories/contracts/IBrevityInterpreter__factory");
 Object.defineProperty(exports, "IBrevityInterpreter__factory", { enumerable: true, get: function () { return IBrevityInterpreter__factory_1.IBrevityInterpreter__factory; } });
+var NoncesBytes32__factory_1 = require("./factories/contracts/NoncesBytes32__factory");
+Object.defineProperty(exports, "NoncesBytes32__factory", { enumerable: true, get: function () { return NoncesBytes32__factory_1.NoncesBytes32__factory; } });
 var OwnedBrevityInterpreter__factory_1 = require("./factories/contracts/OwnedBrevityInterpreter__factory");
 Object.defineProperty(exports, "OwnedBrevityInterpreter__factory", { enumerable: true, get: function () { return OwnedBrevityInterpreter__factory_1.OwnedBrevityInterpreter__factory; } });
 var Arb__factory_1 = require("./factories/contracts/test/Arb.sol/Arb__factory");

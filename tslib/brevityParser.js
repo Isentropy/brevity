@@ -3,6 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.BrevityParser = exports.configFlagRequireVersion = void 0;
 const ethers_1 = require("ethers");
 const SYMBOL_REGEX = /[a-zA-Z][a-zA-Z_0-9]*/;
+const NEGATIVE_INT = /^-[0-9]+$/;
+const COMMENT_REGEX = /\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm;
 const OPCODE_STATICCALL = 0;
 const OPCODE_CALL = 1;
 const OPCODE_DELEGATECALL = 2;
@@ -53,6 +55,8 @@ const KW_GOTO = 'goto';
 const KW_REVERT = 'revert';
 const KW_RETURN = 'return';
 const KW_DUMPMEM = 'dumpMem';
+// minus 1 in 32 byte 2s compliment
+const BN_MINUS1 = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF');
 //const RUN_SELECTOR = BrevityInterpreter__factory.createInterface().getFunction("run").selector
 const ZeroArgQuantityKWs = new Map([
     ['this', QUANTITY_ADDRESSTHIS],
@@ -156,6 +160,10 @@ class BrevityParser {
     }
     encodeLiteral(val, parsingContext) {
         val = BigInt(val);
+        if (val < BigInt(0)) {
+            val = BN_MINUS1 + val + BigInt(1);
+            console.log(`val ${toBytes32(val)}`);
+        }
         // uints less than 2^255 sent unaltered
         if (val < BIT255_NOTLITERAL)
             return val;
@@ -171,6 +179,9 @@ class BrevityParser {
         q = q.trim();
         if (q.length === 0)
             throw Error(`${parsingContext.lineNumber}: Error parsing quantity "${q}"`);
+        if (NEGATIVE_INT.test(q)) {
+            return this.encodeLiteral(q, parsingContext);
+        }
         const [opPos, op] = this.findFirstValidOpCharacter(q);
         if (opPos !== -1) {
             const twoArg = {
@@ -349,7 +360,9 @@ class BrevityParser {
     }
     // returns Solidity call data
     parseBrevityScript(script) {
-        const lines = script.split(/\n/);
+        const woComments = script.replace(COMMENT_REGEX, '\n');
+        //console.log(`woComments ${woComments}`)
+        const lines = woComments.split(/\n/);
         const parsingContext = new ParsingContext();
         let memSize = 0;
         const instructions = [];

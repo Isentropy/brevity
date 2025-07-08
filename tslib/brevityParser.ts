@@ -1,6 +1,8 @@
 import { BigNumberish, FunctionFragment, toBeHex } from 'ethers';
 
 const SYMBOL_REGEX = /[a-zA-Z][a-zA-Z_0-9]*/
+const NEGATIVE_INT = /^-[0-9]+$/
+const COMMENT_REGEX = /\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm
 
 const OPCODE_STATICCALL = 0;
 const OPCODE_CALL = 1;
@@ -59,6 +61,9 @@ const KW_REVERT = 'revert'
 const KW_RETURN = 'return'
 const KW_DUMPMEM = 'dumpMem'
 
+
+// minus 1 in 32 byte 2s compliment
+const BN_MINUS1 = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF')
 //const RUN_SELECTOR = BrevityInterpreter__factory.createInterface().getFunction("run").selector
 
 const ZeroArgQuantityKWs = new Map<string, number>([
@@ -206,6 +211,10 @@ export class BrevityParser {
 
     private encodeLiteral(val: BigNumberish, parsingContext: ParsingContext): bigint {
         val = BigInt(val)
+        if(val < BigInt(0)) {
+            val = BN_MINUS1 + val + BigInt(1)
+            //console.log(`2s compliment val ${toBytes32(val)}`)
+        }
         // uints less than 2^255 sent unaltered
         if (val < BIT255_NOTLITERAL) return val;
         const parsed: Quantity = {
@@ -220,7 +229,9 @@ export class BrevityParser {
         //console.log(`parseQuantity: ${q}`)
         q = q.trim()
         if (q.length === 0) throw Error(`${parsingContext.lineNumber}: Error parsing quantity "${q}"`)
-
+        if(NEGATIVE_INT.test(q)) {
+            return this.encodeLiteral(q, parsingContext)
+        }
         const [opPos, op] = this.findFirstValidOpCharacter(q)
         if (opPos !== -1) {
             const twoArg: Quantity = {
@@ -390,7 +401,9 @@ export class BrevityParser {
 
     // returns Solidity call data
     parseBrevityScript(script: string): BrevityParserOutput {
-        const lines = script.split(/\n/)
+        const woComments = script.replace(COMMENT_REGEX,'\n')
+        //console.log(`woComments ${woComments}`)
+        const lines = woComments.split(/\n/)
         const parsingContext: ParsingContext = new ParsingContext()
         let memSize = 0
         const instructions: (Instruction | LazyEncodeInstuction)[] = []

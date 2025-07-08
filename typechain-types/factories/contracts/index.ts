@@ -5,4 +5,5 @@ export * as cloneFactorySol from "./CloneFactory.sol";
 export * as test from "./test";
 export { BrevityInterpreter__factory } from "./BrevityInterpreter__factory";
 export { IBrevityInterpreter__factory } from "./IBrevityInterpreter__factory";
+export { NoncesBytes32__factory } from "./NoncesBytes32__factory";
 export { OwnedBrevityInterpreter__factory } from "./OwnedBrevityInterpreter__factory";
