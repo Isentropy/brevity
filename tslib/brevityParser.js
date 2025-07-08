@@ -162,7 +162,7 @@ class BrevityParser {
         val = BigInt(val);
         if (val < BigInt(0)) {
             val = BN_MINUS1 + val + BigInt(1);
-            console.log(`val ${toBytes32(val)}`);
+            //console.log(`2s compliment val ${toBytes32(val)}`)
         }
         // uints less than 2^255 sent unaltered
         if (val < BIT255_NOTLITERAL)
