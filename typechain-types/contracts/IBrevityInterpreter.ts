@@ -8,6 +8,7 @@ import type {
   FunctionFragment,
   Result,
   Interface,
+  AddressLike,
   ContractRunner,
   ContractMethod,
   Listener,
@@ -51,8 +52,12 @@ export type ProgramStructOutput = [
 };
 
 export interface IBrevityInterpreterInterface extends Interface {
-  getFunction(nameOrSignature: "run" | "runMeta" | "version"): FunctionFragment;
+  getFunction(
+    nameOrSignature: "nonces" | "noop" | "run" | "runMeta" | "version"
+  ): FunctionFragment;
 
+  encodeFunctionData(functionFragment: "nonces", values: [AddressLike]): string;
+  encodeFunctionData(functionFragment: "noop", values: [ProgramStruct]): string;
   encodeFunctionData(functionFragment: "run", values: [ProgramStruct]): string;
   encodeFunctionData(
     functionFragment: "runMeta",
@@ -60,6 +65,8 @@ export interface IBrevityInterpreterInterface extends Interface {
   ): string;
   encodeFunctionData(functionFragment: "version", values?: undefined): string;
 
+  decodeFunctionResult(functionFragment: "nonces", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "noop", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "run", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "runMeta", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "version", data: BytesLike): Result;
@@ -108,6 +115,10 @@ export interface IBrevityInterpreter extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  nonces: TypedContractMethod<[signer: AddressLike], [bigint], "view">;
+
+  noop: TypedContractMethod<[p: ProgramStruct], [void], "payable">;
+
   run: TypedContractMethod<[p: ProgramStruct], [void], "payable">;
 
   runMeta: TypedContractMethod<
@@ -122,6 +133,12 @@ export interface IBrevityInterpreter extends BaseContract {
     key: string | FunctionFragment
   ): T;
 
+  getFunction(
+    nameOrSignature: "nonces"
+  ): TypedContractMethod<[signer: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "noop"
+  ): TypedContractMethod<[p: ProgramStruct], [void], "payable">;
   getFunction(
     nameOrSignature: "run"
   ): TypedContractMethod<[p: ProgramStruct], [void], "payable">;

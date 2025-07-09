@@ -4,9 +4,8 @@ import './BrevityInterpreter.sol';
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts/utils/Nonces.sol";
 
-contract OwnedBrevityInterpreter is EIP712, Nonces, BrevityInterpreter {
+contract OwnedBrevityInterpreter is EIP712, BrevityInterpreter {
     uint public constant version = 1;
 
     event NewOwner(address indexed newOwner);

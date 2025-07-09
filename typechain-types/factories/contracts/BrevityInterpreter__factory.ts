@@ -12,6 +12,95 @@ const _abi = [
   {
     inputs: [
       {
+        internalType: "address",
+        name: "account",
+        type: "address",
+      },
+      {
+        internalType: "uint256",
+        name: "currentNonce",
+        type: "uint256",
+      },
+    ],
+    name: "InvalidAccountNonce",
+    type: "error",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "signer",
+        type: "address",
+      },
+    ],
+    name: "nonces",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        components: [
+          {
+            internalType: "uint256",
+            name: "config",
+            type: "uint256",
+          },
+          {
+            components: [
+              {
+                internalType: "uint256",
+                name: "opcode",
+                type: "uint256",
+              },
+              {
+                internalType: "bytes32[]",
+                name: "args",
+                type: "bytes32[]",
+              },
+            ],
+            internalType: "struct Instruction[]",
+            name: "instructions",
+            type: "tuple[]",
+          },
+          {
+            components: [
+              {
+                internalType: "uint256",
+                name: "quantityType",
+                type: "uint256",
+              },
+              {
+                internalType: "bytes32[]",
+                name: "args",
+                type: "bytes32[]",
+              },
+            ],
+            internalType: "struct Quantity[]",
+            name: "quantities",
+            type: "tuple[]",
+          },
+        ],
+        internalType: "struct Program",
+        name: "p",
+        type: "tuple",
+      },
+    ],
+    name: "noop",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
         internalType: "uint256[]",
         name: "mem",
         type: "uint256[]",

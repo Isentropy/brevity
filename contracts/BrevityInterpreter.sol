@@ -3,9 +3,12 @@ pragma abicoder v2;
 import "hardhat/console.sol";
 import "./IBrevityInterpreter.sol";
 import "./Constants.sol";
+import "@openzeppelin/contracts/utils/Nonces.sol";
 
-abstract contract BrevityInterpreter is IBrevityInterpreter {
-    
+abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
+    function nonces(address signer) public virtual override(IBrevityInterpreter, Nonces) view returns (uint256) {
+        return super.nonces(signer);
+    }
     // a hash of the compiled program. not used by EIP712
     function _programHash(Program calldata p) internal pure returns (bytes32) {
         return keccak256(abi.encode(p.config, _encodeInstructionsArray(p.instructions), _encodeQuantityArray(p.quantities)));

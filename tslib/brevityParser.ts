@@ -60,6 +60,7 @@ const KW_GOTO = 'goto'
 const KW_REVERT = 'revert'
 const KW_RETURN = 'return'
 const KW_DUMPMEM = 'dumpMem'
+const KW_CLEARMEMSTACK = 'clearMemStack'
 
 
 // minus 1 in 32 byte 2s compliment
@@ -406,6 +407,7 @@ export class BrevityParser {
         const lines = woComments.split(/\n/)
         const parsingContext: ParsingContext = new ParsingContext()
         let memSize = 0
+        let maxMemSize = 0
         const instructions: (Instruction | LazyEncodeInstuction)[] = []
         // lineNumber starts at 1 to align w editors
         for (; parsingContext.lineNumber <= lines.length; parsingContext.lineNumber++) {
@@ -417,7 +419,10 @@ export class BrevityParser {
             if (pp.length > 1) {
                 const k = pp[0].trim()
                 this.checkNewSymbolName(k, parsingContext)
-                parsingContext.preprocessorSymbols.set(k, pp[1].trim())
+                const symbol = pp[1].trim()
+                // check if symbol is a defined preprocessor symbol 
+                const symbolResolved = parsingContext.preprocessorSymbols.get(symbol)
+                parsingContext.preprocessorSymbols.set(k, symbolResolved ? symbolResolved : symbol)
                 continue
             }
             //jump point #name
@@ -432,6 +437,11 @@ export class BrevityParser {
                     opcode: OPCODE_DUMPMEM,
                     args: []
                 })
+                continue
+            }
+            if (line.startsWith(KW_CLEARMEMSTACK)) {
+                parsingContext.memAddressNames.clear()
+                memSize = 0
                 continue
             }
             if (line.startsWith(KW_IF)) {
@@ -506,6 +516,7 @@ export class BrevityParser {
                     const v = varsToDefine[i].trim()
                     this.checkNewSymbolName(v, parsingContext)
                     parsingContext.memAddressNames.set(v, memSize++)
+                    if(memSize > maxMemSize) maxMemSize = memSize
                 }
             } else {
                 // see if left ends with op as in x += 1
@@ -558,7 +569,7 @@ export class BrevityParser {
             }
             return inst
         })
-        const config = toBytes32(BigInt(memSize) | (this.config.configFlags ? this.config.configFlags : BigInt(0)))
+        const config = toBytes32(BigInt(maxMemSize) | (this.config.configFlags ? this.config.configFlags : BigInt(0)))
         return { config, instructions: resolved, quantities: parsingContext.quantites }
     }
 

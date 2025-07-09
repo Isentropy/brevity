@@ -55,6 +55,7 @@ const KW_GOTO = 'goto';
 const KW_REVERT = 'revert';
 const KW_RETURN = 'return';
 const KW_DUMPMEM = 'dumpMem';
+const KW_CLEARMEMSTACK = 'clearMemStack';
 // minus 1 in 32 byte 2s compliment
 const BN_MINUS1 = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF');
 //const RUN_SELECTOR = BrevityInterpreter__factory.createInterface().getFunction("run").selector
@@ -365,6 +366,7 @@ class BrevityParser {
         const lines = woComments.split(/\n/);
         const parsingContext = new ParsingContext();
         let memSize = 0;
+        let maxMemSize = 0;
         const instructions = [];
         // lineNumber starts at 1 to align w editors
         for (; parsingContext.lineNumber <= lines.length; parsingContext.lineNumber++) {
@@ -377,7 +379,10 @@ class BrevityParser {
             if (pp.length > 1) {
                 const k = pp[0].trim();
                 this.checkNewSymbolName(k, parsingContext);
-                parsingContext.preprocessorSymbols.set(k, pp[1].trim());
+                const symbol = pp[1].trim();
+                // check if symbol is a defined preprocessor symbol 
+                const symbolResolved = parsingContext.preprocessorSymbols.get(symbol);
+                parsingContext.preprocessorSymbols.set(k, symbolResolved ? symbolResolved : symbol);
                 continue;
             }
             //jump point #name
@@ -392,6 +397,11 @@ class BrevityParser {
                     opcode: OPCODE_DUMPMEM,
                     args: []
                 });
+                continue;
+            }
+            if (line.startsWith(KW_CLEARMEMSTACK)) {
+                parsingContext.memAddressNames.clear();
+                memSize = 0;
                 continue;
             }
             if (line.startsWith(KW_IF)) {
@@ -463,6 +473,8 @@ class BrevityParser {
                     const v = varsToDefine[i].trim();
                     this.checkNewSymbolName(v, parsingContext);
                     parsingContext.memAddressNames.set(v, memSize++);
+                    if (memSize > maxMemSize)
+                        maxMemSize = memSize;
                 }
             }
             else {
@@ -522,7 +534,7 @@ class BrevityParser {
             }
             return inst;
         });
-        const config = toBytes32(BigInt(memSize) | (this.config.configFlags ? this.config.configFlags : BigInt(0)));
+        const config = toBytes32(BigInt(maxMemSize) | (this.config.configFlags ? this.config.configFlags : BigInt(0)));
         return { config, instructions: resolved, quantities: parsingContext.quantites };
     }
 }

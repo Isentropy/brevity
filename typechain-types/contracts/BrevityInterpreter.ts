@@ -8,6 +8,7 @@ import type {
   FunctionFragment,
   Result,
   Interface,
+  AddressLike,
   ContractRunner,
   ContractMethod,
   Listener,
@@ -52,9 +53,17 @@ export type ProgramStructOutput = [
 
 export interface BrevityInterpreterInterface extends Interface {
   getFunction(
-    nameOrSignature: "printMem" | "run" | "runMeta" | "version"
+    nameOrSignature:
+      | "nonces"
+      | "noop"
+      | "printMem"
+      | "run"
+      | "runMeta"
+      | "version"
   ): FunctionFragment;
 
+  encodeFunctionData(functionFragment: "nonces", values: [AddressLike]): string;
+  encodeFunctionData(functionFragment: "noop", values: [ProgramStruct]): string;
   encodeFunctionData(
     functionFragment: "printMem",
     values: [BigNumberish[], BigNumberish, BigNumberish]
@@ -66,6 +75,8 @@ export interface BrevityInterpreterInterface extends Interface {
   ): string;
   encodeFunctionData(functionFragment: "version", values?: undefined): string;
 
+  decodeFunctionResult(functionFragment: "nonces", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "noop", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "printMem", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "run", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "runMeta", data: BytesLike): Result;
@@ -115,6 +126,10 @@ export interface BrevityInterpreter extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  nonces: TypedContractMethod<[signer: AddressLike], [bigint], "view">;
+
+  noop: TypedContractMethod<[p: ProgramStruct], [void], "payable">;
+
   printMem: TypedContractMethod<
     [mem: BigNumberish[], from: BigNumberish, to: BigNumberish],
     [void],
@@ -135,6 +150,12 @@ export interface BrevityInterpreter extends BaseContract {
     key: string | FunctionFragment
   ): T;
 
+  getFunction(
+    nameOrSignature: "nonces"
+  ): TypedContractMethod<[signer: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "noop"
+  ): TypedContractMethod<[p: ProgramStruct], [void], "payable">;
   getFunction(
     nameOrSignature: "printMem"
   ): TypedContractMethod<

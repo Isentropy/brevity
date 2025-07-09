@@ -232,7 +232,7 @@ export interface OwnedBrevityInterpreter extends BaseContract {
     "view"
   >;
 
-  nonces: TypedContractMethod<[owner: AddressLike], [bigint], "view">;
+  nonces: TypedContractMethod<[signer: AddressLike], [bigint], "view">;
 
   noop: TypedContractMethod<[p: ProgramStruct], [void], "payable">;
 
@@ -302,7 +302,7 @@ export interface OwnedBrevityInterpreter extends BaseContract {
   >;
   getFunction(
     nameOrSignature: "nonces"
-  ): TypedContractMethod<[owner: AddressLike], [bigint], "view">;
+  ): TypedContractMethod<[signer: AddressLike], [bigint], "view">;
   getFunction(
     nameOrSignature: "noop"
   ): TypedContractMethod<[p: ProgramStruct], [void], "payable">;

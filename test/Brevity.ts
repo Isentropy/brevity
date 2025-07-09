@@ -6,7 +6,7 @@ import { BrevityParser, BrevityParserOutput, configFlagRequireVersion } from "..
 import { dataLength, parseEther, BigNumberish } from 'ethers'
 import * as fs from 'fs'
 import { OwnedBrevityInterpreter__factory, IBrevityInterpreter, CloneFactory__factory, OwnedBrevityInterpreter } from "../typechain-types";
-import { signMetaTx } from "../tslib/utils";
+import { signMetaTx, estimateGas } from "../tslib/utils";
 //hardhat default
 //const chainId = 31337
 
@@ -60,21 +60,6 @@ describe("Brevity", function () {
     return { loopTest, tokenA, tokenB, brevityParser, brevityInterpreter: proxy, proxy, owner, otherAccount, test };
   }
 
-  async function testAndProfile(brevityInterpreter: OwnedBrevityInterpreter, o: BrevityParserOutput, value : BigNumberish = BigInt(0)) {
-    let tx = await brevityInterpreter.run(o, {value})
-    let tr = await tx.wait()
-    if (!tr) throw Error()
-    //console.log(`${JSON.stringify(tx, null, 2)}`)
-    //console.log(`${JSON.stringify(tr, null, 2)}`)
-    const gasBrevityRun = tr.gasUsed
-    tx = await brevityInterpreter.noop(o)
-    tr = await tx.wait()
-    if (!tr) throw Error()
-    const noopGas = tr.gasUsed
-    //console.log('NOOP gas = ', (await tx.wait())?.gasUsed)
-    if (!gasBrevityRun || !noopGas) throw Error()
-    console.log(`Brevity gas: total = ${gasBrevityRun}, calldata = ${noopGas}, execution = ${gasBrevityRun - noopGas}`)
-  }
 
   describe("Run", function () {
 
@@ -94,7 +79,7 @@ describe("Brevity", function () {
       let tx = await loopTest.loop(ITERATIONS)
       const gasTestLoop = (await tx.wait())?.gasUsed
       if (!gasTestDeploy || !gasTestLoop) throw Error("undef")
-      await testAndProfile(brevityInterpreter, o)
+      await estimateGas(brevityInterpreter, o)
       console.log(`Solidity Test gas: total = ${gasTestDeploy + gasTestLoop}, deploy = ${gasTestDeploy}, execution = ${gasTestLoop}`)
     })
 
@@ -114,7 +99,7 @@ describe("Brevity", function () {
       const o = brevityParser.parseBrevityScript(inputText)
       //console.log(`${JSON.stringify(o, null, 2)}`)
       await tokenA.mint(bi, parseEther("100"))
-      await testAndProfile(brevityInterpreter, o)
+      await estimateGas(brevityInterpreter, o)
       const Arb = await hre.ethers.getContractFactory("Arb");
       const arb = await Arb.deploy()
       const deployTx = arb.deploymentTransaction()
@@ -172,7 +157,7 @@ describe("Brevity", function () {
       const inputText = prepend + fs.readFileSync(input, { encoding: 'utf-8' })
       const o = brevityParser.parseBrevityScript(inputText)
       //console.log(JSON.stringify(o, null, 2))
-      await testAndProfile(brevityInterpreter, o, parseEther(".001"))      
+      await estimateGas(brevityInterpreter, o, parseEther(".001"))      
     })
 
 
