@@ -9,7 +9,27 @@ const defaultConfig = {
     maxMem: 100
 };
 function help() {
-    console.log("HELP");
+    const msg = `Brevity CLI v1 args
+___________________________
+
+usage: cli.ts (args)* command
+
+args
+_______________
+-i | --infile <script> : the input Brevity script
+-o | --outfile <file> : the optional compiled output
+-t | --target <address> : target Brevity Interpreter address
+-r | --rpc <rpcUrl> : RPC URL
+-h | --help : help
+
+commands
+_______________
+compile: display or output compiled output ony
+estimateGas: estimate gas only, no TX
+run: run script using privateKey in PRVKEY envvar
+runMeta: run script signed by PRVKEY, TX paid by METATXKEY
+`;
+    console.log(msg);
 }
 async function cli() {
     let inputScript;
@@ -46,7 +66,7 @@ async function cli() {
         }
     }
     const cmd = process.argv[i];
-    if (!cmd) {
+    if (!cmd || cmd == '-h' || cmd == '--help') {
         help();
         process.exit(1);
     }
