@@ -1,6 +1,6 @@
 import { IBrevityInterpreter, OwnedBrevityInterpreter } from "../typechain-types";
 import { BrevityParserOutput } from "./brevityParser";
-import { Signer, BigNumberish } from 'ethers'
+import { Signer, BigNumberish, BytesLike, dataLength, toUtf8Bytes, toBeArray, AbiCoder, toBeHex, zeroPadBytes } from 'ethers'
 
 const METATX_TYPES = {
   Instruction: [
@@ -19,6 +19,21 @@ const METATX_TYPES = {
     { name: 'deadline', type: 'uint256' }
   ]
 }
+
+export function bytesMemoryObject(data : string) : string {
+  const len = dataLength(data)
+  const words = Math.ceil(len / 32)
+  data = zeroPadBytes(data, words*32)
+  if(data.startsWith('0x')) data = data.substring(2)  
+  console.log(`data padded ${data}`)
+  let rslt = toBeHex(len, 32) 
+  for(let i=0; i < words; i++) {
+    rslt += ",0x" + data.substring((64*i), (64*(i+1)))
+  }
+  return rslt
+}
+
+
 export async function estimateGas(brevityInterpreter: IBrevityInterpreter, o: BrevityParserOutput, value: BigNumberish = BigInt(0)) {
   const runGas = await brevityInterpreter.getFunction("run").estimateGas(o, {value})
   const noopGas = await brevityInterpreter.getFunction("noop").estimateGas(o, {value})

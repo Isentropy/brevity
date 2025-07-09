@@ -334,7 +334,7 @@ export class BrevityParser {
         } else {
             const firstPeriod = right.indexOf('.')
             address = this.parseQuantity(right.substring(0, firstPeriod), parsingContext)
-            let args
+            let args : string
             right = right.substring(firstPeriod + 1)
             if (right.startsWith('0x')) {
                 //eg address.0x12345678(arg1, arg2)
@@ -360,8 +360,14 @@ export class BrevityParser {
                     //rm ()
                     args = right.substring(firstParen + 1, right.length - 1)
                 }
-            }                
-            fnArgs = args.trim().length === 0 ? [] : args.split(',').map((arg) => { return toBytes32(this.parseQuantity(arg, parsingContext)) })
+            } 
+            // first dealias the proprocessor symbols so that can represent multibyte args eg "4,2,5"            
+            const dealiasedArgs = args.split(',').map((aliased)=>{
+                const dealiased = parsingContext.preprocessorSymbols.get(aliased)
+                return dealiased ? dealiased : aliased
+            }).join(',')
+            //console.log(`dealiased args ${dealiasedArgs}`)
+            fnArgs = dealiasedArgs.trim().length === 0 ? [] : dealiasedArgs.split(',').map((arg) => { return toBytes32(this.parseQuantity(arg, parsingContext)) })
         }
 
         let callArgs = [memWriteInfo, toBytes32(address)]

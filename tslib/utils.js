@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.signMetaTx = exports.estimateGas = void 0;
+exports.signMetaTx = exports.estimateGas = exports.bytesMemoryObject = void 0;
+const ethers_1 = require("ethers");
 const METATX_TYPES = {
     Instruction: [
         { name: 'opcode', type: 'uint256' },
@@ -18,6 +19,20 @@ const METATX_TYPES = {
         { name: 'deadline', type: 'uint256' }
     ]
 };
+function bytesMemoryObject(data) {
+    const len = (0, ethers_1.dataLength)(data);
+    const words = Math.ceil(len / 32);
+    data = (0, ethers_1.zeroPadBytes)(data, words * 32);
+    if (data.startsWith('0x'))
+        data = data.substring(2);
+    console.log(`data padded ${data}`);
+    let rslt = (0, ethers_1.toBeHex)(len, 32);
+    for (let i = 0; i < words; i++) {
+        rslt += ",0x" + data.substring((64 * i), (64 * (i + 1)));
+    }
+    return rslt;
+}
+exports.bytesMemoryObject = bytesMemoryObject;
 async function estimateGas(brevityInterpreter, o, value = BigInt(0)) {
     const runGas = await brevityInterpreter.getFunction("run").estimateGas(o, { value });
     const noopGas = await brevityInterpreter.getFunction("noop").estimateGas(o, { value });

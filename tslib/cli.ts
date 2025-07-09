@@ -3,7 +3,7 @@ import { BrevityParser, BrevityParserConfig } from "./brevityParser"
 import { readFileSync, writeFileSync } from 'fs'
 import { parse } from "path"
 import { BrevityInterpreter__factory, IBrevityInterpreter__factory } from "../typechain-types"
-import { estimateGas, signMetaTx } from "./utils"
+import { bytesMemoryObject, estimateGas, signMetaTx } from "./utils"
 import { writeFile } from "fs/promises"
 const defaultConfig: BrevityParserConfig = {
     maxMem: 100
@@ -125,7 +125,8 @@ async function cli() {
         const deadline: number = Math.floor(((new Date()).getTime()/1000) + 3600)
         const sig = await signMetaTx(signer, targetInterpreter, network.chainId, compiled, deadline)
         const tx = await targetInterpreter.getFunction("runMeta").populateTransaction(compiled, deadline, sig)
-        console.log(tx.data)       
+        console.log(tx.data)
+        if(outputFile) writeFileSync(outputFile, `bytesMemoryObject := ${bytesMemoryObject(tx.data)}`)
     } else if (cmd == 'estimateGas') {
         estimateGas(targetInterpreter, compiled)
     } else {

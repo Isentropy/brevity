@@ -127,6 +127,8 @@ async function cli() {
         const sig = await (0, utils_1.signMetaTx)(signer, targetInterpreter, network.chainId, compiled, deadline);
         const tx = await targetInterpreter.getFunction("runMeta").populateTransaction(compiled, deadline, sig);
         console.log(tx.data);
+        if (outputFile)
+            (0, fs_1.writeFileSync)(outputFile, `bytesMemoryObject := ${(0, utils_1.bytesMemoryObject)(tx.data)}`);
     }
     else if (cmd == 'estimateGas') {
         (0, utils_1.estimateGas)(targetInterpreter, compiled);
