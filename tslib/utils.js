@@ -26,7 +26,7 @@ async function estimateGas(brevityInterpreter, o, value = BigInt(0)) {
     console.log(`Brevity gas: total = ${runGas}, calldata = ${noopGas}, execution = ${runGas - noopGas}`);
 }
 exports.estimateGas = estimateGas;
-async function signMetaTx(signer, brevityInterpreter, chainId, output, deadline = ((new Date()).getTime() / 1000) + 3600) {
+async function signMetaTx(signer, brevityInterpreter, chainId, output, deadline) {
     const bi = await brevityInterpreter.getAddress();
     const domain = {
         name: 'Brev',

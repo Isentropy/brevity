@@ -10,7 +10,7 @@ const defaultConfig: BrevityParserConfig = {
 }
 
 function help() {
-
+    console.log("HELP")
 }
 
 
@@ -25,7 +25,7 @@ async function cli() {
     let targetInterpreterAddress : string | undefined
     let value : BigNumberish  = 0
     let i = 2
-    for (; i < process.argv.length; i++) {
+    for (; i < process.argv.length -1; i++) {
         if (process.argv[i] == '-i' || process.argv[i] == '--infile') {
             inputScript = readFileSync(process.argv[++i], { encoding: 'utf-8' })
         } else if (process.argv[i] == '-f' || process.argv[i] == '--flags') {
@@ -43,12 +43,11 @@ async function cli() {
             break
         }
     }
-    ++i
-    if (i == process.argv.length) {
-        help()
-        process.exit(0)
-    }
     const cmd = process.argv[i]
+    if(!cmd) {
+            help()
+            process.exit(1)
+    }
     const parser = new BrevityParser(defaultConfig)
     const compiled = inputScript ? parser.parseBrevityScript(inputScript) : undefined
     
@@ -60,7 +59,12 @@ async function cli() {
         process.exit(1)
     }
     if (cmd == 'compile') {
-        if(outputFile) writeFileSync(outputFile, JSON.stringify(compiled, null, 2))
+        const code = JSON.stringify(compiled, null, 2)
+        if(outputFile) { 
+            writeFileSync(outputFile, code)
+        } else {
+            console.log(code)
+        }
         process.exit(0)
     }
     if (!provider) {
@@ -73,21 +77,29 @@ async function cli() {
         console.error(`No signer specified. Put private key in PRVKEY envvar`)
         process.exit(1)
     }
-    if(process.env["METATXKEY"] && cmd.toLowerCase().endsWith("meta")) {
+    if(process.env["METATXKEY"]) {
         metaTxPayer = new Wallet(process.env["METATXKEY"], provider)
-    } else {}
+    } 
+    let isMeta = false
+    if (cmd.toLowerCase().endsWith("meta")) {
+        isMeta = true
+        if(!metaTxPayer) {
+            console.error(`No metaTxKey specified. Put private key in METATXKEY envvar`)
+            process.exit(1)
+        }
+    }
 
     if(!targetInterpreterAddress) {
         console.error(`No target interpreter given`)
         process.exit(1)
     }
-    const targetInterpreter =  IBrevityInterpreter__factory.connect(targetInterpreterAddress, metaTxPayer ? metaTxPayer : signer)
+    const targetInterpreter =  IBrevityInterpreter__factory.connect(targetInterpreterAddress, isMeta ? metaTxPayer : signer)
     if (cmd == 'run') {
         const resp = await targetInterpreter.run(compiled, {value})
         console.log(`Submitted run txHash ${resp.hash}`)        
     } else if (cmd == 'runMeta') {
         const network = await provider.getNetwork()
-        const deadline: number = ((new Date()).getTime()/1000) + 3600
+        const deadline: number = Math.floor(((new Date()).getTime()/1000) + 3600)
         const sig = await signMetaTx(signer, targetInterpreter, network.chainId, compiled, deadline)
         const resp = await targetInterpreter.runMeta(compiled, deadline, sig)
         console.log(`Submitted runMeta txHash ${resp.hash}`)        
@@ -97,10 +109,6 @@ async function cli() {
         console.error(`Unknown cmd: ${cmd}`)
         process.exit(1)
     }
-
-    if (!inputScript) throw Error("must specify input text")
-    const output = parser.parseBrevityScript(inputScript)
-    console.log(`${JSON.stringify(output, null, 2)}`)
 }
 
 cli()
