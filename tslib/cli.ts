@@ -2,7 +2,7 @@ import { BigNumberish, BytesLike, JsonRpcProvider, Provider, Signer, Wallet } fr
 import { BrevityParser, BrevityParserConfig } from "./brevityParser"
 import { readFileSync, writeFileSync } from 'fs'
 import { parse } from "path"
-import { BrevityInterpreter__factory, IBrevityInterpreter__factory } from "typechain-types"
+import { BrevityInterpreter__factory, IBrevityInterpreter__factory } from "../typechain-types"
 import { estimateGas, signMetaTx } from "./utils"
 import { writeFile } from "fs/promises"
 const defaultConfig: BrevityParserConfig = {

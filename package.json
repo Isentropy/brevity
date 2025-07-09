@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.2",
-    "ethers": "^6.13.4"
+    "ethers": "^6.13.4",
+    "tsx": "^4.20.3"
   }
-
 }

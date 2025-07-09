@@ -18,6 +18,7 @@ async function cli() {
     let signer;
     let metaTxPayer;
     let targetInterpreterAddress;
+    let value = 0;
     let i = 2;
     for (; i < process.argv.length; i++) {
         if (process.argv[i] == '-i' || process.argv[i] == '--infile') {
@@ -55,6 +56,11 @@ async function cli() {
         console.error(`No input script`);
         process.exit(1);
     }
+    if (cmd == 'compile') {
+        if (outputFile)
+            (0, fs_1.writeFileSync)(outputFile, JSON.stringify(compiled, null, 2));
+        process.exit(0);
+    }
     if (!provider) {
         console.error(`No RPC given`);
         process.exit(1);
@@ -76,12 +82,15 @@ async function cli() {
     }
     const targetInterpreter = typechain_types_1.IBrevityInterpreter__factory.connect(targetInterpreterAddress, metaTxPayer ? metaTxPayer : signer);
     if (cmd == 'run') {
-        const resp = await targetInterpreter.run(compiled);
-        console.log(`Submitted Run txHash ${resp.hash}`);
+        const resp = await targetInterpreter.run(compiled, { value });
+        console.log(`Submitted run txHash ${resp.hash}`);
     }
     else if (cmd == 'runMeta') {
         const network = await provider.getNetwork();
-        (0, utils_1.signMetaTx)(signer, targetInterpreter, network.chainId, compiled);
+        const deadline = ((new Date()).getTime() / 1000) + 3600;
+        const sig = await (0, utils_1.signMetaTx)(signer, targetInterpreter, network.chainId, compiled, deadline);
+        const resp = await targetInterpreter.runMeta(compiled, deadline, sig);
+        console.log(`Submitted runMeta txHash ${resp.hash}`);
     }
     else if (cmd == 'estimateGas') {
         (0, utils_1.estimateGas)(targetInterpreter, compiled);
