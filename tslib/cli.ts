@@ -26,9 +26,10 @@ _______________
 commands
 _______________
 compile: display or output compiled output ony
-estimateGas: estimate gas only, no TX
+estimateGas: estimate gas only. no TX
 run: run script using privateKey in PRVKEY envvar
 runMeta: run script signed by PRVKEY, TX paid by METATXKEY
+signMeta: sign metaTx with PRVKEY. returns "data" field of metaTx
 `
     console.log(msg)
 }
@@ -100,29 +101,31 @@ async function cli() {
     if(process.env["METATXKEY"]) {
         metaTxPayer = new Wallet(process.env["METATXKEY"], provider)
     } 
-    let isMeta = false
-    if (cmd.toLowerCase().endsWith("meta")) {
-        isMeta = true
-        if(!metaTxPayer) {
-            console.error(`No metaTxKey specified. Put private key in METATXKEY envvar`)
-            process.exit(1)
-        }
-    }
-
+  
     if(!targetInterpreterAddress) {
         console.error(`No target interpreter given`)
         process.exit(1)
     }
-    const targetInterpreter =  IBrevityInterpreter__factory.connect(targetInterpreterAddress, isMeta ? metaTxPayer : signer)
+    const targetInterpreter =  IBrevityInterpreter__factory.connect(targetInterpreterAddress, metaTxPayer && cmd == 'runMeta' ? metaTxPayer : signer)
     if (cmd == 'run') {
         const resp = await targetInterpreter.run(compiled, {value})
         console.log(`Submitted run txHash ${resp.hash}`)        
     } else if (cmd == 'runMeta') {
+        if(!metaTxPayer) {
+            console.error(`No metaTxKey specified. Put private key in METATXKEY envvar`)
+            process.exit(1)
+        }
         const network = await provider.getNetwork()
         const deadline: number = Math.floor(((new Date()).getTime()/1000) + 3600)
         const sig = await signMetaTx(signer, targetInterpreter, network.chainId, compiled, deadline)
         const resp = await targetInterpreter.runMeta(compiled, deadline, sig)
         console.log(`Submitted runMeta txHash ${resp.hash}`)        
+    } else if (cmd == 'signMeta') {
+        const network = await provider.getNetwork()
+        const deadline: number = Math.floor(((new Date()).getTime()/1000) + 3600)
+        const sig = await signMetaTx(signer, targetInterpreter, network.chainId, compiled, deadline)
+        const tx = await targetInterpreter.getFunction("runMeta").populateTransaction(compiled, deadline, sig)
+        console.log(tx.data)       
     } else if (cmd == 'estimateGas') {
         estimateGas(targetInterpreter, compiled)
     } else {
