@@ -2,11 +2,13 @@
 
 Copyright 2024 Isentropy LLC. All Rights Reserved
 
-NOT LICENSED
-
 Brevity is a language, similar in syntax to Solidity, that is compactly transpiled to an EVM transaction and run on a **general purpose smart contract, the Brevity Interpreter**. Because Brevity is interpreted, it doesn't need to deploy new smart contracts to implement new workflows.
 
-Brevity is **NOT YET AUDITED** and in development and alpha. We welcome code review and design comments.
+Brevity is **NOT YET AUDITED** and in development and alpha. Use at your own risk. We welcome code review and design comments. Note that the [LICENSE](LICENSE) limits commerical use. For commercial inquires, please email info@isentropy.com. 
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
 
 ## A language-in-a-language!? Why?
  - **All-in-One General Purpose Contract** Users can deploy their own Brevity Interpreter contract that is Owned by them. The contract can run arbitrary workflows without needing to deploy more code or move owned tokens. Deployment using [Clone pattern](contracts/CloneFactory.sol) is supported, and costs less than 100000 gas.
@@ -38,10 +40,11 @@ _______________
 commands
 _______________
 build: transpile script into Breviety Interpreter instructions 
+deploy: deploy OwnedBrevityInterpreter, TX paid by PRVKEY, owner = target if defined, otherwise address of PRVKEY
 estimateGas: estimate gas only. no TX
 run: run script using privateKey in PRVKEY envvar
 runMeta: run script signed by PRVKEY, TX paid by METATXKEY
-signMeta: sign metaTx with PRVKEY. returns "data" field of metaTx
+signMeta: sign metaTx with PRVKEY. returns "data" field of metaTx. no TX
 
 envvars
 _______________
@@ -157,7 +160,3 @@ Brevity Scripts (```.brv``` ) are transpiled into a Brevity Calldata Program tha
 ### Usage
 See [OwnedBrevityInterpreter](contracts/OwnedBrevityInterpreter.sol) for an example of a Brevity Interpreter contract that can be used only by an owner.
 
-
-## Legal
-
-THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

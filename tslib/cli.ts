@@ -27,8 +27,7 @@ commands
 _______________
 build: transpile script into Breviety Interpreter instructions 
 estimateGas: estimate gas only. no TX
-deploy: deploy OwnedBrevityInterpreter as PRVKEY
-deployMeta: deploy OwnedBrevityInterpreter owned by PRVKEY, TX paid by METATXKEY
+deploy: deploy OwnedBrevityInterpreter, TX paid by PRVKEY, owner = target if defined, otherwise address of PRVKEY
 run: run script using privateKey in PRVKEY envvar
 runMeta: run script signed by PRVKEY, TX paid by METATXKEY
 signMeta: sign metaTx with PRVKEY. returns "data" field of metaTx
@@ -96,14 +95,16 @@ async function cli() {
         }
     }
 
-    if (cmd.startsWith('deploy')) {
+    if (cmd == 'deploy') {
         if(!signer) {
             console.error(`No signer specified. Put private key in PRVKEY envvar`)
             process.exit(1)
         }
-        const factory = new OwnedBrevityInterpreter__factory(txPayer)
-        const rslt = await factory.deploy(await signer.getAddress())
-        console.log(`deployed to ${await rslt.getAddress()} in txHash ${rslt.deploymentTransaction()?.hash}`)
+        const factory = new OwnedBrevityInterpreter__factory(signer)
+        // owner can be passed using -t target
+        const owner = targetInterpreterAddress ? targetInterpreterAddress : await signer.getAddress()
+        const rslt = await factory.deploy(owner)
+        console.log(`deployed at ${await rslt.getAddress()}, owner = ${owner}, in txHash ${rslt.deploymentTransaction()?.hash}`)
         process.exit(0)
     }
     const parser = new BrevityParser(defaultConfig)
