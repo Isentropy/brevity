@@ -30,6 +30,12 @@ estimateGas: estimate gas only. no TX
 run: run script using privateKey in PRVKEY envvar
 runMeta: run script signed by PRVKEY, TX paid by METATXKEY
 signMeta: sign metaTx with PRVKEY. returns "data" field of metaTx
+
+envvars
+_______________
+the private keys are stored in envvars:
+PRVKEY : the key that owns Brevity Interpreter (needed for all commands except "build")
+METATXKEY : the key that pays for TX (need for command "runMeta")
 `
     console.log(msg)
 }
