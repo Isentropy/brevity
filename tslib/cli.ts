@@ -1,8 +1,8 @@
-import { BigNumberish, BytesLike, JsonRpcProvider, Provider, Signer, Wallet } from "ethers"
+import { BigNumberish, BytesLike, JsonRpcProvider, parseEther, Provider, Signer, Wallet } from "ethers"
 import { BrevityParser, BrevityParserConfig } from "./brevityParser"
 import { readFileSync, writeFileSync } from 'fs'
 import { parse } from "path"
-import { BrevityInterpreter__factory, IBrevityInterpreter__factory } from "../typechain-types"
+import { BrevityInterpreter__factory, IBrevityInterpreter__factory, OwnedBrevityInterpreter__factory } from "../typechain-types"
 import { bytesMemoryObject, estimateGas, signMetaTx } from "./utils"
 import { writeFile } from "fs/promises"
 const defaultConfig: BrevityParserConfig = {
@@ -27,6 +27,8 @@ commands
 _______________
 build: transpile script into Breviety Interpreter instructions 
 estimateGas: estimate gas only. no TX
+deploy: deploy OwnedBrevityInterpreter as PRVKEY
+deployMeta: deploy OwnedBrevityInterpreter owned by PRVKEY, TX paid by METATXKEY
 run: run script using privateKey in PRVKEY envvar
 runMeta: run script signed by PRVKEY, TX paid by METATXKEY
 signMeta: sign metaTx with PRVKEY. returns "data" field of metaTx
@@ -66,6 +68,9 @@ async function cli() {
             targetInterpreterAddress = process.argv[++i]
         } else if (process.argv[i] == '-r' || process.argv[i] == '--rpc') {
             provider = new JsonRpcProvider(process.argv[++i])
+        } else if (process.argv[i] == '-v' || process.argv[i] == '--value') {
+            value = process.argv[++i]
+            if(value.toLowerCase().endsWith('eth')) value = parseEther(value.substring(0, value.length - 3))
         } else {
             break
         }
@@ -75,11 +80,34 @@ async function cli() {
             help()
             process.exit(1)
     }
+    if(process.env["PRVKEY"]) {
+        signer = new Wallet(process.env["PRVKEY"], provider)
+    }
+    if(process.env["METATXKEY"]) {
+        metaTxPayer = new Wallet(process.env["METATXKEY"], provider)
+    }
+    let txPayer = signer
+    if(cmd.toLowerCase().endsWith('meta')) {
+        if(metaTxPayer) {
+            txPayer = metaTxPayer
+        } else {
+            console.error(`No metaTxKey specified. Put private key in METATXKEY envvar`)
+            process.exit(1)
+        }
+    }
+
+    if (cmd.startsWith('deploy')) {
+        if(!signer) {
+            console.error(`No signer specified. Put private key in PRVKEY envvar`)
+            process.exit(1)
+        }
+        const factory = new OwnedBrevityInterpreter__factory(txPayer)
+        const rslt = await factory.deploy(await signer.getAddress())
+        console.log(`deployed to ${await rslt.getAddress()} in txHash ${rslt.deploymentTransaction()?.hash}`)
+        process.exit(0)
+    }
     const parser = new BrevityParser(defaultConfig)
     const compiled = inputScript ? parser.parseBrevityScript(inputScript) : undefined
-    
-
-
 
     if (!compiled) {
         console.error(`No input script`)
@@ -98,29 +126,19 @@ async function cli() {
         console.error(`No RPC given`)
         process.exit(1)
     }
-    if(process.env["PRVKEY"]) {
-        signer = new Wallet(process.env["PRVKEY"], provider)
-    } else {
+    if(!signer) {
         console.error(`No signer specified. Put private key in PRVKEY envvar`)
         process.exit(1)
     }
-    if(process.env["METATXKEY"]) {
-        metaTxPayer = new Wallet(process.env["METATXKEY"], provider)
-    } 
-  
     if(!targetInterpreterAddress) {
         console.error(`No target interpreter given`)
         process.exit(1)
     }
-    const targetInterpreter =  IBrevityInterpreter__factory.connect(targetInterpreterAddress, metaTxPayer && cmd == 'runMeta' ? metaTxPayer : signer)
+    const targetInterpreter =  IBrevityInterpreter__factory.connect(targetInterpreterAddress, txPayer)
     if (cmd == 'run') {
         const resp = await targetInterpreter.run(compiled, {value})
         console.log(`Submitted run txHash ${resp.hash}`)        
     } else if (cmd == 'runMeta') {
-        if(!metaTxPayer) {
-            console.error(`No metaTxKey specified. Put private key in METATXKEY envvar`)
-            process.exit(1)
-        }
         const network = await provider.getNetwork()
         const deadline: number = Math.floor(((new Date()).getTime()/1000) + 3600)
         const sig = await signMetaTx(signer, targetInterpreter, network.chainId, compiled, deadline)
