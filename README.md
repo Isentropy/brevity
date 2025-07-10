@@ -4,6 +4,8 @@ Copyright 2024 Isentropy LLC. All Rights Reserved
 
 Brevity is a language, similar in syntax to Solidity, that is compactly transpiled to an EVM transaction and run on a **general purpose smart contract, the Brevity Interpreter**. Because Brevity is interpreted, it doesn't need to deploy new smart contracts to implement new workflows.
 
+#### Please Note
+
 Brevity is **NOT YET AUDITED** and in development and alpha. Use at your own risk. We welcome code review and design comments. Note that the [LICENSE](LICENSE) limits commerical use. For commercial inquires, please email info@isentropy.com. 
 
 THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -11,7 +13,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 
 
 ## A language-in-a-language!? Why?
- - **All-in-One General Purpose Contract** Users can deploy their own Brevity Interpreter contract that is Owned by them. The contract can run arbitrary workflows without needing to deploy more code or move owned tokens. Deployment using [Clone pattern](contracts/CloneFactory.sol) is supported, and costs less than 100000 gas.
+ - **All-in-One General Purpose Contract** Users can deploy a privately controlled Brevity Interpreter  contract, which can run arbitrary workflows without deploying more code or moving tokens. Deployment using [Clone pattern](contracts/CloneFactory.sol) is supported, and costs less than 100000 gas.
  - **Guardrails**: Brevity supports a [hook to EVM CALLs](contracts/BrevityInterpreter.sol#L219C21-L219C32) that can be used to apply restrictons on which external methods are called. 
  - **Metering**: The [hook to EVM CALLs](contracts/BrevityInterpreter.sol#L219C21-L219C32) allows for metering of asset transfers. 
  - **MetaTransactions**: Brevity calls can be submitted as EIP712 metaTxs, enabling Brevity Interpreters to be controlled by wallets that hold no tokens. This functionality is built into [Brevity CLI](tslib/cli.ts)
