@@ -9,9 +9,9 @@ Brevity is a language, similar in syntax to Solidity, that is compactly transpil
 Brevity is **NOT YET AUDITED** and in development and alpha. We welcome code review and design comments.
 
 ## A language-in-a-language!? Why?
- - **All-in-One General Purpose Contract** Users can deploy their own Brevity Interpreter contract that is Owned by them. The contract can run arbitrary workflows without needing to deploy more code or move owned tokens. Deployment using [Clone pattern](https://github.com/Isentropy/brevity/blob/777be66f6ead630e099292367bb40fb3665029d0/contracts/CloneFactory.sol#L15) is supported, and costs less than 100000 gas.
- - **Guardrails**: Brevity supports a [hook to EVM CALLs](https://github.com/Isentropy/brevity/blob/0b533d446eb8a56cbf7a6e2773f6e78df921b703/contracts/BrevityInterpreter.sol#L219C21-L219C32) that can be used to apply restrictons on which external methods are called. 
- - **Metering**: The [hook to EVM CALLs](https://github.com/Isentropy/brevity/blob/0b533d446eb8a56cbf7a6e2773f6e78df921b703/contracts/BrevityInterpreter.sol#L219C21-L219C32) allows for metering of asset transfers. 
+ - **All-in-One General Purpose Contract** Users can deploy their own Brevity Interpreter contract that is Owned by them. The contract can run arbitrary workflows without needing to deploy more code or move owned tokens. Deployment using [Clone pattern](contracts/CloneFactory.sol) is supported, and costs less than 100000 gas.
+ - **Guardrails**: Brevity supports a [hook to EVM CALLs](contracts/BrevityInterpreter.sol#L219C21-L219C32) that can be used to apply restrictons on which external methods are called. 
+ - **Metering**: The [hook to EVM CALLs](contracts/BrevityInterpreter.sol#L219C21-L219C32) allows for metering of asset transfers. 
  - **MetaTransactions**: Brevity calls can be submitted as EIP712 metaTxs, enabling Brevity Interpreters to be controlled by wallets that hold no tokens. This functionality is built into [Brevity CLI](tslib/cli.ts)
  - **Gas Saving**: EVM contracts are expensive to deploy relative to calldata. Deploying EVM code costs around 200 gas/byte, whereas calldata costs 4-16 gas/byte. Brevity saves on deployment cost by putting code in the calldata and interpreting. For a simple arbitrage example in [Brevity](test/briefs/example.brv) and [Solidity](contracts/Arb.sol):
 ```

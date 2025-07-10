@@ -1,10 +1,10 @@
-// for TESTING
-// convert half of msg.value into USDC, then add liquidity with the other with USDC 
-
-
 /*
-sdssada
+for TESTING
+convert half of msg.value into USDC, then add liquidity with the other with USDC 
 */
+
+// preprocessor symbols
+
 uniswapRouter := 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45
 uniswapPositionManager := 0xC36442b4a4522E871399CD717aBDD847Ab11FE88
 weth := 0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2
@@ -18,8 +18,8 @@ ownerOf := ownerOf(uint256)
 tickUpper := 887220
 // -887220 in 32byte 2s compliment
 tickLower := -887220
+// same as:
 //tickLower := 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF2764C
-//tickLower := 0x0000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF2764C
 
 
 CALL {"value": "msg.value"} weth.deposit()()
