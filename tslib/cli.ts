@@ -18,14 +18,14 @@ usage: cli.ts (args)* command
 args
 _______________
 -i | --infile <script> : the input Brevity script
--o | --outfile <file> : the optional compiled output
+-o | --outfile <file> : optional output to file instead of stdout
 -t | --target <address> : target Brevity Interpreter address
 -r | --rpc <rpcUrl> : RPC URL
 -h | --help : help
 
 commands
 _______________
-compile: display or output compiled output ony
+build: transpile script into Breviety Interpreter instructions 
 estimateGas: estimate gas only. no TX
 run: run script using privateKey in PRVKEY envvar
 runMeta: run script signed by PRVKEY, TX paid by METATXKEY
@@ -79,7 +79,7 @@ async function cli() {
         console.error(`No input script`)
         process.exit(1)
     }
-    if (cmd == 'compile') {
+    if (cmd == 'build') {
         const code = JSON.stringify(compiled, null, 2)
         if(outputFile) { 
             writeFileSync(outputFile, code)
