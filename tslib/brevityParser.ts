@@ -1,4 +1,5 @@
-import { BigNumberish, FunctionFragment, toBeHex } from 'ethers';
+import { BigNumberish, dataLength, FunctionFragment, getBytes, hexlify, toBeHex } from 'ethers';
+import { bytesMemoryObject } from './utils';
 
 const SYMBOL_REGEX = /[a-zA-Z][a-zA-Z_0-9]*/
 const NEGATIVE_INT = /^-[0-9]+$/
@@ -363,8 +364,17 @@ export class BrevityParser {
             } 
             // first dealias the proprocessor symbols so that can represent multibyte args eg "4,2,5"            
             const dealiasedArgs = args.split(',').map((aliased)=>{
-                const dealiased = parsingContext.preprocessorSymbols.get(aliased)
-                return dealiased ? dealiased : aliased
+                aliased = aliased.trim()
+                let dealiased = parsingContext.preprocessorSymbols.get(aliased)
+                if(!dealiased) return aliased
+                // translate "strings" and bytes > 32 to bytes/string EVM mem representation
+                // so they can be used in fn calls
+                if(dealiased.startsWith("\"") && dealiased.endsWith("\"")) {
+                    dealiased = bytesMemoryObject(hexlify(Buffer.from(dealiased.substring(1, dealiased.length -1), 'utf8')))
+                } else if(dealiased.startsWith('0x') && dataLength(dealiased) > 32) {
+                    dealiased = bytesMemoryObject(dealiased)
+                }
+                return dealiased
             }).join(',')
             //console.log(`dealiased args ${dealiasedArgs}`)
             fnArgs = dealiasedArgs.trim().length === 0 ? [] : dealiasedArgs.split(',').map((arg) => { return toBytes32(this.parseQuantity(arg, parsingContext)) })
