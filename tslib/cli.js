@@ -26,6 +26,7 @@ commands
 _______________
 build: transpile script into Breviety Interpreter instructions 
 estimateGas: estimate gas only. no TX
+deploy: deploy OwnedBrevityInterpreter, TX paid by PRVKEY, owner = target if defined, otherwise address of PRVKEY
 run: run script using privateKey in PRVKEY envvar
 runMeta: run script signed by PRVKEY, TX paid by METATXKEY
 signMeta: sign metaTx with PRVKEY. returns "data" field of metaTx
@@ -68,6 +69,11 @@ async function cli() {
         else if (process.argv[i] == '-r' || process.argv[i] == '--rpc') {
             provider = new ethers_1.JsonRpcProvider(process.argv[++i]);
         }
+        else if (process.argv[i] == '-v' || process.argv[i] == '--value') {
+            value = process.argv[++i];
+            if (value.toLowerCase().endsWith('eth'))
+                value = (0, ethers_1.parseEther)(value.substring(0, value.length - 3));
+        }
         else {
             break;
         }
@@ -76,6 +82,34 @@ async function cli() {
     if (!cmd || cmd == '-h' || cmd == '--help') {
         help();
         process.exit(1);
+    }
+    if (process.env["PRVKEY"]) {
+        signer = new ethers_1.Wallet(process.env["PRVKEY"], provider);
+    }
+    if (process.env["METATXKEY"]) {
+        metaTxPayer = new ethers_1.Wallet(process.env["METATXKEY"], provider);
+    }
+    let txPayer = signer;
+    if (cmd.toLowerCase().endsWith('meta')) {
+        if (metaTxPayer) {
+            txPayer = metaTxPayer;
+        }
+        else {
+            console.error(`No metaTxKey specified. Put private key in METATXKEY envvar`);
+            process.exit(1);
+        }
+    }
+    if (cmd == 'deploy') {
+        if (!signer) {
+            console.error(`No signer specified. Put private key in PRVKEY envvar`);
+            process.exit(1);
+        }
+        const factory = new typechain_types_1.OwnedBrevityInterpreter__factory(signer);
+        // owner can be passed using -t target
+        const owner = targetInterpreterAddress ? targetInterpreterAddress : await signer.getAddress();
+        const rslt = await factory.deploy(owner);
+        console.log(`deployed at ${await rslt.getAddress()}, owner = ${owner}, in txHash ${rslt.deploymentTransaction()?.hash}`);
+        process.exit(0);
     }
     const parser = new brevityParser_1.BrevityParser(defaultConfig);
     const compiled = inputScript ? parser.parseBrevityScript(inputScript) : undefined;
@@ -97,30 +131,20 @@ async function cli() {
         console.error(`No RPC given`);
         process.exit(1);
     }
-    if (process.env["PRVKEY"]) {
-        signer = new ethers_1.Wallet(process.env["PRVKEY"], provider);
-    }
-    else {
+    if (!signer) {
         console.error(`No signer specified. Put private key in PRVKEY envvar`);
         process.exit(1);
-    }
-    if (process.env["METATXKEY"]) {
-        metaTxPayer = new ethers_1.Wallet(process.env["METATXKEY"], provider);
     }
     if (!targetInterpreterAddress) {
         console.error(`No target interpreter given`);
         process.exit(1);
     }
-    const targetInterpreter = typechain_types_1.IBrevityInterpreter__factory.connect(targetInterpreterAddress, metaTxPayer && cmd == 'runMeta' ? metaTxPayer : signer);
+    const targetInterpreter = typechain_types_1.IBrevityInterpreter__factory.connect(targetInterpreterAddress, txPayer);
     if (cmd == 'run') {
         const resp = await targetInterpreter.run(compiled, { value });
         console.log(`Submitted run txHash ${resp.hash}`);
     }
     else if (cmd == 'runMeta') {
-        if (!metaTxPayer) {
-            console.error(`No metaTxKey specified. Put private key in METATXKEY envvar`);
-            process.exit(1);
-        }
         const network = await provider.getNetwork();
         const deadline = Math.floor(((new Date()).getTime() / 1000) + 3600);
         const sig = await (0, utils_1.signMetaTx)(signer, targetInterpreter, network.chainId, compiled, deadline);

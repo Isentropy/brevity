@@ -14,7 +14,8 @@ contract OwnedBrevityInterpreter is EIP712, BrevityInterpreter {
     error TransferFailed(address erc20, address from, address to, uint amount);
 
     modifier onlyOwner() {
-        require(msg.sender == owner, NotOwner());
+        // msg.sender == address(this) allows self-calls
+        require(msg.sender == owner || msg.sender == address(this), NotOwner());
         _;
     }
 
