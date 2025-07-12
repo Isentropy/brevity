@@ -22,7 +22,7 @@ tickLower := -887220
 //tickLower := 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF2764C
 
 
-CALL {"value": "msg.value"} weth.deposit()()
+CALL {value: msg.value} weth.deposit()()
 var wethAmt = STATICCALL weth.balanceOf(this)
 // convert half to USDC and put half as liquidity
 wethAmt /= 2
@@ -34,5 +34,5 @@ var tokenId, liquidity, amount0, amount1 = CALL uniswapPositionManager.mint(usdc
 var tokenOwner = STATICCALL uniswapPositionManager.ownerOf(tokenId)
 // equivalent to if(!=) revert
 if(!(tokenOwner == this)) revert
-CALL this.withdrawAll(address)(0)
+//CALL this.withdrawAll(address)(0)
 dumpMem

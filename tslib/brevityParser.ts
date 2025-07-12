@@ -110,12 +110,29 @@ export interface Quantity {
     args: string[]
 }
 
-interface FnParams {
-    value?: string
+export function configFlagRequireVersion(v: number): bigint {
+    return BigInt(v) << BigInt(64)
 }
 
-export function configFlagRequireVersion( v: number ) : bigint {
-    return BigInt(v) << BigInt(64)
+
+/*
+like JSON.parse for maps but allows k/v wo "
+*/
+
+function parseMap(map: string) {
+    map = map.trim()
+    if (map.startsWith("{") && map.endsWith("}")) map = map.substring(1, map.length - 1)
+    const rslt = new Map<string, string>()
+    map.split(',').forEach((kv) => {
+        kv = kv.trim()
+        const parsed = kv.split(':').map((e) => {
+            e = e.trim()
+            if (e.startsWith("\"") && e.endsWith("\"")) e = e.substring(1, e.length - 1)
+            return e
+        })
+        rslt.set(parsed[0], parsed[1])
+    })
+    return rslt
 }
 
 
@@ -213,7 +230,7 @@ export class BrevityParser {
 
     private encodeLiteral(val: BigNumberish, parsingContext: ParsingContext): bigint {
         val = BigInt(val)
-        if(val < BigInt(0)) {
+        if (val < BigInt(0)) {
             val = BN_MINUS1 + val + BigInt(1)
             //console.log(`2s compliment val ${toBytes32(val)}`)
         }
@@ -231,7 +248,7 @@ export class BrevityParser {
         //console.log(`parseQuantity: ${q}`)
         q = q.trim()
         if (q.length === 0) throw Error(`${parsingContext.lineNumber}: Error parsing quantity "${q}"`)
-        if(NEGATIVE_INT.test(q)) {
+        if (NEGATIVE_INT.test(q)) {
             return this.encodeLiteral(q, parsingContext)
         }
         const [opPos, op] = this.findFirstValidOpCharacter(q)
@@ -318,24 +335,23 @@ export class BrevityParser {
 
         let right = fn.substring(firstSpace).trim()
         // value, gas, etc
-        let callParams: FnParams = {}
         if (right.startsWith('{')) {
             const lastBrace = right.indexOf('}')
-            callParams = JSON.parse(right.substring(0, lastBrace + 1))
-            if (callParams.value) value = callParams.value
-            //console.log(`callParams: ${JSON.stringify(callParams)}`)
+            const callParams = parseMap(right.substring(0, lastBrace + 1))
+            if (callParams.has("value")) value = callParams.get("value")!
+            console.log(`callParams: ${JSON.stringify(callParams)}`)
             right = right.substring(lastBrace + 1)
         }
 
         let address
         let fnSelector: string | undefined
         let fnArgs: string[] | undefined
-        if(cmd === KW_SEND) {
+        if (cmd === KW_SEND) {
             address = this.parseQuantity(right.substring(0, right.length), parsingContext)
         } else {
             const firstPeriod = right.indexOf('.')
             address = this.parseQuantity(right.substring(0, firstPeriod), parsingContext)
-            let args : string
+            let args: string
             right = right.substring(firstPeriod + 1)
             if (right.startsWith('0x')) {
                 //eg address.0x12345678(arg1, arg2)
@@ -351,7 +367,7 @@ export class BrevityParser {
                     //rm ()
                     args = right.substring(dp + 2, right.length - 1)
                 } else {
-    
+
                     // it is aliased address eg fooAlias := foo(arg1, arg2)
                     const firstParen = right.indexOf('(')
                     const alias = right.substring(0, firstParen)
@@ -361,17 +377,17 @@ export class BrevityParser {
                     //rm ()
                     args = right.substring(firstParen + 1, right.length - 1)
                 }
-            } 
+            }
             // first dealias the proprocessor symbols so that can represent multibyte args eg "4,2,5"            
-            const dealiasedArgs = args.split(',').map((aliased)=>{
+            const dealiasedArgs = args.split(',').map((aliased) => {
                 aliased = aliased.trim()
                 let dealiased = parsingContext.preprocessorSymbols.get(aliased)
-                if(!dealiased) return aliased
+                if (!dealiased) return aliased
                 // translate "strings" and bytes > 32 to bytes/string EVM mem representation
                 // so they can be used in fn calls
-                if(dealiased.startsWith("\"") && dealiased.endsWith("\"")) {
-                    dealiased = bytesMemoryObject(hexlify(Buffer.from(dealiased.substring(1, dealiased.length -1), 'utf8')))
-                } else if(dealiased.startsWith('0x') && dataLength(dealiased) > 32) {
+                if (dealiased.startsWith("\"") && dealiased.endsWith("\"")) {
+                    dealiased = bytesMemoryObject(hexlify(Buffer.from(dealiased.substring(1, dealiased.length - 1), 'utf8')))
+                } else if (dealiased.startsWith('0x') && dataLength(dealiased) > 32) {
                     dealiased = bytesMemoryObject(dealiased)
                 }
                 return dealiased
@@ -381,13 +397,13 @@ export class BrevityParser {
         }
 
         let callArgs = [memWriteInfo, toBytes32(address)]
-        if(opcode === OPCODE_CALL) callArgs.push(toBytes32(this.parseQuantity(value, parsingContext)))
-        if(fnSelector) {
+        if (opcode === OPCODE_CALL) callArgs.push(toBytes32(this.parseQuantity(value, parsingContext)))
+        if (fnSelector) {
             callArgs.push(toBytes32(fnSelector))
-            if(fnArgs) {
+            if (fnArgs) {
                 callArgs = callArgs.concat(fnArgs)
             }
-        }   
+        }
         return {
             opcode,
             args: callArgs
@@ -418,7 +434,7 @@ export class BrevityParser {
 
     // returns Solidity call data
     parseBrevityScript(script: string): BrevityParserOutput {
-        const woComments = script.replace(COMMENT_REGEX,'\n')
+        const woComments = script.replace(COMMENT_REGEX, '\n')
         //console.log(`woComments ${woComments}`)
         const lines = woComments.split(/\n/)
         const parsingContext: ParsingContext = new ParsingContext()
@@ -532,7 +548,7 @@ export class BrevityParser {
                     const v = varsToDefine[i].trim()
                     this.checkNewSymbolName(v, parsingContext)
                     parsingContext.memAddressNames.set(v, memSize++)
-                    if(memSize > maxMemSize) maxMemSize = memSize
+                    if (memSize > maxMemSize) maxMemSize = memSize
                 }
             } else {
                 // see if left ends with op as in x += 1

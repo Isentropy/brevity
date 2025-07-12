@@ -90,6 +90,26 @@ function configFlagRequireVersion(v) {
     return BigInt(v) << BigInt(64);
 }
 exports.configFlagRequireVersion = configFlagRequireVersion;
+/*
+like JSON.parse for maps but allows k/v wo "
+*/
+function parseMap(map) {
+    map = map.trim();
+    if (map.startsWith("{") && map.endsWith("}"))
+        map = map.substring(1, map.length - 1);
+    const rslt = new Map();
+    map.split(',').forEach((kv) => {
+        kv = kv.trim();
+        const parsed = kv.split(':').map((e) => {
+            e = e.trim();
+            if (e.startsWith("\"") && e.endsWith("\""))
+                e = e.substring(1, e.length - 1);
+            return e;
+        });
+        rslt.set(parsed[0], parsed[1]);
+    });
+    return rslt;
+}
 class ParsingContext {
     constructor() {
         this.preprocessorSymbols = new Map();
@@ -271,13 +291,12 @@ class BrevityParser {
             throw Error(`${parsingContext.lineNumber}: Unknown fn cmd ${cmd}`);
         let right = fn.substring(firstSpace).trim();
         // value, gas, etc
-        let callParams = {};
         if (right.startsWith('{')) {
             const lastBrace = right.indexOf('}');
-            callParams = JSON.parse(right.substring(0, lastBrace + 1));
-            if (callParams.value)
-                value = callParams.value;
-            //console.log(`callParams: ${JSON.stringify(callParams)}`)
+            const callParams = parseMap(right.substring(0, lastBrace + 1));
+            if (callParams.has("value"))
+                value = callParams.get("value");
+            console.log(`callParams: ${JSON.stringify(callParams)}`);
             right = right.substring(lastBrace + 1);
         }
         let address;
