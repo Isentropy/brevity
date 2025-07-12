@@ -46,7 +46,7 @@ async function cli() {
     let provider;
     let signer;
     let metaTxPayer;
-    let targetInterpreterAddress;
+    let targetAddress;
     let value = 0;
     let i = 2;
     for (; i < process.argv.length - 1; i++) {
@@ -64,7 +64,7 @@ async function cli() {
             process.exit(0);
         }
         else if (process.argv[i] == '-t' || process.argv[i] == '--target') {
-            targetInterpreterAddress = process.argv[++i];
+            targetAddress = process.argv[++i];
         }
         else if (process.argv[i] == '-r' || process.argv[i] == '--rpc') {
             provider = new ethers_1.JsonRpcProvider(process.argv[++i]);
@@ -90,7 +90,7 @@ async function cli() {
         metaTxPayer = new ethers_1.Wallet(process.env["METATXKEY"], provider);
     }
     let txPayer = signer;
-    if (cmd.toLowerCase().endsWith('meta')) {
+    if (cmd == 'runMeta') {
         if (metaTxPayer) {
             txPayer = metaTxPayer;
         }
@@ -106,9 +106,19 @@ async function cli() {
         }
         const factory = new typechain_types_1.OwnedBrevityInterpreter__factory(signer);
         // owner can be passed using -t target
-        const owner = targetInterpreterAddress ? targetInterpreterAddress : await signer.getAddress();
+        const owner = targetAddress ? targetAddress : await signer.getAddress();
         const rslt = await factory.deploy(owner);
-        console.log(`deployed at ${await rslt.getAddress()}, owner = ${owner}, in txHash ${rslt.deploymentTransaction()?.hash}`);
+        console.log(`OwnedBrevityInterpreter deployed at ${await rslt.getAddress()}, owner = ${owner}, in txHash ${rslt.deploymentTransaction()?.hash}`);
+        process.exit(0);
+    }
+    if (cmd == 'deployFactory') {
+        if (!signer) {
+            console.error(`No signer specified. Put private key in PRVKEY envvar`);
+            process.exit(1);
+        }
+        const factory = new typechain_types_1.CloneFactory__factory(signer);
+        const rslt = await factory.deploy();
+        console.log(`CloneFactory deployed at ${await rslt.getAddress()}, in txHash ${rslt.deploymentTransaction()?.hash}`);
         process.exit(0);
     }
     const parser = new brevityParser_1.BrevityParser(defaultConfig);
@@ -135,11 +145,11 @@ async function cli() {
         console.error(`No signer specified. Put private key in PRVKEY envvar`);
         process.exit(1);
     }
-    if (!targetInterpreterAddress) {
+    if (!targetAddress) {
         console.error(`No target interpreter given`);
         process.exit(1);
     }
-    const targetInterpreter = typechain_types_1.IBrevityInterpreter__factory.connect(targetInterpreterAddress, txPayer);
+    const targetInterpreter = typechain_types_1.IBrevityInterpreter__factory.connect(targetAddress, txPayer);
     if (cmd == 'run') {
         const resp = await targetInterpreter.run(compiled, { value });
         console.log(`Submitted run txHash ${resp.hash}`);
@@ -147,18 +157,30 @@ async function cli() {
     else if (cmd == 'runMeta') {
         const network = await provider.getNetwork();
         const deadline = Math.floor(((new Date()).getTime() / 1000) + 3600);
-        const sig = await (0, utils_1.signMetaTx)(signer, targetInterpreter, network.chainId, compiled, deadline);
+        const sig = await (0, utils_1.signMetaTx)(signer, targetAddress, network.chainId, compiled, deadline);
         const resp = await targetInterpreter.runMeta(compiled, deadline, sig);
         console.log(`Submitted runMeta txHash ${resp.hash}`);
     }
     else if (cmd == 'signMeta') {
         const network = await provider.getNetwork();
         const deadline = Math.floor(((new Date()).getTime() / 1000) + 3600);
-        const sig = await (0, utils_1.signMetaTx)(signer, targetInterpreter, network.chainId, compiled, deadline);
+        const sig = await (0, utils_1.signMetaTx)(signer, targetAddress, network.chainId, compiled, deadline);
         const tx = await targetInterpreter.getFunction("runMeta").populateTransaction(compiled, deadline, sig);
         console.log(tx.data);
-        if (outputFile)
-            (0, fs_1.writeFileSync)(outputFile, `bytesMemoryObject := ${(0, utils_1.bytesMemoryObject)(tx.data)}`);
+    }
+    else if (cmd == 'signFactoryMeta') {
+        // experimental, for bridging
+        // target = CloneFactory
+        const cloneFactory = typechain_types_1.CloneFactory__factory.connect(targetAddress, provider);
+        const implementation = process.argv[++i];
+        const salt = (0, ethers_1.toBeHex)(process.argv[++i], 32);
+        const network = await provider.getNetwork();
+        const deadline = Math.floor(((new Date()).getTime() / 1000) + 3600);
+        const owner = await signer.getAddress();
+        const interpreterAddress = await cloneFactory.predictDeterministicAddress(implementation, salt, owner);
+        const sig = await (0, utils_1.signMetaTx)(signer, interpreterAddress, network.chainId, compiled, deadline);
+        const tx = await cloneFactory.getFunction("cloneIfNeededThenRun").populateTransaction(implementation, salt, owner, compiled, deadline, sig);
+        console.log(tx.data);
     }
     else if (cmd == 'estimateGas') {
         (0, utils_1.estimateGas)(targetInterpreter, compiled);

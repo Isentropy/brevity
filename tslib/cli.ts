@@ -1,8 +1,8 @@
-import { BigNumberish, BytesLike, JsonRpcProvider, parseEther, Provider, Signer, Wallet } from "ethers"
+import { BigNumberish, BytesLike, JsonRpcProvider, parseEther, Provider, Signer, toBeHex, Wallet } from "ethers"
 import { BrevityParser, BrevityParserConfig } from "./brevityParser"
 import { readFileSync, writeFileSync } from 'fs'
 import { parse } from "path"
-import { BrevityInterpreter__factory, IBrevityInterpreter__factory, OwnedBrevityInterpreter__factory } from "../typechain-types"
+import { BrevityInterpreter__factory, CloneFactory__factory, IBrevityInterpreter__factory, OwnedBrevityInterpreter__factory } from "../typechain-types"
 import { bytesMemoryObject, estimateGas, signMetaTx } from "./utils"
 import { writeFile } from "fs/promises"
 const defaultConfig: BrevityParserConfig = {
@@ -50,7 +50,7 @@ async function cli() {
     let provider: Provider | undefined
     let signer: Signer | undefined
     let metaTxPayer: Signer | undefined
-    let targetInterpreterAddress : string | undefined
+    let targetAddress : string | undefined
     let value : BigNumberish  = 0
     let i = 2
     for (; i < process.argv.length -1; i++) {
@@ -64,7 +64,7 @@ async function cli() {
             help()
             process.exit(0)
         } else if (process.argv[i] == '-t' || process.argv[i] == '--target') {
-            targetInterpreterAddress = process.argv[++i]
+            targetAddress = process.argv[++i]
         } else if (process.argv[i] == '-r' || process.argv[i] == '--rpc') {
             provider = new JsonRpcProvider(process.argv[++i])
         } else if (process.argv[i] == '-v' || process.argv[i] == '--value') {
@@ -86,7 +86,7 @@ async function cli() {
         metaTxPayer = new Wallet(process.env["METATXKEY"], provider)
     }
     let txPayer = signer
-    if(cmd.toLowerCase().endsWith('meta')) {
+    if(cmd == 'runMeta') {
         if(metaTxPayer) {
             txPayer = metaTxPayer
         } else {
@@ -102,9 +102,19 @@ async function cli() {
         }
         const factory = new OwnedBrevityInterpreter__factory(signer)
         // owner can be passed using -t target
-        const owner = targetInterpreterAddress ? targetInterpreterAddress : await signer.getAddress()
+        const owner = targetAddress ? targetAddress : await signer.getAddress()
         const rslt = await factory.deploy(owner)
-        console.log(`deployed at ${await rslt.getAddress()}, owner = ${owner}, in txHash ${rslt.deploymentTransaction()?.hash}`)
+        console.log(`OwnedBrevityInterpreter deployed at ${await rslt.getAddress()}, owner = ${owner}, in txHash ${rslt.deploymentTransaction()?.hash}`)
+        process.exit(0)
+    }
+    if (cmd == 'deployFactory') {
+        if(!signer) {
+            console.error(`No signer specified. Put private key in PRVKEY envvar`)
+            process.exit(1)
+        }
+        const factory = new CloneFactory__factory(signer)
+        const rslt = await factory.deploy()
+        console.log(`CloneFactory deployed at ${await rslt.getAddress()}, in txHash ${rslt.deploymentTransaction()?.hash}`)
         process.exit(0)
     }
     const parser = new BrevityParser(defaultConfig)
@@ -131,25 +141,38 @@ async function cli() {
         console.error(`No signer specified. Put private key in PRVKEY envvar`)
         process.exit(1)
     }
-    if(!targetInterpreterAddress) {
+    if(!targetAddress) {
         console.error(`No target interpreter given`)
         process.exit(1)
     }
-    const targetInterpreter =  IBrevityInterpreter__factory.connect(targetInterpreterAddress, txPayer)
+    const targetInterpreter =  IBrevityInterpreter__factory.connect(targetAddress, txPayer)
     if (cmd == 'run') {
         const resp = await targetInterpreter.run(compiled, {value})
         console.log(`Submitted run txHash ${resp.hash}`)        
     } else if (cmd == 'runMeta') {
         const network = await provider.getNetwork()
         const deadline: number = Math.floor(((new Date()).getTime()/1000) + 3600)
-        const sig = await signMetaTx(signer, targetInterpreter, network.chainId, compiled, deadline)
+        const sig = await signMetaTx(signer, targetAddress, network.chainId, compiled, deadline)
         const resp = await targetInterpreter.runMeta(compiled, deadline, sig)
         console.log(`Submitted runMeta txHash ${resp.hash}`)        
     } else if (cmd == 'signMeta') {
         const network = await provider.getNetwork()
         const deadline: number = Math.floor(((new Date()).getTime()/1000) + 3600)
-        const sig = await signMetaTx(signer, targetInterpreter, network.chainId, compiled, deadline)
+        const sig = await signMetaTx(signer, targetAddress, network.chainId, compiled, deadline)
         const tx = await targetInterpreter.getFunction("runMeta").populateTransaction(compiled, deadline, sig)
+        console.log(tx.data)
+    } else if (cmd == 'signFactoryMeta') {
+        // experimental, for bridging
+        // target = CloneFactory
+        const cloneFactory = CloneFactory__factory.connect(targetAddress, provider)
+        const implementation = process.argv[++i]
+        const salt = toBeHex(process.argv[++i], 32)
+        const network = await provider.getNetwork()
+        const deadline: number = Math.floor(((new Date()).getTime()/1000) + 3600)
+        const owner = await signer.getAddress()
+        const interpreterAddress = await cloneFactory.predictDeterministicAddress(implementation, salt, owner)
+        const sig = await signMetaTx(signer, interpreterAddress, network.chainId, compiled, deadline)
+        const tx = await cloneFactory.getFunction("cloneIfNeededThenRun").populateTransaction(implementation, salt, owner, compiled, deadline, sig)
         console.log(tx.data)
     } else if (cmd == 'estimateGas') {
         estimateGas(targetInterpreter, compiled)

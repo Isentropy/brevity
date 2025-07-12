@@ -1,4 +1,4 @@
-import { IBrevityInterpreter, OwnedBrevityInterpreter } from "../typechain-types";
+import { IBrevityInterpreter, IBrevityInterpreter__factory, OwnedBrevityInterpreter } from "../typechain-types";
 import { BrevityParserOutput } from "./brevityParser";
 import { Signer, BigNumberish, BytesLike, dataLength, toUtf8Bytes, toBeArray, AbiCoder, toBeHex, zeroPadBytes } from 'ethers'
 
@@ -41,16 +41,17 @@ export async function estimateGas(brevityInterpreter: IBrevityInterpreter, o: Br
   console.log(`Brevity gas: total = ${runGas}, calldata = ${noopGas}, execution = ${runGas - noopGas}`)
 }
 
-export async function signMetaTx(signer: Signer, brevityInterpreter: IBrevityInterpreter, chainId: BigNumberish, output: BrevityParserOutput, deadline: number) {
-  const bi = await brevityInterpreter.getAddress()
+export async function signMetaTx(signer: Signer, brevityInterpreterAddress: string, chainId: BigNumberish, output: BrevityParserOutput, deadline: number) {
   const domain = {
     name: 'Brev',
     version: '1',
     chainId: chainId,
-    verifyingContract: bi
+    verifyingContract: brevityInterpreterAddress
   }
   const signerAddress = await signer.getAddress()
-  const nonce = await brevityInterpreter.nonces(signerAddress)
+  const code = await signer.provider?.getCode(brevityInterpreterAddress)
+  // if not deployed, use 0 for nonce
+  const nonce = (!code || dataLength(code) == 0 )? 0 : await IBrevityInterpreter__factory.connect(brevityInterpreterAddress, signer.provider).nonces(signerAddress)
   const v = {
     deadline,
     nonce,

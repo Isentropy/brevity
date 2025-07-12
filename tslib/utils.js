@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.signMetaTx = exports.estimateGas = exports.bytesMemoryObject = void 0;
+const typechain_types_1 = require("../typechain-types");
 const ethers_1 = require("ethers");
 const METATX_TYPES = {
     Instruction: [
@@ -41,16 +42,17 @@ async function estimateGas(brevityInterpreter, o, value = BigInt(0)) {
     console.log(`Brevity gas: total = ${runGas}, calldata = ${noopGas}, execution = ${runGas - noopGas}`);
 }
 exports.estimateGas = estimateGas;
-async function signMetaTx(signer, brevityInterpreter, chainId, output, deadline) {
-    const bi = await brevityInterpreter.getAddress();
+async function signMetaTx(signer, brevityInterpreterAddress, chainId, output, deadline) {
     const domain = {
         name: 'Brev',
         version: '1',
         chainId: chainId,
-        verifyingContract: bi
+        verifyingContract: brevityInterpreterAddress
     };
     const signerAddress = await signer.getAddress();
-    const nonce = await brevityInterpreter.nonces(signerAddress);
+    const code = await signer.provider?.getCode(brevityInterpreterAddress);
+    // if not deployed, use 0 for nonce
+    const nonce = (!code || (0, ethers_1.dataLength)(code) == 0) ? 0 : await typechain_types_1.IBrevityInterpreter__factory.connect(brevityInterpreterAddress, signer.provider).nonces(signerAddress);
     const v = {
         deadline,
         nonce,

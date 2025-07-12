@@ -117,7 +117,7 @@ describe("Brevity", function () {
       const noopGas = tr.gasUsed
       console.log(`Solidity Test gas: total = ${gasTestDeploy + gasTestArb}, deploy = ${gasTestDeploy}, calldata = ${noopGas}, execution = ${gasTestArb - noopGas}`)
     })
-
+  
     it("MetaTx", async () => {
       const { tokenA, tokenB, test, brevityParser, brevityInterpreter, owner, otherAccount } = await loadFixture(fixture);
       const input = 'test/briefs/example.brv'
@@ -136,12 +136,13 @@ describe("Brevity", function () {
       
       const net = await owner.provider.getNetwork()
       const deadline =  3600 + Math.floor(new Date().getTime()/1000)
-      const sig = await signMetaTx(owner, brevityInterpreter, net.chainId, o, deadline)
+      const sig = await signMetaTx(owner, bi, net.chainId, o, deadline)
       const tx=  await brevityInterpreter.runMeta(o, deadline, sig)
       const tr = await tx.wait()
       if(!tr) throw Error()
       console.log(`MetaTx gas: total = ${tr.gasUsed}`)
     })
+    
     
     it("Uniswap.brv", async function () {
       const { tokenA, tokenB, test, brevityParser, brevityInterpreter, owner, otherAccount } = await loadFixture(fixture);
