@@ -1,6 +1,6 @@
 import { BigNumberish, dataLength, FunctionFragment, getBytes, hexlify, toBeHex } from 'ethers';
 import { bytesMemoryObject } from './utils';
-import { Buffer } from 'node:buffer';
+import { Buffer } from 'buffer';
 
 const SYMBOL_REGEX = /[a-zA-Z][a-zA-Z_0-9]*/
 const NEGATIVE_INT = /^-[0-9]+$/

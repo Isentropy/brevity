@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.BrevityParser = exports.configFlagRequireVersion = void 0;
 const ethers_1 = require("ethers");
 const utils_1 = require("./utils");
-const node_buffer_1 = require("node:buffer");
+const buffer_1 = require("buffer");
 const SYMBOL_REGEX = /[a-zA-Z][a-zA-Z_0-9]*/;
 const NEGATIVE_INT = /^-[0-9]+$/;
 const COMMENT_REGEX = /\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm;
@@ -347,7 +347,7 @@ class BrevityParser {
                 // translate "strings" and bytes > 32 to bytes/string EVM mem representation
                 // so they can be used in fn calls
                 if (dealiased.startsWith("\"") && dealiased.endsWith("\"")) {
-                    dealiased = (0, utils_1.bytesMemoryObject)((0, ethers_1.hexlify)(node_buffer_1.Buffer.from(dealiased.substring(1, dealiased.length - 1), 'utf8')));
+                    dealiased = (0, utils_1.bytesMemoryObject)((0, ethers_1.hexlify)(buffer_1.Buffer.from(dealiased.substring(1, dealiased.length - 1), 'utf8')));
                 }
                 else if (dealiased.startsWith('0x') && (0, ethers_1.dataLength)(dealiased) > 32) {
                     dealiased = (0, utils_1.bytesMemoryObject)(dealiased);
