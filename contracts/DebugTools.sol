@@ -7,27 +7,27 @@ contract DebugTools {
     }
     function log0(bytes memory logData) public {
         assembly {
-            log0(logData, mload(logData))
+            log0(add(logData, 32), mload(logData))
         }
     }
     function log1(uint256 topic1, bytes memory logData) public {
         assembly {
-            log1(logData, mload(logData), topic1)
+            log1(add(logData, 32), mload(logData), topic1)
         }
     }
     function log2(uint256 topic1, uint256 topic2, bytes memory logData) public {
         assembly {
-            log2(logData, mload(logData), topic1, topic2)
+            log2(add(logData, 32), mload(logData), topic1, topic2)
         }
     }
     function log3(uint256 topic1, uint256 topic2, uint256 topic3, bytes memory logData) public {
         assembly {
-            log3(logData, mload(logData), topic1, topic2, topic3)
+            log3(add(logData, 32), mload(logData), topic1, topic2, topic3)
         }
     }
     function log4(uint256 topic1, uint256 topic2, uint256 topic3, uint256 topic4, bytes memory logData) public {
         assembly {
-            log4(logData, mload(logData), topic1, topic2, topic3, topic4)
+            log4(add(logData, 32), mload(logData), topic1, topic2, topic3, topic4)
         }
     }
 }

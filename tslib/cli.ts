@@ -104,7 +104,7 @@ async function cli() {
         // owner can be passed using -t target
         const owner = targetAddress ? targetAddress : await signer.getAddress()
         const rslt = await factory.deploy(owner)
-        console.log(`OwnedBrevityInterpreter deployed at ${await rslt.getAddress()}, owner = ${owner}, in txHash ${rslt.deploymentTransaction()?.hash}`)
+        console.log(`OwnedBrevityInterpreter deployed at ${await rslt.getAddress()} , owner = ${owner}, in txHash ${rslt.deploymentTransaction()?.hash}`)
         process.exit(0)
     }
     if (cmd == 'deployFactory') {

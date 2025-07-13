@@ -25,7 +25,7 @@ export function bytesMemoryObject(data : string) : string {
   const words = Math.ceil(len / 32)
   data = zeroPadBytes(data, words*32)
   if(data.startsWith('0x')) data = data.substring(2)  
-  console.log(`data padded ${data}`)
+  //console.log(`data padded ${data}`)
   let rslt = toBeHex(len, 32) 
   for(let i=0; i < words; i++) {
     rslt += ",0x" + data.substring((64*i), (64*(i+1)))
