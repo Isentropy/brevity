@@ -6,6 +6,6 @@ export type { cloneFactorySol };
 import type * as test from "./test";
 export type { test };
 export type { BrevityInterpreter } from "./BrevityInterpreter";
+export type { DebugTools } from "./DebugTools";
 export type { IBrevityInterpreter } from "./IBrevityInterpreter";
-export type { NoncesBytes32 } from "./NoncesBytes32";
 export type { OwnedBrevityInterpreter } from "./OwnedBrevityInterpreter";

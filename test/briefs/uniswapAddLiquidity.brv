@@ -20,7 +20,9 @@ tickUpper := 887220
 tickLower := -887220
 // same as:
 //tickLower := 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF2764C
+foo := "yogfhgfhgfyo"
 
+CALL this.log1(uint256,bytes)(123, 32, foo)
 
 CALL {value: msg.value} weth.deposit()()
 var wethAmt = STATICCALL weth.balanceOf(this)
@@ -35,4 +37,5 @@ var tokenOwner = STATICCALL uniswapPositionManager.ownerOf(tokenId)
 // equivalent to if(!=) revert
 if(!(tokenOwner == this)) revert
 //CALL this.withdrawAll(address)(0)
+
 dumpMem

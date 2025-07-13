@@ -1,5 +1,6 @@
 import { BigNumberish, dataLength, FunctionFragment, getBytes, hexlify, toBeHex } from 'ethers';
 import { bytesMemoryObject } from './utils';
+import { Buffer } from 'node:buffer';
 
 const SYMBOL_REGEX = /[a-zA-Z][a-zA-Z_0-9]*/
 const NEGATIVE_INT = /^-[0-9]+$/
@@ -339,7 +340,7 @@ export class BrevityParser {
             const lastBrace = right.indexOf('}')
             const callParams = parseMap(right.substring(0, lastBrace + 1))
             if (callParams.has("value")) value = callParams.get("value")!
-            console.log(`callParams: ${JSON.stringify(callParams)}`)
+            //console.log(`callParams: ${callParams.size}`)
             right = right.substring(lastBrace + 1)
         }
 

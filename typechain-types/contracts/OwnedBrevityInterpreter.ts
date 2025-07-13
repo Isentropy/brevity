@@ -57,7 +57,13 @@ export interface OwnedBrevityInterpreterInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "DOMAIN_SEPARATOR"
+      | "consoleLog"
       | "eip712Domain"
+      | "log0"
+      | "log1"
+      | "log2"
+      | "log3"
+      | "log4"
       | "nonces"
       | "noop"
       | "owner"
@@ -80,9 +86,27 @@ export interface OwnedBrevityInterpreterInterface extends Interface {
     functionFragment: "DOMAIN_SEPARATOR",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "consoleLog", values: [string]): string;
   encodeFunctionData(
     functionFragment: "eip712Domain",
     values?: undefined
+  ): string;
+  encodeFunctionData(functionFragment: "log0", values: [BytesLike]): string;
+  encodeFunctionData(
+    functionFragment: "log1",
+    values: [BigNumberish, BytesLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "log2",
+    values: [BigNumberish, BigNumberish, BytesLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "log3",
+    values: [BigNumberish, BigNumberish, BigNumberish, BytesLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "log4",
+    values: [BigNumberish, BigNumberish, BigNumberish, BigNumberish, BytesLike]
   ): string;
   encodeFunctionData(functionFragment: "nonces", values: [AddressLike]): string;
   encodeFunctionData(functionFragment: "noop", values: [ProgramStruct]): string;
@@ -122,10 +146,16 @@ export interface OwnedBrevityInterpreterInterface extends Interface {
     functionFragment: "DOMAIN_SEPARATOR",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "consoleLog", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "eip712Domain",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "log0", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "log1", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "log2", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "log3", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "log4", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "nonces", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "noop", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
@@ -216,6 +246,8 @@ export interface OwnedBrevityInterpreter extends BaseContract {
 
   DOMAIN_SEPARATOR: TypedContractMethod<[], [string], "view">;
 
+  consoleLog: TypedContractMethod<[logData: string], [void], "view">;
+
   eip712Domain: TypedContractMethod<
     [],
     [
@@ -230,6 +262,43 @@ export interface OwnedBrevityInterpreter extends BaseContract {
       }
     ],
     "view"
+  >;
+
+  log0: TypedContractMethod<[logData: BytesLike], [void], "nonpayable">;
+
+  log1: TypedContractMethod<
+    [topic1: BigNumberish, logData: BytesLike],
+    [void],
+    "nonpayable"
+  >;
+
+  log2: TypedContractMethod<
+    [topic1: BigNumberish, topic2: BigNumberish, logData: BytesLike],
+    [void],
+    "nonpayable"
+  >;
+
+  log3: TypedContractMethod<
+    [
+      topic1: BigNumberish,
+      topic2: BigNumberish,
+      topic3: BigNumberish,
+      logData: BytesLike
+    ],
+    [void],
+    "nonpayable"
+  >;
+
+  log4: TypedContractMethod<
+    [
+      topic1: BigNumberish,
+      topic2: BigNumberish,
+      topic3: BigNumberish,
+      topic4: BigNumberish,
+      logData: BytesLike
+    ],
+    [void],
+    "nonpayable"
   >;
 
   nonces: TypedContractMethod<[signer: AddressLike], [bigint], "view">;
@@ -284,6 +353,9 @@ export interface OwnedBrevityInterpreter extends BaseContract {
     nameOrSignature: "DOMAIN_SEPARATOR"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
+    nameOrSignature: "consoleLog"
+  ): TypedContractMethod<[logData: string], [void], "view">;
+  getFunction(
     nameOrSignature: "eip712Domain"
   ): TypedContractMethod<
     [],
@@ -299,6 +371,48 @@ export interface OwnedBrevityInterpreter extends BaseContract {
       }
     ],
     "view"
+  >;
+  getFunction(
+    nameOrSignature: "log0"
+  ): TypedContractMethod<[logData: BytesLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "log1"
+  ): TypedContractMethod<
+    [topic1: BigNumberish, logData: BytesLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "log2"
+  ): TypedContractMethod<
+    [topic1: BigNumberish, topic2: BigNumberish, logData: BytesLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "log3"
+  ): TypedContractMethod<
+    [
+      topic1: BigNumberish,
+      topic2: BigNumberish,
+      topic3: BigNumberish,
+      logData: BytesLike
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "log4"
+  ): TypedContractMethod<
+    [
+      topic1: BigNumberish,
+      topic2: BigNumberish,
+      topic3: BigNumberish,
+      topic4: BigNumberish,
+      logData: BytesLike
+    ],
+    [void],
+    "nonpayable"
   >;
   getFunction(
     nameOrSignature: "nonces"
