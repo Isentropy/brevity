@@ -24,12 +24,15 @@ _______________
 
 commands
 _______________
+No transaction:
 build: transpile script into Breviety Interpreter instructions 
 estimateGas: estimate gas only. no TX
+signMeta: sign metaTx with PRVKEY. returns "data" field of metaTx
+
+Runs transaction:
 deploy: deploy OwnedBrevityInterpreter, TX paid by PRVKEY, owner = target if defined, otherwise address of PRVKEY
 run: run script using privateKey in PRVKEY envvar
 runMeta: run script signed by PRVKEY, TX paid by METATXKEY
-signMeta: sign metaTx with PRVKEY. returns "data" field of metaTx
 
 envvars
 _______________
@@ -118,7 +121,17 @@ async function cli() {
         }
         const factory = new typechain_types_1.CloneFactory__factory(signer);
         const rslt = await factory.deploy();
-        console.log(`CloneFactory deployed at ${await rslt.getAddress()}, in txHash ${rslt.deploymentTransaction()?.hash}`);
+        console.log(`CloneFactory deployed at ${await rslt.getAddress()} , in txHash ${rslt.deploymentTransaction()?.hash}`);
+        process.exit(0);
+    }
+    if (cmd == 'deployTestToken') {
+        if (!signer) {
+            console.error(`No signer specified. Put private key in PRVKEY envvar`);
+            process.exit(1);
+        }
+        const token = new typechain_types_1.TestToken__factory(signer);
+        const rslt = await token.deploy();
+        console.log(`TestToken deployed at ${await rslt.getAddress()} , in txHash ${rslt.deploymentTransaction()?.hash}`);
         process.exit(0);
     }
     const parser = new brevityParser_1.BrevityParser(defaultConfig);

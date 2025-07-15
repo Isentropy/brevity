@@ -17,16 +17,8 @@ async function deployOwnedBrevityInterpreter() {
     await interpreter.deploymentTransaction()?.wait();
     console.log(`Deployed OwnedBrevityInterpreter to ${await interpreter.getAddress()}`);
 }
-async function deployTestCoin(name, symbol, amount) {
-    console.log(`Deploying ${amount} TestCoin ${name} ${symbol} from ${wallet.address}`);
-    const factory = new typechain_types_1.TestCoin__factory(wallet);
-    const tc = await factory.deploy(name, symbol, amount);
-    await tc.deploymentTransaction()?.wait();
-    console.log(`Deployed TestCoin to ${await tc.getAddress()}`);
-}
 async function main() {
     try {
-        await deployTestCoin("test", "b1", (0, ethers_1.parseEther)("1000000000"));
         //await deployOwnedBrevityInterpreter()
     }
     catch (err) {
