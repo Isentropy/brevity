@@ -14,10 +14,6 @@ import * as Contracts from ".";
 declare module "hardhat/types/runtime" {
   interface HardhatEthersHelpers extends HardhatEthersHelpersBase {
     getContractFactory(
-      name: "Ownable",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.Ownable__factory>;
-    getContractFactory(
       name: "IERC1155Errors",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC1155Errors__factory>;
@@ -41,10 +37,6 @@ declare module "hardhat/types/runtime" {
       name: "ERC20",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ERC20__factory>;
-    getContractFactory(
-      name: "ERC20Burnable",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ERC20Burnable__factory>;
     getContractFactory(
       name: "IERC20Metadata",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -122,19 +114,14 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Test__factory>;
     getContractFactory(
-      name: "TestCoin",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.TestCoin__factory>;
-    getContractFactory(
       name: "TestToken",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.TestToken__factory>;
+    getContractFactory(
+      name: "TestTokenMultiMint",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.TestTokenMultiMint__factory>;
 
-    getContractAt(
-      name: "Ownable",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.Ownable>;
     getContractAt(
       name: "IERC1155Errors",
       address: string | ethers.Addressable,
@@ -165,11 +152,6 @@ declare module "hardhat/types/runtime" {
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.ERC20>;
-    getContractAt(
-      name: "ERC20Burnable",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.ERC20Burnable>;
     getContractAt(
       name: "IERC20Metadata",
       address: string | ethers.Addressable,
@@ -266,20 +248,16 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.Test>;
     getContractAt(
-      name: "TestCoin",
+      name: "TestToken",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.TestCoin>;
+    ): Promise<Contracts.TestToken>;
     getContractAt(
-      name: "TestToken",
+      name: "TestTokenMultiMint",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.TestToken>;
+    ): Promise<Contracts.TestTokenMultiMint>;
 
-    deployContract(
-      name: "Ownable",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.Ownable>;
     deployContract(
       name: "IERC1155Errors",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -304,10 +282,6 @@ declare module "hardhat/types/runtime" {
       name: "ERC20",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ERC20>;
-    deployContract(
-      name: "ERC20Burnable",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ERC20Burnable>;
     deployContract(
       name: "IERC20Metadata",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -385,19 +359,14 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Test>;
     deployContract(
-      name: "TestCoin",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.TestCoin>;
-    deployContract(
       name: "TestToken",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.TestToken>;
-
     deployContract(
-      name: "Ownable",
-      args: any[],
+      name: "TestTokenMultiMint",
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.Ownable>;
+    ): Promise<Contracts.TestTokenMultiMint>;
+
     deployContract(
       name: "IERC1155Errors",
       args: any[],
@@ -428,11 +397,6 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ERC20>;
-    deployContract(
-      name: "ERC20Burnable",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ERC20Burnable>;
     deployContract(
       name: "IERC20Metadata",
       args: any[],
@@ -529,15 +493,15 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Test>;
     deployContract(
-      name: "TestCoin",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.TestCoin>;
-    deployContract(
       name: "TestToken",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.TestToken>;
+    deployContract(
+      name: "TestTokenMultiMint",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.TestTokenMultiMint>;
 
     // default types
     getContractFactory(

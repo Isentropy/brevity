@@ -159,6 +159,7 @@ Brevity Scripts (```.brv``` ) are transpiled into a Brevity Calldata Program tha
 - quantites: A Quantity is a formula that resolves to a uint256. It can be literal, mem pointer, or function(Quantity...) that returns a uint256 word. Function are expressed internally with the opcode as prefix, eg  ```123, (* 5 6), (+ mem[2] 5), this (ie address(this)), msg.sender```.
 
 
+
 ### Usage
 See [OwnedBrevityInterpreter](contracts/OwnedBrevityInterpreter.sol) for an example of a Brevity Interpreter contract that can be used only by an owner.
 

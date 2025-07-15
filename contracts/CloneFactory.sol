@@ -27,7 +27,7 @@ contract CloneFactory {
     function cloneDeterministic(address implementation, bytes32 salt, address owner) public returns (address) {
         bytes32 newSalt = keccak256(abi.encodePacked(salt, owner));
         address cloneAddress = Clones.cloneDeterministic(implementation, newSalt);
-        SetOwner(cloneAddress).setOwner(owner);
+        if(owner != address(0)) SetOwner(cloneAddress).setOwner(owner);
         emit NewClone(owner, cloneAddress, implementation);
         return cloneAddress;
     }

@@ -5,5 +5,5 @@ export * as arbSol from "./Arb.sol";
 export { LoopTest__factory } from "./LoopTest__factory";
 export { MintableERC20__factory } from "./MintableERC20__factory";
 export { Test__factory } from "./Test__factory";
-export { TestCoin__factory } from "./TestCoin__factory";
 export { TestToken__factory } from "./TestToken__factory";
+export { TestTokenMultiMint__factory } from "./TestTokenMultiMint__factory";

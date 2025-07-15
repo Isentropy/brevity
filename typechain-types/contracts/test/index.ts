@@ -6,5 +6,5 @@ export type { arbSol };
 export type { LoopTest } from "./LoopTest";
 export type { MintableERC20 } from "./MintableERC20";
 export type { Test } from "./Test";
-export type { TestCoin } from "./TestCoin";
 export type { TestToken } from "./TestToken";
+export type { TestTokenMultiMint } from "./TestTokenMultiMint";

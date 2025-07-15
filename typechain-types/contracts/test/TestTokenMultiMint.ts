@@ -23,29 +23,23 @@ import type {
   TypedContractMethod,
 } from "../../common";
 
-export interface TestCoinInterface extends Interface {
+export interface TestTokenMultiMintInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "allowance"
       | "approve"
       | "balanceOf"
-      | "burn"
-      | "burnFrom"
       | "decimals"
+      | "init"
       | "mint"
       | "name"
-      | "owner"
-      | "renounceOwnership"
       | "symbol"
       | "totalSupply"
       | "transfer"
       | "transferFrom"
-      | "transferOwnership"
   ): FunctionFragment;
 
-  getEvent(
-    nameOrSignatureOrTopic: "Approval" | "OwnershipTransferred" | "Transfer"
-  ): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Approval" | "Transfer"): EventFragment;
 
   encodeFunctionData(
     functionFragment: "allowance",
@@ -59,19 +53,16 @@ export interface TestCoinInterface extends Interface {
     functionFragment: "balanceOf",
     values: [AddressLike]
   ): string;
-  encodeFunctionData(functionFragment: "burn", values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: "decimals", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "burnFrom",
+    functionFragment: "init",
+    values: [string, AddressLike, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "mint",
     values: [AddressLike, BigNumberish]
   ): string;
-  encodeFunctionData(functionFragment: "decimals", values?: undefined): string;
-  encodeFunctionData(functionFragment: "mint", values: [BigNumberish]): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
-  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "renounceOwnership",
-    values?: undefined
-  ): string;
   encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "totalSupply",
@@ -85,24 +76,14 @@ export interface TestCoinInterface extends Interface {
     functionFragment: "transferFrom",
     values: [AddressLike, AddressLike, BigNumberish]
   ): string;
-  encodeFunctionData(
-    functionFragment: "transferOwnership",
-    values: [AddressLike]
-  ): string;
 
   decodeFunctionResult(functionFragment: "allowance", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "burn", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "burnFrom", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "decimals", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "init", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "renounceOwnership",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "totalSupply",
@@ -111,10 +92,6 @@ export interface TestCoinInterface extends Interface {
   decodeFunctionResult(functionFragment: "transfer", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "transferFrom",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "transferOwnership",
     data: BytesLike
   ): Result;
 }
@@ -130,19 +107,6 @@ export namespace ApprovalEvent {
     owner: string;
     spender: string;
     value: bigint;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace OwnershipTransferredEvent {
-  export type InputTuple = [previousOwner: AddressLike, newOwner: AddressLike];
-  export type OutputTuple = [previousOwner: string, newOwner: string];
-  export interface OutputObject {
-    previousOwner: string;
-    newOwner: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -168,11 +132,11 @@ export namespace TransferEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export interface TestCoin extends BaseContract {
-  connect(runner?: ContractRunner | null): TestCoin;
+export interface TestTokenMultiMint extends BaseContract {
+  connect(runner?: ContractRunner | null): TestTokenMultiMint;
   waitForDeployment(): Promise<this>;
 
-  interface: TestCoinInterface;
+  interface: TestTokenMultiMintInterface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
@@ -225,23 +189,21 @@ export interface TestCoin extends BaseContract {
 
   balanceOf: TypedContractMethod<[account: AddressLike], [bigint], "view">;
 
-  burn: TypedContractMethod<[value: BigNumberish], [void], "nonpayable">;
+  decimals: TypedContractMethod<[], [bigint], "view">;
 
-  burnFrom: TypedContractMethod<
-    [account: AddressLike, value: BigNumberish],
+  init: TypedContractMethod<
+    [symbol_: string, mintTo: AddressLike, mintAmount: BigNumberish],
     [void],
     "nonpayable"
   >;
 
-  decimals: TypedContractMethod<[], [bigint], "view">;
-
-  mint: TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
+  mint: TypedContractMethod<
+    [to: AddressLike, amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
   name: TypedContractMethod<[], [string], "view">;
-
-  owner: TypedContractMethod<[], [string], "view">;
-
-  renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
 
   symbol: TypedContractMethod<[], [string], "view">;
 
@@ -256,12 +218,6 @@ export interface TestCoin extends BaseContract {
   transferFrom: TypedContractMethod<
     [from: AddressLike, to: AddressLike, value: BigNumberish],
     [boolean],
-    "nonpayable"
-  >;
-
-  transferOwnership: TypedContractMethod<
-    [newOwner: AddressLike],
-    [void],
     "nonpayable"
   >;
 
@@ -287,30 +243,25 @@ export interface TestCoin extends BaseContract {
     nameOrSignature: "balanceOf"
   ): TypedContractMethod<[account: AddressLike], [bigint], "view">;
   getFunction(
-    nameOrSignature: "burn"
-  ): TypedContractMethod<[value: BigNumberish], [void], "nonpayable">;
+    nameOrSignature: "decimals"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
-    nameOrSignature: "burnFrom"
+    nameOrSignature: "init"
   ): TypedContractMethod<
-    [account: AddressLike, value: BigNumberish],
+    [symbol_: string, mintTo: AddressLike, mintAmount: BigNumberish],
     [void],
     "nonpayable"
   >;
   getFunction(
-    nameOrSignature: "decimals"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
     nameOrSignature: "mint"
-  ): TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
+  ): TypedContractMethod<
+    [to: AddressLike, amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "name"
   ): TypedContractMethod<[], [string], "view">;
-  getFunction(
-    nameOrSignature: "owner"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
-    nameOrSignature: "renounceOwnership"
-  ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "symbol"
   ): TypedContractMethod<[], [string], "view">;
@@ -331,9 +282,6 @@ export interface TestCoin extends BaseContract {
     [boolean],
     "nonpayable"
   >;
-  getFunction(
-    nameOrSignature: "transferOwnership"
-  ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
 
   getEvent(
     key: "Approval"
@@ -341,13 +289,6 @@ export interface TestCoin extends BaseContract {
     ApprovalEvent.InputTuple,
     ApprovalEvent.OutputTuple,
     ApprovalEvent.OutputObject
-  >;
-  getEvent(
-    key: "OwnershipTransferred"
-  ): TypedContractEvent<
-    OwnershipTransferredEvent.InputTuple,
-    OwnershipTransferredEvent.OutputTuple,
-    OwnershipTransferredEvent.OutputObject
   >;
   getEvent(
     key: "Transfer"
@@ -367,17 +308,6 @@ export interface TestCoin extends BaseContract {
       ApprovalEvent.InputTuple,
       ApprovalEvent.OutputTuple,
       ApprovalEvent.OutputObject
-    >;
-
-    "OwnershipTransferred(address,address)": TypedContractEvent<
-      OwnershipTransferredEvent.InputTuple,
-      OwnershipTransferredEvent.OutputTuple,
-      OwnershipTransferredEvent.OutputObject
-    >;
-    OwnershipTransferred: TypedContractEvent<
-      OwnershipTransferredEvent.InputTuple,
-      OwnershipTransferredEvent.OutputTuple,
-      OwnershipTransferredEvent.OutputObject
     >;
 
     "Transfer(address,address,uint256)": TypedContractEvent<

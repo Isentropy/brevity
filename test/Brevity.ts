@@ -46,7 +46,7 @@ describe("Brevity", function () {
     const gasProxyDeploy = tr?.gasUsed
     console.log(`proxy deploy gas = ${gasProxyDeploy}`)
     const Test = await hre.ethers.getContractFactory("Test");
-    const TestToken = await hre.ethers.getContractFactory("TestToken");
+    const TestToken = await hre.ethers.getContractFactory("TestTokenMultiMint");
     const LoopTest = await hre.ethers.getContractFactory("LoopTest");
     const loopTest = await LoopTest.deploy();
     const test = await Test.deploy();

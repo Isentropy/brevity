@@ -30,7 +30,7 @@ export interface TestTokenInterface extends Interface {
       | "approve"
       | "balanceOf"
       | "decimals"
-      | "mint"
+      | "init"
       | "name"
       | "symbol"
       | "totalSupply"
@@ -54,8 +54,8 @@ export interface TestTokenInterface extends Interface {
   ): string;
   encodeFunctionData(functionFragment: "decimals", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "mint",
-    values: [AddressLike, BigNumberish]
+    functionFragment: "init",
+    values: [string, AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
@@ -76,7 +76,7 @@ export interface TestTokenInterface extends Interface {
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "decimals", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "init", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
   decodeFunctionResult(
@@ -185,8 +185,8 @@ export interface TestToken extends BaseContract {
 
   decimals: TypedContractMethod<[], [bigint], "view">;
 
-  mint: TypedContractMethod<
-    [to: AddressLike, amount: BigNumberish],
+  init: TypedContractMethod<
+    [symbol_: string, mintTo: AddressLike, mintAmount: BigNumberish],
     [void],
     "nonpayable"
   >;
@@ -234,9 +234,9 @@ export interface TestToken extends BaseContract {
     nameOrSignature: "decimals"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
-    nameOrSignature: "mint"
+    nameOrSignature: "init"
   ): TypedContractMethod<
-    [to: AddressLike, amount: BigNumberish],
+    [symbol_: string, mintTo: AddressLike, mintAmount: BigNumberish],
     [void],
     "nonpayable"
   >;

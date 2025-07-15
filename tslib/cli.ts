@@ -2,7 +2,7 @@ import { BigNumberish, BytesLike, JsonRpcProvider, parseEther, Provider, Signer,
 import { BrevityParser, BrevityParserConfig } from "./brevityParser"
 import { readFileSync, writeFileSync } from 'fs'
 import { parse } from "path"
-import { BrevityInterpreter__factory, CloneFactory__factory, IBrevityInterpreter__factory, OwnedBrevityInterpreter__factory } from "../typechain-types"
+import { BrevityInterpreter__factory, CloneFactory__factory, IBrevityInterpreter__factory, OwnedBrevityInterpreter__factory, TestToken__factory } from "../typechain-types"
 import { bytesMemoryObject, estimateGas, signMetaTx } from "./utils"
 import { writeFile } from "fs/promises"
 const defaultConfig: BrevityParserConfig = {
@@ -25,12 +25,15 @@ _______________
 
 commands
 _______________
+No transaction:
 build: transpile script into Breviety Interpreter instructions 
 estimateGas: estimate gas only. no TX
+signMeta: sign metaTx with PRVKEY. returns "data" field of metaTx
+
+Runs transaction:
 deploy: deploy OwnedBrevityInterpreter, TX paid by PRVKEY, owner = target if defined, otherwise address of PRVKEY
 run: run script using privateKey in PRVKEY envvar
 runMeta: run script signed by PRVKEY, TX paid by METATXKEY
-signMeta: sign metaTx with PRVKEY. returns "data" field of metaTx
 
 envvars
 _______________
@@ -114,7 +117,17 @@ async function cli() {
         }
         const factory = new CloneFactory__factory(signer)
         const rslt = await factory.deploy()
-        console.log(`CloneFactory deployed at ${await rslt.getAddress()}, in txHash ${rslt.deploymentTransaction()?.hash}`)
+        console.log(`CloneFactory deployed at ${await rslt.getAddress()} , in txHash ${rslt.deploymentTransaction()?.hash}`)
+        process.exit(0)
+    }
+    if (cmd == 'deployTestToken') {
+        if(!signer) {
+            console.error(`No signer specified. Put private key in PRVKEY envvar`)
+            process.exit(1)
+        }
+        const token = new TestToken__factory(signer)
+        const rslt = await token.deploy()
+        console.log(`TestToken deployed at ${await rslt.getAddress()} , in txHash ${rslt.deploymentTransaction()?.hash}`)
         process.exit(0)
     }
     const parser = new BrevityParser(defaultConfig)
