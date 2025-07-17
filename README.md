@@ -1,6 +1,6 @@
 # Brevity, an EVM scripting language
 
-Copyright 2024 Isentropy LLC. All Rights Reserved
+Copyright 2024, 2025 Isentropy LLC
 
 Brevity is a language, similar in syntax to Solidity, that is compactly transpiled to an EVM transaction and run on a **general purpose smart contract, the Brevity Interpreter**. Because Brevity is interpreted, it doesn't need to deploy new smart contracts to implement new workflows.
 
@@ -65,14 +65,24 @@ Brevity is deliberately bare bones.  You can CALL and STATICCALL, put variables 
 ### Only 1 data type: UINT256  
 Like [B](https://en.wikipedia.org/wiki/B_(programming_language)), Brevity has 1 data type, the word (uint256). Arithmatic operations are all unsigned. The parser translates negative ints into their 2s compliment UINT form.
 
-### Proprocessor Symbols
-Proprocessor Symbols are like defined **string substitions**. You use them to define constants. They need not be Quantities but they often are. Instead of importing ABIs, you define the function signatures of the functions you want to call as preprocessor symbols.
+### Preprocessor Symbols
+Preprocessor Symbols are like defined **string substitions**. You use them to define constants. They need not be Quantities but they often are. Instead of importing ABIs, you define the function signatures of the functions you want to call as preprocessor symbols.
 ```
 usdc := 0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48
 // this will tell the Brevity Interpreter to evaluate "3 + 4" each time it sees
 seven := 3 + 4
 balanceOf := balanceOf(address)
 ```
+
+#### Variable length types
+Brevity v1 has basic support for multi-word types like ```string``` and ```bytes``` with preprocessor symbols. These Solidity types are stored in EVM memory and calldata as a list of 32 bytes words: ```length, bytes0_31, bytes32_64, etc```. Brevity v1 translates preprocessor symbols of strings (eg ```"hello"```) and 32+ length bytes  (eg 0x{32+ bytes hex}) into a list of 32 byte words when used in function calls. The Solidity ABI specifies that these these multi-word types are presented in function calls as an **offset** to the object. So this is how to invoke functions of ```string``` and ```bytes``` in Brevity v1:
+```
+foo := foo(string)
+s := "hello"
+CALL target.foo(32, s)
+// same as CALL target.foo(32, 5, 0x68656C6C6F)
+```
+The 32 above means the first arg is an offset and the data comes after 1st arg (1*32). This becomes messy with multiple offsets. We hope to offer easier multi-word support in v2.
 
 ### Only 1 stack: memStack
 Brevity allocates a fixed size chunk of memory call the memStack. The size is calculated by the parser and sent as part of the TX data. . The following code assigns the symbol "x" to the next position on the memStack and stores the word 123, and then 456:
@@ -91,6 +101,18 @@ You can write Quantities on the memStack:
 ```
 var y = msg.value / 2
 ```
+Internally, quantities are encoded as a word (called qWord in code) that can represent:
+ - a literal (if bit 255 NOTLITERAL is unset)
+ - a memStack pointer (if bit 255 NOTLITERAL is set, bit 254 NOTMEM is unset)
+ - otherwise a pointer to Quantities array. Quantities are just an operand + args:
+
+ ```
+ struct Quantity {
+    uint quantityType;
+    // qWords
+    bytes32[] args;
+}
+ ``` 
 
 ### STATICCALL doesnt change state
 STATICCALL calls a view function and writes the output to a contiguous block of memStack
@@ -148,7 +170,14 @@ var y = 2
 dumpMem
 ```
 
-
+### 0 and 1 arg builtin Quantities:
+```
+// address(this)
+this
+//native balance
+balance(someAddress)
+block.timestamp
+```
 
 
 ## Under the Hood
