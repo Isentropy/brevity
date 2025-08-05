@@ -15,8 +15,8 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 
 ## A language-in-a-language!? Why?
  - **All-in-One General Purpose Contract** Users can deploy a privately controlled Brevity Interpreter  contract, which can run arbitrary workflows without deploying more code or moving tokens. Deployment using [Clone pattern](contracts/CloneFactory.sol) is supported, and costs less than 100000 gas.
- - **Guardrails**: Brevity supports a [hook to EVM CALLs](https://github.com/Isentropy/brevity/blob/7c30196bd119d7d91d99469c9ec88dc7dd5a219e/contracts/BrevityInterpreter.sol#L191) that can be used to apply restrictons on which external methods are called. 
- - **Metering**: The [hook to EVM CALLs](https://github.com/Isentropy/brevity/blob/7c30196bd119d7d91d99469c9ec88dc7dd5a219e/contracts/BrevityInterpreter.sol#L191) allows for metering of asset transfers. 
+ - **Guardrails**: Brevity supports a [hook to EVM CALLs](https://github.com/Isentropy/brevity/blob/7c30196bd119d7d91d99469c9ec88dc7dd5a219e/contracts/BrevityInterpreter.sol#L117) that can be used to apply restrictons on which external methods are called. 
+ - **Metering**: The [hook to EVM CALLs](https://github.com/Isentropy/brevity/blob/7c30196bd119d7d91d99469c9ec88dc7dd5a219e/contracts/BrevityInterpreter.sol#L117) allows for metering of asset transfers. 
  - **MetaTransactions**: Brevity calls can be submitted as EIP712 metaTxs, enabling Brevity Interpreters to be controlled by wallets that hold no tokens. This functionality is built into [Brevity CLI](tslib/cli.ts)
  - **Gas Saving**: EVM contracts are expensive to deploy relative to calldata. Deploying EVM code costs around 200 gas/byte, whereas calldata costs 4-16 gas/byte. Brevity saves on deployment cost by putting code in the calldata and interpreting. For a simple arbitrage example in [Brevity](test/briefs/example.brv) and [Solidity](contracts/Arb.sol):
 ```
