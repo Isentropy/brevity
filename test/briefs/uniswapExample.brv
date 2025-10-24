@@ -1,0 +1,40 @@
+
+cloneFactory := 0x5C199aa90E2E360Cc80D5fdfC75534E7b68c04e7
+uniswapRouter := 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45
+uniswapPositionManager := 0xC36442b4a4522E871399CD717aBDD847Ab11FE88
+weth := 0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2
+usdc := 0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48
+templateInterpreter := 0x7825a0C45Daf9b43B70E417bd2e022860531dB83
+
+approve := approve(address,uint256)
+balanceOf := balanceOf(address)
+transfer := transfer(address,uint256)
+log1 := log1(uint256,bytes)
+ownerOf := ownerOf(uint256)
+
+exactInputSingle := exactInputSingle((address,address,uint24,address,uint256,uint256,uint160))
+mint := mint((address,address,uint24,int24,int24,uint256,uint256,uint256,uint256,address,uint256))
+tickUpper := 887220
+tickLower := -887220
+
+fromToken := weth
+toToken := usdc
+toTokenMinOutput := 1000
+swapFee := 3000
+
+// commands
+//swap 10% of held ETH for WETH
+var fromAmount = balance(this)/10
+CALL {value: fromAmount} weth.deposit()()
+// convert half to toToken
+fromAmount /= 2
+// approve 
+CALL weth.approve(uniswapRouter, fromAmount)
+// swap
+var toTokenBal = CALL uniswapRouter.exactInputSingle(fromToken, toToken, swapFee, this, fromAmount, toTokenMinOutput, 0)
+// approve
+CALL fromToken.approve(uniswapPositionManager, fromAmount)
+CALL toToken.approve(uniswapPositionManager, toTokenBal)
+var tokenId, liquidity, amount0, amount1 = CALL uniswapPositionManager.mint(toToken, fromToken, swapFee, tickLower, tickUpper, toTokenBal, fromAmount, 0, 0, this, block.timestamp)
+var tokenOwner = STATICCALL uniswapPositionManager.ownerOf(tokenId)
+if(!(tokenOwner == this)) revert
