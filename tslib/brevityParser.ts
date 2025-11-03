@@ -63,6 +63,7 @@ const KW_REVERT = 'revert'
 const KW_RETURN = 'return'
 const KW_DUMPMEM = 'dumpMem'
 const KW_CLEARMEMSTACK = 'clearMemStack'
+const KW_CLEARPREPROC = 'clearPreProc'
 
 
 // minus 1 in 32 byte 2s compliment
@@ -475,6 +476,10 @@ export class BrevityParser {
             if (line.startsWith(KW_CLEARMEMSTACK)) {
                 parsingContext.memAddressNames.clear()
                 memSize = 0
+                continue
+            }
+            if (line.startsWith(KW_CLEARPREPROC)) {
+                parsingContext.preprocessorSymbols.clear()
                 continue
             }
             if (line.startsWith(KW_IF)) {
