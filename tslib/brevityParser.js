@@ -58,7 +58,8 @@ const KW_REVERT = 'revert';
 const KW_RETURN = 'return';
 const KW_DUMPMEM = 'dumpMem';
 const KW_CLEARMEMSTACK = 'clearMemStack';
-const KW_CLEARPREPROC = 'clearPreProc';
+// clears all preprocessor symbols that are not all uppercase
+const KW_CLEARPARAMS = 'clearParams';
 // minus 1 in 32 byte 2s compliment
 const BN_MINUS1 = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF');
 //const RUN_SELECTOR = BrevityInterpreter__factory.createInterface().getFunction("run").selector
@@ -443,8 +444,12 @@ class BrevityParser {
                 memSize = 0;
                 continue;
             }
-            if (line.startsWith(KW_CLEARPREPROC)) {
-                parsingContext.preprocessorSymbols.clear();
+            if (line.startsWith(KW_CLEARPARAMS)) {
+                for (let k of parsingContext.preprocessorSymbols.keys()) {
+                    if (k != k.toUpperCase())
+                        parsingContext.preprocessorSymbols.delete(k);
+                }
+                //parsingContext.preprocessorSymbols = parsingContext.preprocessorSymbols
                 continue;
             }
             if (line.startsWith(KW_IF)) {
