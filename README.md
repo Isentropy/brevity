@@ -2,7 +2,7 @@
 
 Copyright 2024, 2025 Isentropy LLC
 
-Brevity is a language, similar in syntax to Solidity, that is compactly transpiled to an EVM transaction and run on a **general purpose smart contract, the Brevity Interpreter**. Because Brevity is interpreted, it doesn't need to deploy new smart contracts to implement new workflows.
+Brevity is a language, similar in syntax to Solidity, that is compactly transpiled to an EVM transaction and **run with 1 click** on a general purpose smart contract, the Brevity Interpreter. Because Brevity is interpreted, it doesn't need to deploy new smart contracts to implement new workflows.
 
 #### Please Note
 
