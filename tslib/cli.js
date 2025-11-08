@@ -1,10 +1,8 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const ethers_1 = require("ethers");
-const brevityParser_1 = require("./brevityParser");
-const fs_1 = require("fs");
-const typechain_types_1 = require("../typechain-types");
-const utils_1 = require("./utils");
+import { JsonRpcProvider, parseEther, toBeHex, Wallet } from "ethers";
+import { BrevityParser } from "./brevityParser";
+import { readFileSync, writeFileSync } from 'fs';
+import { CloneFactory__factory, IBrevityInterpreter__factory, OwnedBrevityInterpreter__factory, TestToken__factory } from "../typechain-types";
+import { estimateGas, signMetaTx } from "./utils";
 const defaultConfig = {
     maxMem: 100
 };
@@ -54,7 +52,7 @@ async function cli() {
     let i = 2;
     for (; i < process.argv.length - 1; i++) {
         if (process.argv[i] == '-i' || process.argv[i] == '--infile') {
-            inputScript = (0, fs_1.readFileSync)(process.argv[++i], { encoding: 'utf-8' });
+            inputScript = readFileSync(process.argv[++i], { encoding: 'utf-8' });
         }
         else if (process.argv[i] == '-f' || process.argv[i] == '--flags') {
             //initalFlags = process.argv[++i]
@@ -70,12 +68,12 @@ async function cli() {
             targetAddress = process.argv[++i];
         }
         else if (process.argv[i] == '-r' || process.argv[i] == '--rpc') {
-            provider = new ethers_1.JsonRpcProvider(process.argv[++i]);
+            provider = new JsonRpcProvider(process.argv[++i]);
         }
         else if (process.argv[i] == '-v' || process.argv[i] == '--value') {
             value = process.argv[++i];
             if (value.toLowerCase().endsWith('eth'))
-                value = (0, ethers_1.parseEther)(value.substring(0, value.length - 3));
+                value = parseEther(value.substring(0, value.length - 3));
         }
         else {
             break;
@@ -87,10 +85,10 @@ async function cli() {
         process.exit(1);
     }
     if (process.env["PRVKEY"]) {
-        signer = new ethers_1.Wallet(process.env["PRVKEY"], provider);
+        signer = new Wallet(process.env["PRVKEY"], provider);
     }
     if (process.env["METATXKEY"]) {
-        metaTxPayer = new ethers_1.Wallet(process.env["METATXKEY"], provider);
+        metaTxPayer = new Wallet(process.env["METATXKEY"], provider);
     }
     let txPayer = signer;
     if (cmd == 'runMeta') {
@@ -107,7 +105,7 @@ async function cli() {
             console.error(`No signer specified. Put private key in PRVKEY envvar`);
             process.exit(1);
         }
-        const factory = new typechain_types_1.OwnedBrevityInterpreter__factory(signer);
+        const factory = new OwnedBrevityInterpreter__factory(signer);
         // owner can be passed using -t target
         const owner = targetAddress ? targetAddress : await signer.getAddress();
         const rslt = await factory.deploy(owner);
@@ -119,7 +117,7 @@ async function cli() {
             console.error(`No signer specified. Put private key in PRVKEY envvar`);
             process.exit(1);
         }
-        const factory = new typechain_types_1.CloneFactory__factory(signer);
+        const factory = new CloneFactory__factory(signer);
         const rslt = await factory.deploy();
         console.log(`CloneFactory deployed at ${await rslt.getAddress()} , in txHash ${rslt.deploymentTransaction()?.hash}`);
         process.exit(0);
@@ -129,12 +127,12 @@ async function cli() {
             console.error(`No signer specified. Put private key in PRVKEY envvar`);
             process.exit(1);
         }
-        const token = new typechain_types_1.TestToken__factory(signer);
+        const token = new TestToken__factory(signer);
         const rslt = await token.deploy();
         console.log(`TestToken deployed at ${await rslt.getAddress()} , in txHash ${rslt.deploymentTransaction()?.hash}`);
         process.exit(0);
     }
-    const parser = new brevityParser_1.BrevityParser(defaultConfig);
+    const parser = new BrevityParser(defaultConfig);
     const compiled = inputScript ? parser.parseBrevityScript(inputScript) : undefined;
     if (!compiled) {
         console.error(`No input script`);
@@ -143,7 +141,7 @@ async function cli() {
     if (cmd == 'build') {
         const code = JSON.stringify(compiled, null, 2);
         if (outputFile) {
-            (0, fs_1.writeFileSync)(outputFile, code);
+            writeFileSync(outputFile, code);
         }
         else {
             console.log(code);
@@ -162,7 +160,7 @@ async function cli() {
         console.error(`No target interpreter given`);
         process.exit(1);
     }
-    const targetInterpreter = typechain_types_1.IBrevityInterpreter__factory.connect(targetAddress, txPayer);
+    const targetInterpreter = IBrevityInterpreter__factory.connect(targetAddress, txPayer);
     if (cmd == 'run') {
         const resp = await targetInterpreter.run(compiled, { value });
         console.log(`Submitted run txHash ${resp.hash}`);
@@ -170,33 +168,33 @@ async function cli() {
     else if (cmd == 'runMeta') {
         const network = await provider.getNetwork();
         const deadline = Math.floor(((new Date()).getTime() / 1000) + 3600);
-        const sig = await (0, utils_1.signMetaTx)(signer, targetAddress, network.chainId, compiled, deadline);
+        const sig = await signMetaTx(signer, targetAddress, network.chainId, compiled, deadline);
         const resp = await targetInterpreter.runMeta(compiled, deadline, sig);
         console.log(`Submitted runMeta txHash ${resp.hash}`);
     }
     else if (cmd == 'signMeta') {
         const network = await provider.getNetwork();
         const deadline = Math.floor(((new Date()).getTime() / 1000) + 3600);
-        const sig = await (0, utils_1.signMetaTx)(signer, targetAddress, network.chainId, compiled, deadline);
+        const sig = await signMetaTx(signer, targetAddress, network.chainId, compiled, deadline);
         const tx = await targetInterpreter.getFunction("runMeta").populateTransaction(compiled, deadline, sig);
         console.log(tx.data);
     }
     else if (cmd == 'signFactoryMeta') {
         // experimental, for bridging
         // target = CloneFactory
-        const cloneFactory = typechain_types_1.CloneFactory__factory.connect(targetAddress, provider);
+        const cloneFactory = CloneFactory__factory.connect(targetAddress, provider);
         const implementation = process.argv[++i];
-        const salt = (0, ethers_1.toBeHex)(process.argv[++i], 32);
+        const salt = toBeHex(process.argv[++i], 32);
         const network = await provider.getNetwork();
         const deadline = Math.floor(((new Date()).getTime() / 1000) + 3600);
         const owner = await signer.getAddress();
         const interpreterAddress = await cloneFactory.predictDeterministicAddress(implementation, salt, owner);
-        const sig = await (0, utils_1.signMetaTx)(signer, interpreterAddress, network.chainId, compiled, deadline);
+        const sig = await signMetaTx(signer, interpreterAddress, network.chainId, compiled, deadline);
         const tx = await cloneFactory.getFunction("cloneIfNeededThenRun").populateTransaction(implementation, salt, owner, compiled, deadline, sig);
         console.log(tx.data);
     }
     else if (cmd == 'estimateGas') {
-        (0, utils_1.estimateGas)(targetInterpreter, compiled);
+        estimateGas(targetInterpreter, compiled);
     }
     else {
         console.error(`Unknown cmd: ${cmd}`);

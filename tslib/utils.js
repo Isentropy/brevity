@@ -1,8 +1,5 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.signMetaTx = exports.estimateGas = exports.bytesMemoryObject = void 0;
-const typechain_types_1 = require("../typechain-types");
-const ethers_1 = require("ethers");
+import { IBrevityInterpreter__factory } from "../typechain-types";
+import { dataLength, toBeHex, zeroPadBytes } from 'ethers';
 const METATX_TYPES = {
     Instruction: [
         { name: 'opcode', type: 'uint256' },
@@ -20,29 +17,27 @@ const METATX_TYPES = {
         { name: 'deadline', type: 'uint256' }
     ]
 };
-function bytesMemoryObject(data) {
-    const len = (0, ethers_1.dataLength)(data);
+export function bytesMemoryObject(data) {
+    const len = dataLength(data);
     const words = Math.ceil(len / 32);
-    data = (0, ethers_1.zeroPadBytes)(data, words * 32);
+    data = zeroPadBytes(data, words * 32);
     if (data.startsWith('0x'))
         data = data.substring(2);
     //console.log(`data padded ${data}`)
-    let rslt = (0, ethers_1.toBeHex)(len, 32);
+    let rslt = toBeHex(len, 32);
     for (let i = 0; i < words; i++) {
         rslt += ",0x" + data.substring((64 * i), (64 * (i + 1)));
     }
     return rslt;
 }
-exports.bytesMemoryObject = bytesMemoryObject;
-async function estimateGas(brevityInterpreter, o, value = BigInt(0)) {
+export async function estimateGas(brevityInterpreter, o, value = BigInt(0)) {
     const runGas = await brevityInterpreter.getFunction("run").estimateGas(o, { value });
     const noopGas = await brevityInterpreter.getFunction("noop").estimateGas(o, { value });
     if (!runGas || !noopGas)
         throw Error();
     console.log(`Brevity gas: total = ${runGas}, calldata = ${noopGas}, execution = ${runGas - noopGas}`);
 }
-exports.estimateGas = estimateGas;
-async function signMetaTx(signer, brevityInterpreterAddress, chainId, output, deadline) {
+export async function signMetaTx(signer, brevityInterpreterAddress, chainId, output, deadline) {
     const domain = {
         name: 'Brev',
         version: '1',
@@ -52,7 +47,7 @@ async function signMetaTx(signer, brevityInterpreterAddress, chainId, output, de
     const signerAddress = await signer.getAddress();
     const code = await signer.provider?.getCode(brevityInterpreterAddress);
     // if not deployed, use 0 for nonce
-    const nonce = (!code || (0, ethers_1.dataLength)(code) == 0) ? 0 : await typechain_types_1.IBrevityInterpreter__factory.connect(brevityInterpreterAddress, signer.provider).nonces(signerAddress);
+    const nonce = (!code || dataLength(code) == 0) ? 0 : await IBrevityInterpreter__factory.connect(brevityInterpreterAddress, signer.provider).nonces(signerAddress);
     const v = {
         deadline,
         nonce,
@@ -61,4 +56,3 @@ async function signMetaTx(signer, brevityInterpreterAddress, chainId, output, de
     const sig = await signer.signTypedData(domain, METATX_TYPES, v);
     return sig;
 }
-exports.signMetaTx = signMetaTx;

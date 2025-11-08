@@ -1,9 +1,6 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.BrevityParser = exports.configFlagRequireVersion = void 0;
-const ethers_1 = require("ethers");
-const utils_1 = require("./utils");
-const buffer_1 = require("buffer");
+import { dataLength, FunctionFragment, hexlify, toBeHex } from 'ethers';
+import { bytesMemoryObject } from './utils';
+import { Buffer } from 'buffer';
 const SYMBOL_REGEX = /[a-zA-Z][a-zA-Z_0-9]*/;
 const NEGATIVE_INT = /^-[0-9]+$/;
 const COMMENT_REGEX = /\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm;
@@ -89,10 +86,9 @@ const TwoArgQuantityKWs = new Map([
     ['==', QUANTITY_OP_EQ]
 ]);
 const KWS = new Set([...ZeroArgQuantityKWs.keys()].concat([...OneArgQuantityKWs.keys()]).concat([...TwoArgQuantityKWs.keys()]).concat([KW_REVERT, KW_RETURN, KW_GOTO, KW_IF, KW_CALL, KW_SEND, KW_STATICCALL, KW_DELEGATECALL, KW_VAR, KW_DUMPMEM]));
-function configFlagRequireVersion(v) {
+export function configFlagRequireVersion(v) {
     return BigInt(v) << BigInt(64);
 }
-exports.configFlagRequireVersion = configFlagRequireVersion;
 /*
 like JSON.parse for maps but allows k/v wo "
 */
@@ -136,11 +132,11 @@ class ParsingContext {
     }
 }
 function toBytes32(n) {
-    const hex = (0, ethers_1.toBeHex)(n, 32);
+    const hex = toBeHex(n, 32);
     //onsole.log(`toBytes32 ${n} ${hex}`)
     return hex;
 }
-class BrevityParser {
+export class BrevityParser {
     constructor(config) {
         this.config = config;
     }
@@ -324,7 +320,7 @@ class BrevityParser {
                 if (dp >= 0) {
                     // function sig isnt aliased
                     const fnSig = right.substring(0, dp + 1);
-                    fnSelector = ethers_1.FunctionFragment.from(fnSig).selector;
+                    fnSelector = FunctionFragment.from(fnSig).selector;
                     //rm ()
                     args = right.substring(dp + 2, right.length - 1);
                 }
@@ -335,7 +331,7 @@ class BrevityParser {
                     const fnSig = parsingContext.preprocessorSymbols.get(alias);
                     if (typeof fnSig === 'undefined')
                         throw Error(`${parsingContext.lineNumber}: Cant decipher fnSig ${alias}. must define string with full signature`);
-                    fnSelector = ethers_1.FunctionFragment.from(fnSig).selector;
+                    fnSelector = FunctionFragment.from(fnSig).selector;
                     //rm ()
                     args = right.substring(firstParen + 1, right.length - 1);
                 }
@@ -349,10 +345,10 @@ class BrevityParser {
                 // translate "strings" and bytes > 32 to bytes/string EVM mem representation
                 // so they can be used in fn calls
                 if (dealiased.startsWith("\"") && dealiased.endsWith("\"")) {
-                    dealiased = (0, utils_1.bytesMemoryObject)((0, ethers_1.hexlify)(buffer_1.Buffer.from(dealiased.substring(1, dealiased.length - 1), 'utf8')));
+                    dealiased = bytesMemoryObject(hexlify(Buffer.from(dealiased.substring(1, dealiased.length - 1), 'utf8')));
                 }
-                else if (dealiased.startsWith('0x') && (0, ethers_1.dataLength)(dealiased) > 32) {
-                    dealiased = (0, utils_1.bytesMemoryObject)(dealiased);
+                else if (dealiased.startsWith('0x') && dataLength(dealiased) > 32) {
+                    dealiased = bytesMemoryObject(dealiased);
                 }
                 return dealiased;
             }).join(',');
@@ -586,4 +582,3 @@ class BrevityParser {
         return { config, instructions: resolved, quantities: parsingContext.quantites };
     }
 }
-exports.BrevityParser = BrevityParser;
