@@ -14,16 +14,41 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 The GUI showcases a graphical step composition tool that makes it easy to write workflows without specific knowledge of Brevity language.
 
 ## A language-in-a-language!? Why?
- - **All-in-One General Purpose Contract** Users can deploy a privately controlled Brevity Interpreter  contract, which can run arbitrary workflows without deploying more code or moving tokens. Deployment using [Clone pattern](contracts/CloneFactory.sol) is supported, and costs less than 100000 gas.
- - **Guardrails**: Brevity supports a [hook to EVM CALLs](https://github.com/Isentropy/brevity/blob/7c30196bd119d7d91d99469c9ec88dc7dd5a219e/contracts/BrevityInterpreter.sol#L117) that can be used to apply restrictons on which external methods are called. 
- - **Metering**: The [hook to EVM CALLs](https://github.com/Isentropy/brevity/blob/7c30196bd119d7d91d99469c9ec88dc7dd5a219e/contracts/BrevityInterpreter.sol#L117) allows for metering of asset transfers. 
- - **MetaTransactions**: Brevity calls can be submitted as EIP712 metaTxs, enabling Brevity Interpreters to be controlled by wallets that hold no tokens. This functionality is built into [Brevity CLI](tslib/cli.ts)
- - **Gas Saving**: EVM contracts are expensive to deploy relative to calldata. Deploying EVM code costs around 200 gas/byte, whereas calldata costs 4-16 gas/byte. Brevity saves on deployment cost by putting code in the calldata and interpreting. For a simple arbitrage example in [Brevity](test/briefs/example.brv) and [Solidity](contracts/Arb.sol):
+
+
+Imagine you want to run a multi-step DeFi workflow that does some DeFi actions (swap, stake, flash loan, etc) according to a program, and reverts if some conditions aren't met. Let's compare writing this in a custom Solidity smart contract vs running a Brevity script on Brevity Interpreter smart contract:
+
+
+### Run ANY workflow
+If your workflow was reused many times and never changed, a custom Solidity smart contract would be the easy solution. But what the workflow needs to be updated sometimes? This is trivial with Brevity, but tricky with a smart contract that is not general-purpose. You'd have to vet and deploy new smart contract code, and possibly do some proxy operations if the smart contract held the tokens.
+ 
+### Composable GUI
+With Brevity, end users can run ANY DeFi workflow in 1 click in an easy [GUI](https://github.com/Isentropy/brevity-gui). The GUI doesnt change with the workflow and users can easily see what they're running. A custom Solidity smart contract requires a custom GUI. 
+
+### Flash Loan Integration
+Super easy in Brevity, difficult to write your own. UniswapV4FlashBrevityInterpreter allows you pass in a Brevity script to be run as callback to IPoolManager.unlock(). 
+
+### MetaTransactions
+Brevity calls can be submitted as EIP712 metaTxs, enabling Brevity Interpreters to be controlled by wallets that hold no tokens. This functionality is built into [Brevity CLI](tslib/cli.ts). In a non general purpose smart contract, this requires tricky code changes each time the Workflow format changes. Brevity can even send metaTransactions **across bridges**.
+
+### Guardrails
+Brevity supports a [hook to EVM CALLs](https://github.com/Isentropy/brevity/blob/7c30196bd119d7d91d99469c9ec88dc7dd5a219e/contracts/BrevityInterpreter.sol#L117) that can be used to apply restrictons on which external methods are called. So you  can **whitelist** particular DeFi operations. This is  difficult to enforce in Solidity.
+
+
+ ### Metering
+ The [hook to EVM CALLs](https://github.com/Isentropy/brevity/blob/7c30196bd119d7d91d99469c9ec88dc7dd5a219e/contracts/BrevityInterpreter.sol#L117) allows for metering of asset transfers in and out of a BrevityInterpreter. This is also difficult to enforce in Solidity.
+
+### Gas
+Deployment of an OwnedBrevityInterperter using [Clone pattern](contracts/CloneFactory.sol) is supported, and costs less than 100000 gas.
+
+If the workflow is not reused often, you'll save gas with Brevity. This is because EVM code is expensive to deploy relative to calldata. Deploying EVM code costs around 200 gas/byte, whereas calldata costs 4-16 gas/byte. Brevity saves on deployment cost by putting code in the calldata and interpreting. For a simple arbitrage example in [Brevity](test/briefs/example.brv) and [Solidity](contracts/Arb.sol):
 ```
 Brevity gas: total = 204504, calldata = 51443, execution = 153061
 Solidity Test gas: total = 463028, deploy = 343682, calldata = 23528, execution = 95818
 ```
-Generally Brevity saves gas on workflows that are not reused. 
+If the workflow is reused often, you may save gas with a custom smart contract. Also consider that the Brevity interperter holds tokens itself. A custom smart contract that sends the tokens back to msg.sender each run incurs gas fees. A custom smart contract that holds tokens has security risks by upgrades.
+
+ 
 
 ## CLI Usage
 ```
