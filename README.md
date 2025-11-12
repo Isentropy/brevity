@@ -20,22 +20,22 @@ Imagine you want to run a multi-step DeFi workflow that does some DeFi actions (
 
 
 ### Run ANY workflow
-If your workflow was reused many times and never changed, a custom Solidity smart contract would be the easy solution. But what the workflow needs to be updated sometimes? This is trivial with Brevity, but tricky with a smart contract that is not general-purpose. You'd have to vet and deploy new smart contract code, and possibly do some proxy operations if the smart contract held the tokens.
+If your workflow was reused many times and never changed, a custom Solidity smart contract would be the easy solution. But what if the workflow needs code changes? This is trivial with Brevity, but tricky with a smart contract that is not general-purpose. You'd have to vet and deploy new smart contract code, and reconfigure a proxy if the smart contract held tokens.
  
 ### Composable GUI
 With Brevity, end users can run ANY DeFi workflow in 1 click in an easy [GUI](https://github.com/Isentropy/brevity-gui). The GUI doesnt change with the workflow and users can easily see what they're running. A custom Solidity smart contract requires a custom GUI. 
 
 ### Guardrails
-Brevity supports a [hook to EVM CALLs](https://github.com/Isentropy/brevity/blob/7c30196bd119d7d91d99469c9ec88dc7dd5a219e/contracts/BrevityInterpreter.sol#L117) that can be used to apply restrictons on which external methods are called. So you  can **whitelist** particular DeFi operations. In Solidity you'd have to write your own hook to external calls and vet the code to insure its always used.
+Brevity supports a [hook to EVM CALLs](https://github.com/Isentropy/brevity/blob/7c30196bd119d7d91d99469c9ec88dc7dd5a219e/contracts/BrevityInterpreter.sol#L117) that can be used to apply restrictons on which external methods are called. So you  can **whitelist** particular DeFi operations. In Solidity you'd have to write your own hook to external calls and vet the code to ensure its always used.
 
 ### Flash Loan Integration
-Super easy in Brevity, difficult to write your own. UniswapV4FlashBrevityInterpreter allows you pass in a Brevity script to be run as callback to IPoolManager.unlock(). 
+Super easy in Brevity, difficult to write your own. UniswapV4FlashBrevityInterpreter allows you pass in a Brevity script to be run as callback to IPoolManager.unlock().
 
 ### MetaTransactions
-Brevity calls can be submitted as EIP712 metaTxs, enabling Brevity Interpreters to be controlled by wallets that hold no tokens. This functionality is built into [Brevity CLI](tslib/cli.ts). In a non general purpose smart contract, this requires tricky code changes each time the Workflow format changes. Brevity can even send metaTransactions **across bridges**.
+Brevity calls can be submitted as EIP712 metaTxs, enabling Brevity Interpreters to be controlled by wallets that hold no tokens. This functionality is built into [Brevity CLI](tslib/cli.ts). A custom smart contract requires tricky code changes if the Workflow instruction changes. Brevity can even send metaTransactions **across bridges**.
 
  ### Metering
- The [hook to EVM CALLs](https://github.com/Isentropy/brevity/blob/7c30196bd119d7d91d99469c9ec88dc7dd5a219e/contracts/BrevityInterpreter.sol#L117) allows for metering of asset transfers in and out of a BrevityInterpreter. This is also difficult to enforce in Solidity.
+ The [hook to EVM CALLs](https://github.com/Isentropy/brevity/blob/7c30196bd119d7d91d99469c9ec88dc7dd5a219e/contracts/BrevityInterpreter.sol#L117) allows for metering of asset transfers in and out of a BrevityInterpreter. This is also difficult to enforce in Solidity without a hook.
 
 ### Gas
 Deployment of an OwnedBrevityInterperter using [Clone pattern](contracts/CloneFactory.sol) is supported, and costs less than 100000 gas.
@@ -46,7 +46,6 @@ Brevity gas: total = 204504, calldata = 51443, execution = 153061
 Solidity Test gas: total = 463028, deploy = 343682, calldata = 23528, execution = 95818
 ```
 If the workflow is reused often, you may save gas with a custom smart contract. Also consider that the Brevity interperter holds tokens itself. A custom smart contract that sends the tokens back to msg.sender each run incurs gas fees. A custom smart contract that holds tokens has security risks by upgrades.
-
  
 
 ## CLI Usage
