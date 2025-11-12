@@ -25,15 +25,14 @@ If your workflow was reused many times and never changed, a custom Solidity smar
 ### Composable GUI
 With Brevity, end users can run ANY DeFi workflow in 1 click in an easy [GUI](https://github.com/Isentropy/brevity-gui). The GUI doesnt change with the workflow and users can easily see what they're running. A custom Solidity smart contract requires a custom GUI. 
 
+### Guardrails
+Brevity supports a [hook to EVM CALLs](https://github.com/Isentropy/brevity/blob/7c30196bd119d7d91d99469c9ec88dc7dd5a219e/contracts/BrevityInterpreter.sol#L117) that can be used to apply restrictons on which external methods are called. So you  can **whitelist** particular DeFi operations. In Solidity you'd have to write your own hook to external calls and vet the code to insure its always used.
+
 ### Flash Loan Integration
 Super easy in Brevity, difficult to write your own. UniswapV4FlashBrevityInterpreter allows you pass in a Brevity script to be run as callback to IPoolManager.unlock(). 
 
 ### MetaTransactions
 Brevity calls can be submitted as EIP712 metaTxs, enabling Brevity Interpreters to be controlled by wallets that hold no tokens. This functionality is built into [Brevity CLI](tslib/cli.ts). In a non general purpose smart contract, this requires tricky code changes each time the Workflow format changes. Brevity can even send metaTransactions **across bridges**.
-
-### Guardrails
-Brevity supports a [hook to EVM CALLs](https://github.com/Isentropy/brevity/blob/7c30196bd119d7d91d99469c9ec88dc7dd5a219e/contracts/BrevityInterpreter.sol#L117) that can be used to apply restrictons on which external methods are called. So you  can **whitelist** particular DeFi operations. This is  difficult to enforce in Solidity.
-
 
  ### Metering
  The [hook to EVM CALLs](https://github.com/Isentropy/brevity/blob/7c30196bd119d7d91d99469c9ec88dc7dd5a219e/contracts/BrevityInterpreter.sol#L117) allows for metering of asset transfers in and out of a BrevityInterpreter. This is also difficult to enforce in Solidity.
