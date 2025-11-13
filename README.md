@@ -1,4 +1,4 @@
-# Brevity, an EVM scripting language for workflows
+# Brevity, an interpreted EVM scripting language for workflows
 
 Copyright 2024, 2025 Isentropy LLC
 
