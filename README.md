@@ -16,14 +16,14 @@ The GUI showcases a graphical step composition tool that makes it easy to write 
 ## A language-in-a-language!? Why?
 
 
-Imagine you want to run a multi-step DeFi workflow that does some DeFi actions (swap, stake, flash loan, etc) according to a program, and reverts if some conditions aren't met. Let's compare writing this in a custom Solidity smart contract vs running a Brevity script on Brevity Interpreter smart contract:
+Imagine you want to run a multi-step DeFi workflow that does some DeFi actions (swap, liquid stake, flash loan, etc) according to a program, and reverts if some conditions aren't met. Let's compare writing this in a custom Solidity smart contract vs running a Brevity script on Brevity Interpreter smart contract:
 
 
 ### Run ANY workflow
 If your workflow was reused many times and never changed, a custom Solidity smart contract would be the easy solution. But what if the workflow needs code changes? This is trivial with Brevity, but tricky with a smart contract that is not general-purpose. You'd have to vet and deploy new smart contract code, and reconfigure a proxy if the smart contract held tokens.
  
 ### Composable GUI
-With Brevity, end users can run ANY DeFi workflow in 1 click in an easy [GUI](https://github.com/Isentropy/brevity-gui). The GUI doesnt change with the workflow and users can easily see what they're running. A custom Solidity smart contract requires a custom GUI. 
+With Brevity, end users can run ANY DeFi workflow in 1 click in an easy [GUI](https://github.com/Isentropy/brevity-gui). Steps can be **composed graphically**, and the GUI generates a Brevity script. The GUI doesnt change with the workflow and users can easily see what they're running. A custom Solidity smart contract requires a custom GUI. 
 
 ### Guardrails
 Brevity supports a [hook to EVM CALLs](https://github.com/Isentropy/brevity/blob/7c30196bd119d7d91d99469c9ec88dc7dd5a219e/contracts/BrevityInterpreter.sol#L117) that can be used to apply restrictons on which external methods are called. So you  can **whitelist** particular DeFi operations. In Solidity you'd have to write your own hook to external calls and vet the code to ensure its always used.
