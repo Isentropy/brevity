@@ -10,9 +10,6 @@ Brevity is **NOT YET AUDITED** and in development and alpha. Use at your own ris
 
 THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-## Brevity also has an composable [GUI](https://github.com/Isentropy/brevity-gui)
-The GUI showcases a graphical step composition tool that makes it easy to write workflows without specific knowledge of Brevity language.
-
 ## A language-in-a-language!? Why?
 
 
@@ -22,8 +19,8 @@ Imagine you want to run a multi-step DeFi workflow that does some DeFi actions (
 ### Run ANY workflow
 If your workflow was reused many times and never changed, a custom Solidity smart contract would be the easy solution. But what if the workflow needs code changes? This is trivial with Brevity, but tricky with a smart contract that is not general-purpose. You'd have to vet and deploy new smart contract code, and reconfigure a proxy if the smart contract held tokens.
  
-### Composable GUI
-With Brevity, end users can run ANY DeFi workflow in 1 click in an easy [GUI](https://github.com/Isentropy/brevity-gui). Steps can be **composed graphically**, and the GUI generates a Brevity script. The GUI doesnt change with the workflow and users can easily see what they're running. A custom Solidity smart contract requires a custom GUI. 
+### [Composable GUI](https://github.com/Isentropy/brevity-gui)
+With Brevity, end users can run ANY DeFi workflow in 1 click in an easy [GUI](https://github.com/Isentropy/brevity-gui). Steps can be **composed graphically** without specific knowledge of Brevity language. The GUI doesnt change with the workflow and users can easily see what they're running. A custom Solidity smart contract requires a custom GUI. 
 
 ### Guardrails
 Brevity supports a [hook to EVM CALLs](https://github.com/Isentropy/brevity/blob/7c30196bd119d7d91d99469c9ec88dc7dd5a219e/contracts/BrevityInterpreter.sol#L117) that can be used to apply restrictons on which external methods are called. So you  can **whitelist** particular DeFi operations. In Solidity you'd have to write your own hook to external calls and vet the code to ensure its always used.
