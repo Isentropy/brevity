@@ -202,11 +202,11 @@ block.timestamp
 
 
 ## Under the Hood
-Brevity Scripts (```.brv``` ) are transpiled into a Brevity Calldata Program that is passed to the [Interpreter](contracts/BrevityInterpreter.sol) as ```(uint config, Instruction[] calldata instructions, Quantity[] calldata quantities)```. 
+Brevity Scripts (```.brv``` ) are transpiled into a Brevity Calldata Program that is passed to the [Interpreter](contracts/BrevityInterpreter.sol) as ```(uint config, Instruction[] calldata instructions, Quantity[] calldata quantities)```.
 
 - config: Specifies optional config flags and memStack size
-- instructions: similar to a normal assembly instruction set, but very minimal. Some args are words that represent a ```Quantity```. Quantity evaluation does the arithmatic operations. 
-- quantites: A Quantity is a formula that resolves to a uint256. It can be literal, mem pointer, or function(Quantity...) that returns a uint256 word. Function are expressed internally with the opcode as prefix, eg  ```123, (* 5 6), (+ mem[2] 5), this (ie address(this)), msg.sender```.
+- instructions: Brevity has a [minimal instructon set](https://github.com/Isentropy/brevity/blob/5770fdd99f716b74944f6565b92a97deaed6b4a0/contracts/Constants.sol#L9). The instruction operands are words that represent ```Quantities```. Quantity evaluation does the arithmatic operations. 
+- quantites: A Quantity is a formula that resolves to a uint256. It can be literal, mem pointer, or function(Quantity...) that returns a uint256 word. They are expressed internally with the opcode as prefix, eg  ```123, (* 5 6), (+ mem[2] 5), this (ie address(this)), msg.sender```. Quantities are LISP-like and evaulated recursively. 
 
 ### Usage
 See [OwnedBrevityInterpreter](contracts/OwnedBrevityInterpreter.sol) for an example of a Brevity Interpreter contract that can be used only by an owner.
