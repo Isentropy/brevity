@@ -190,7 +190,7 @@ balance(someAddress)
 block.timestamp
 ```
 
-#### Variable length types
+### Variable length types
 Brevity v1 has basic support for multi-word types like ```string``` and ```bytes``` with preprocessor symbols. These Solidity types are stored in EVM memory and calldata as a list of 32 bytes words: ```length, bytes0_31, bytes32_64, etc```. Brevity v1 translates preprocessor symbols of strings (eg ```"hello"```) and 32+ length bytes  (eg 0x{32+ bytes hex}) into a list of 32 byte words when used in function calls. The Solidity ABI specifies that these these multi-word types are presented in function calls as an **offset** to the object. So this is how to invoke functions of ```string``` and ```bytes``` in Brevity v1:
 ```
 foo := foo(string)
