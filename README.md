@@ -13,7 +13,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 ## A language-in-a-language!? Why?
 
 
-Imagine you want to run a multi-step DeFi workflow that does some DeFi actions (swap, liquid stake, flash loan, etc) according to a program, and reverts if some conditions aren't met. Let's compare writing this in a custom Solidity smart contract vs running a Brevity script on Brevity Interpreter smart contract:
+Imagine you want to run a multi-step DeFi workflow that does some DeFi actions (swap, liquid stake, flash loan, etc) according to a program, and reverts if some conditions aren't met. Let's compare writing this in a custom Solidity smart contract vs running a Brevity script on a Brevity Interpreter smart contract:
 
 
 ### Run ANY workflow
@@ -23,7 +23,7 @@ If your workflow was reused many times and never changed, a custom Solidity smar
 With Brevity, end users can run ANY DeFi workflow in 1 click in an easy [GUI](https://github.com/Isentropy/brevity-gui). Steps can be **composed graphically** without specific knowledge of Brevity language. The GUI doesnt change with the workflow and users can easily see what they're running. A custom Solidity smart contract requires a custom GUI. 
 
 ### Guardrails
-Brevity supports a [hook to EVM CALLs](https://github.com/Isentropy/brevity/blob/7c30196bd119d7d91d99469c9ec88dc7dd5a219e/contracts/BrevityInterpreter.sol#L117) that can be used to apply restrictons on which external methods are called. So you  can **whitelist** particular DeFi operations. In Solidity you'd have to write your own hook to external calls and vet the code to ensure its always used.
+Brevity supports a [hook to EVM CALLs](https://github.com/Isentropy/brevity/blob/7c30196bd119d7d91d99469c9ec88dc7dd5a219e/contracts/BrevityInterpreter.sol#L117) that can be used to apply restrictons on which external methods are called. So you  can **whitelist** particular DeFi operations. In Solidity you'd have to write your own hook to external calls and vet the code to ensure it's always used.
 
 ### Flash Loan Integration
 Super easy in Brevity, difficult to write your own. UniswapV4FlashBrevityInterpreter allows you pass in a Brevity script to be run as callback to IPoolManager.unlock().
@@ -95,16 +95,6 @@ seven := 3 + 4
 balanceOf := balanceOf(address)
 ```
 
-#### Variable length types
-Brevity v1 has basic support for multi-word types like ```string``` and ```bytes``` with preprocessor symbols. These Solidity types are stored in EVM memory and calldata as a list of 32 bytes words: ```length, bytes0_31, bytes32_64, etc```. Brevity v1 translates preprocessor symbols of strings (eg ```"hello"```) and 32+ length bytes  (eg 0x{32+ bytes hex}) into a list of 32 byte words when used in function calls. The Solidity ABI specifies that these these multi-word types are presented in function calls as an **offset** to the object. So this is how to invoke functions of ```string``` and ```bytes``` in Brevity v1:
-```
-foo := foo(string)
-s := "hello"
-CALL target.foo(32, s)
-// same as CALL target.foo(32, 5, 0x68656C6C6F)
-```
-The 32 above means the first arg is an offset and the data comes after 1st arg (1*32). This becomes messy with multiple offsets. We hope to offer easier multi-word support in v2.
-
 ### Only 1 stack: memStack
 Brevity allocates a fixed size chunk of memory call the memStack. The size is calculated by the parser and sent as part of the TX data. . The following code assigns the symbol "x" to the next position on the memStack and stores the word 123, and then 456:
 
@@ -150,12 +140,12 @@ syntax is similar to STATICCALL, but CALL can change state.
 var tokenId, liquidity, amount0, amount1 = CALL uniswapPositionManager.mint(usdc, weth, fee, tickLower, tickUpper, usdcBal, wethAmt, 0, 0, this, block.timestamp)
 
 // if we haven't defined wrap := wrap() as preprocessor symbol, can specify full fn signature: 
-CALL {"value":"123"} weth.wrap()()
+CALL {value: 123} weth.wrap()()
 ```
 ### SEND sends native token only without data
 ```
-SEND {"value":"123"} targetAddress
-SEND {"value":"msg.value / 3 "} targetAddress
+SEND {value: 123} targetAddress
+SEND {value: msg.value / 3 } targetAddress
 ```
 
 ### Use jump points and goto for flow control
@@ -199,6 +189,16 @@ this
 balance(someAddress)
 block.timestamp
 ```
+
+#### Variable length types
+Brevity v1 has basic support for multi-word types like ```string``` and ```bytes``` with preprocessor symbols. These Solidity types are stored in EVM memory and calldata as a list of 32 bytes words: ```length, bytes0_31, bytes32_64, etc```. Brevity v1 translates preprocessor symbols of strings (eg ```"hello"```) and 32+ length bytes  (eg 0x{32+ bytes hex}) into a list of 32 byte words when used in function calls. The Solidity ABI specifies that these these multi-word types are presented in function calls as an **offset** to the object. So this is how to invoke functions of ```string``` and ```bytes``` in Brevity v1:
+```
+foo := foo(string)
+s := "hello"
+CALL target.foo(32, s)
+// same as CALL target.foo(32, 5, 0x68656C6C6F)
+```
+The 32 above means the first arg is an offset and the data comes after 1st arg (1*32). This becomes messy with multiple offsets. We hope to offer easier multi-word support in v2.
 
 
 ## Under the Hood
