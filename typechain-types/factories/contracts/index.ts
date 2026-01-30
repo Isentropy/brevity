@@ -3,6 +3,7 @@
 /* eslint-disable */
 export * as cloneFactorySol from "./CloneFactory.sol";
 export * as test from "./test";
+export * as uniswap4 from "./uniswap4";
 export { BrevityInterpreter__factory } from "./BrevityInterpreter__factory";
 export { DebugTools__factory } from "./DebugTools__factory";
 export { IBrevityInterpreter__factory } from "./IBrevityInterpreter__factory";

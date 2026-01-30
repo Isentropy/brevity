@@ -5,6 +5,8 @@ import type * as cloneFactorySol from "./CloneFactory.sol";
 export type { cloneFactorySol };
 import type * as test from "./test";
 export type { test };
+import type * as uniswap4 from "./uniswap4";
+export type { uniswap4 };
 export type { BrevityInterpreter } from "./BrevityInterpreter";
 export type { DebugTools } from "./DebugTools";
 export type { IBrevityInterpreter } from "./IBrevityInterpreter";

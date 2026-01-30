@@ -5,11 +5,11 @@ import hre, { ethers } from "hardhat";
 import { BrevityParser, BrevityParserOutput, configFlagRequireVersion } from "../tslib/brevityParser";
 import { dataLength, parseEther, BigNumberish } from 'ethers'
 import * as fs from 'fs'
-import { OwnedBrevityInterpreter__factory, IBrevityInterpreter, CloneFactory__factory, OwnedBrevityInterpreter } from "../typechain-types";
+import { OwnedBrevityInterpreter__factory, IBrevityInterpreter, CloneFactory__factory, OwnedBrevityInterpreter, Uniswap4FlashBrevityInterpreter__factory } from "../typechain-types";
 import { signMetaTx, estimateGas } from "../tslib/utils";
 //hardhat default
 //const chainId = 31337
-
+const UNISWAP_POOL_MANAGER_MAINNET = '0x000000000004444c5dc75cb358380d2e3de08a90'
 const ITERATIONS = 10
 function brevityLoopProgram(n: number, toFoo: string): string {
   const lines: string[] = [`n := ${n - 1}`]
@@ -32,8 +32,12 @@ describe("Brevity", function () {
     // Contracts are deployed using the first signer/account by default
     const [owner, otherAccount] = await hre.ethers.getSigners();
 
-    const OwnedBrevityInterpreter = await hre.ethers.getContractFactory("OwnedBrevityInterpreter");
+    const OwnedBrevityInterpreter = await new OwnedBrevityInterpreter__factory(owner)
+    //const ubi = await hre.ethers.getContractFactory("Uniswap4FlashBrevityInterpreter");
+    const ubi = new Uniswap4FlashBrevityInterpreter__factory(owner)
+    let uniswapv4BrevityInterpreter = await ubi.deploy(owner.address, UNISWAP_POOL_MANAGER_MAINNET)
     let brevityInterpreter = await OwnedBrevityInterpreter.deploy(owner.address);
+//    let uniswapv4BrevityInterpreter = await ubi.deploy(owner.address, UNISWAP_POOL_MANAGER_MAINNET)
     const CloneFactory = await hre.ethers.getContractFactory("CloneFactory");
     const bi = await brevityInterpreter.getAddress()
     const factory = await CloneFactory.deploy()
@@ -57,14 +61,25 @@ describe("Brevity", function () {
       maxMem: 100,
       configFlags: configFlagRequireVersion(1)
     })
-    return { loopTest, tokenA, tokenB, brevityParser, brevityInterpreter: proxy, proxy, owner, otherAccount, test };
+    return { loopTest, tokenA, tokenB, brevityParser, brevityInterpreter: proxy, proxy, owner, otherAccount, test, uniswapv4BrevityInterpreter };
   }
 
 
   describe("Run", function () {
+    it("Flash loan", async function () {
+      const { loopTest, brevityParser, brevityInterpreter, owner, uniswapv4BrevityInterpreter, } = await loadFixture(fixture);
+      //const input = 'test/briefs/example.brv'
+      const inputText = `
+      var x=1
+      x += 1
+      `
+      const o = brevityParser.parseBrevityScript(inputText)
+      await uniswapv4BrevityInterpreter.unlockAndRun(o)
+    })
+ 
 
     it("Loop", async function () {
-      const { loopTest, brevityParser, brevityInterpreter, owner, otherAccount } = await loadFixture(fixture);
+      const { loopTest, brevityParser, brevityInterpreter, owner, otherAccount, } = await loadFixture(fixture);
       //const input = 'test/briefs/example.brv'
       const inputText = brevityLoopProgram(ITERATIONS, await loopTest.getAddress())
       const o = brevityParser.parseBrevityScript(inputText)

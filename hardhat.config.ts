@@ -14,8 +14,7 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       forking: {
-        url: 'https://eth-mainnet.public.blastapi.io',
-        blockNumber: 20000000
+        url: 'https://eth-mainnet.public.blastapi.io'
       }
     }
   }

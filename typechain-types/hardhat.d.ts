@@ -70,6 +70,70 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Strings__factory>;
     getContractFactory(
+      name: "IUnlockCallback",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IUnlockCallback__factory>;
+    getContractFactory(
+      name: "IERC20Minimal",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IERC20Minimal__factory>;
+    getContractFactory(
+      name: "IERC6909Claims",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IERC6909Claims__factory>;
+    getContractFactory(
+      name: "IExtsload",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IExtsload__factory>;
+    getContractFactory(
+      name: "IExttload",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IExttload__factory>;
+    getContractFactory(
+      name: "IHooks",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IHooks__factory>;
+    getContractFactory(
+      name: "IPoolManager",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IPoolManager__factory>;
+    getContractFactory(
+      name: "IProtocolFees",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IProtocolFees__factory>;
+    getContractFactory(
+      name: "CustomRevert",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.CustomRevert__factory>;
+    getContractFactory(
+      name: "SafeCast",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.SafeCast__factory>;
+    getContractFactory(
+      name: "BalanceDeltaLibrary",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.BalanceDeltaLibrary__factory>;
+    getContractFactory(
+      name: "BeforeSwapDeltaLibrary",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.BeforeSwapDeltaLibrary__factory>;
+    getContractFactory(
+      name: "CurrencyLibrary",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.CurrencyLibrary__factory>;
+    getContractFactory(
+      name: "ImmutableState",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ImmutableState__factory>;
+    getContractFactory(
+      name: "SafeCallback",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.SafeCallback__factory>;
+    getContractFactory(
+      name: "IImmutableState",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IImmutableState__factory>;
+    getContractFactory(
       name: "BrevityInterpreter",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.BrevityInterpreter__factory>;
@@ -121,6 +185,10 @@ declare module "hardhat/types/runtime" {
       name: "TestTokenMultiMint",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.TestTokenMultiMint__factory>;
+    getContractFactory(
+      name: "Uniswap4FlashBrevityInterpreter",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.Uniswap4FlashBrevityInterpreter__factory>;
 
     getContractAt(
       name: "IERC1155Errors",
@@ -193,6 +261,86 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.Strings>;
     getContractAt(
+      name: "IUnlockCallback",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IUnlockCallback>;
+    getContractAt(
+      name: "IERC20Minimal",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IERC20Minimal>;
+    getContractAt(
+      name: "IERC6909Claims",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IERC6909Claims>;
+    getContractAt(
+      name: "IExtsload",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IExtsload>;
+    getContractAt(
+      name: "IExttload",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IExttload>;
+    getContractAt(
+      name: "IHooks",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IHooks>;
+    getContractAt(
+      name: "IPoolManager",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IPoolManager>;
+    getContractAt(
+      name: "IProtocolFees",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IProtocolFees>;
+    getContractAt(
+      name: "CustomRevert",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.CustomRevert>;
+    getContractAt(
+      name: "SafeCast",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.SafeCast>;
+    getContractAt(
+      name: "BalanceDeltaLibrary",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.BalanceDeltaLibrary>;
+    getContractAt(
+      name: "BeforeSwapDeltaLibrary",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.BeforeSwapDeltaLibrary>;
+    getContractAt(
+      name: "CurrencyLibrary",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.CurrencyLibrary>;
+    getContractAt(
+      name: "ImmutableState",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ImmutableState>;
+    getContractAt(
+      name: "SafeCallback",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.SafeCallback>;
+    getContractAt(
+      name: "IImmutableState",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IImmutableState>;
+    getContractAt(
       name: "BrevityInterpreter",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -257,6 +405,11 @@ declare module "hardhat/types/runtime" {
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.TestTokenMultiMint>;
+    getContractAt(
+      name: "Uniswap4FlashBrevityInterpreter",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.Uniswap4FlashBrevityInterpreter>;
 
     deployContract(
       name: "IERC1155Errors",
@@ -315,6 +468,70 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Strings>;
     deployContract(
+      name: "IUnlockCallback",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IUnlockCallback>;
+    deployContract(
+      name: "IERC20Minimal",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IERC20Minimal>;
+    deployContract(
+      name: "IERC6909Claims",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IERC6909Claims>;
+    deployContract(
+      name: "IExtsload",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IExtsload>;
+    deployContract(
+      name: "IExttload",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IExttload>;
+    deployContract(
+      name: "IHooks",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IHooks>;
+    deployContract(
+      name: "IPoolManager",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IPoolManager>;
+    deployContract(
+      name: "IProtocolFees",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IProtocolFees>;
+    deployContract(
+      name: "CustomRevert",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.CustomRevert>;
+    deployContract(
+      name: "SafeCast",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.SafeCast>;
+    deployContract(
+      name: "BalanceDeltaLibrary",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.BalanceDeltaLibrary>;
+    deployContract(
+      name: "BeforeSwapDeltaLibrary",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.BeforeSwapDeltaLibrary>;
+    deployContract(
+      name: "CurrencyLibrary",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.CurrencyLibrary>;
+    deployContract(
+      name: "ImmutableState",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ImmutableState>;
+    deployContract(
+      name: "SafeCallback",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.SafeCallback>;
+    deployContract(
+      name: "IImmutableState",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IImmutableState>;
+    deployContract(
       name: "BrevityInterpreter",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.BrevityInterpreter>;
@@ -366,6 +583,10 @@ declare module "hardhat/types/runtime" {
       name: "TestTokenMultiMint",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.TestTokenMultiMint>;
+    deployContract(
+      name: "Uniswap4FlashBrevityInterpreter",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.Uniswap4FlashBrevityInterpreter>;
 
     deployContract(
       name: "IERC1155Errors",
@@ -438,6 +659,86 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Strings>;
     deployContract(
+      name: "IUnlockCallback",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IUnlockCallback>;
+    deployContract(
+      name: "IERC20Minimal",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IERC20Minimal>;
+    deployContract(
+      name: "IERC6909Claims",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IERC6909Claims>;
+    deployContract(
+      name: "IExtsload",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IExtsload>;
+    deployContract(
+      name: "IExttload",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IExttload>;
+    deployContract(
+      name: "IHooks",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IHooks>;
+    deployContract(
+      name: "IPoolManager",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IPoolManager>;
+    deployContract(
+      name: "IProtocolFees",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IProtocolFees>;
+    deployContract(
+      name: "CustomRevert",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.CustomRevert>;
+    deployContract(
+      name: "SafeCast",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.SafeCast>;
+    deployContract(
+      name: "BalanceDeltaLibrary",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.BalanceDeltaLibrary>;
+    deployContract(
+      name: "BeforeSwapDeltaLibrary",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.BeforeSwapDeltaLibrary>;
+    deployContract(
+      name: "CurrencyLibrary",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.CurrencyLibrary>;
+    deployContract(
+      name: "ImmutableState",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ImmutableState>;
+    deployContract(
+      name: "SafeCallback",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.SafeCallback>;
+    deployContract(
+      name: "IImmutableState",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IImmutableState>;
+    deployContract(
       name: "BrevityInterpreter",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -502,6 +803,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.TestTokenMultiMint>;
+    deployContract(
+      name: "Uniswap4FlashBrevityInterpreter",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.Uniswap4FlashBrevityInterpreter>;
 
     // default types
     getContractFactory(
