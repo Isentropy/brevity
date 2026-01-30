@@ -376,7 +376,8 @@ export class BrevityParser {
                     const alias = right.substring(0, firstParen)
                     const fnSig = parsingContext.preprocessorSymbols.get(alias)
                     if (typeof fnSig === 'undefined') throw Error(`${parsingContext.lineNumber}: Cant decipher fnSig ${alias}. must define string with full signature`)
-                    fnSelector = FunctionFragment.from(fnSig).selector
+                    if(fnSig.startsWith('0x')) fnSelector = fnSig
+                    else fnSelector = FunctionFragment.from(fnSig).selector
                     //rm ()
                     args = right.substring(firstParen + 1, right.length - 1)
                 }
@@ -389,13 +390,20 @@ export class BrevityParser {
                 // translate "strings" and bytes > 32 to bytes/string EVM mem representation
                 // so they can be used in fn calls
                 if (dealiased.startsWith("\"") && dealiased.endsWith("\"")) {
+                    // pp symbol is a string. translate to list of words: "length, word1, word2, ..."
                     dealiased = bytesMemoryObject(hexlify(Buffer.from(dealiased.substring(1, dealiased.length - 1), 'utf8')))
-                } else if (dealiased.startsWith('0x') && dataLength(dealiased) > 32) {
+                } else if (dealiased.startsWith('0x') && 
+                    dealiased.indexOf(',') == -1  && 
+                    dataLength(dealiased) > 32) {
+                    // pp symbol is literal hex bytes. translate to list of words                     
                     dealiased = bytesMemoryObject(dealiased)
+                } else {
+                    
                 }
+                // if it's a list of "," separated hex words, it works fine as is
                 return dealiased
             }).join(',')
-            //console.log(`dealiased args ${dealiasedArgs}`)
+            console.log(`dealiased args ${dealiasedArgs}`)
             fnArgs = dealiasedArgs.trim().length === 0 ? [] : dealiasedArgs.split(',').map((arg) => { return toBytes32(this.parseQuantity(arg, parsingContext)) })
         }
 
@@ -450,18 +458,23 @@ export class BrevityParser {
             //comment
             if (line.startsWith('//') || line === '') continue;
             const pp = line.split(':=')
-            //preprocessor directive
             if (pp.length > 1) {
+                //preprocessor directive
                 const k = pp[0].trim()
                 this.checkNewSymbolName(k, parsingContext)
                 const symbol = pp[1].trim()
-                // check if symbol is a defined preprocessor symbol 
-                const symbolResolved = parsingContext.preprocessorSymbols.get(symbol)
-                parsingContext.preprocessorSymbols.set(k, symbolResolved ? symbolResolved : symbol)
+                const resolvedParts = symbol.split(',').map((part) => {
+                    // check if part is a defined preprocessor symbol 
+                    part = part.trim()
+                    const partResolved = parsingContext.preprocessorSymbols.get(part)
+                    return partResolved ?? part
+                }).join(',')
+                //console.log(`key ${k} resolvedParts ${resolvedParts}`)
+                parsingContext.preprocessorSymbols.set(k, resolvedParts)
                 continue
             }
-            //jump point #name
             if (line.startsWith('#')) {
+                //jump point #name
                 const sym = line.substring(1)
                 this.checkNewSymbolName(sym, parsingContext)
                 parsingContext.jumppointNames.set(sym, instructions.length)

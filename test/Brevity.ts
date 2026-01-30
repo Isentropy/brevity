@@ -69,10 +69,7 @@ describe("Brevity", function () {
     it("Flash loan", async function () {
       const { loopTest, brevityParser, brevityInterpreter, owner, uniswapv4BrevityInterpreter, } = await loadFixture(fixture);
       //const input = 'test/briefs/example.brv'
-      const inputText = `
-      var x=1
-      x += 1
-      `
+      const inputText = fs.readFileSync('test/briefs/uniswap4ModifyLiquidity.brv', { encoding: 'utf-8' })
       const o = brevityParser.parseBrevityScript(inputText)
       await uniswapv4BrevityInterpreter.unlockAndRun(o)
     })

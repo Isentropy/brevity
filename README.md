@@ -1,6 +1,6 @@
 # Brevity, an interpreted EVM scripting language for workflows
 
-Copyright 2024, 2025 Isentropy LLC
+Copyright 2024 -2026 Isentropy LLC
 
 Brevity is a language, similar in syntax to Solidity, that is compactly transpiled to an EVM transaction and **run with 1 click** on a general purpose smart contract, the Brevity Interpreter. Because Brevity is interpreted, it doesn't need to deploy new smart contracts to implement new workflows.
 
@@ -191,7 +191,7 @@ block.timestamp
 ```
 
 ### Variable length types
-Brevity v1 has basic support for multi-word types like ```string``` and ```bytes``` with preprocessor symbols. These Solidity types are stored in EVM memory and calldata as a list of 32 bytes words: ```length, bytes0_31, bytes32_64, etc```. Brevity v1 translates preprocessor symbols of strings (eg ```"hello"```) and 32+ length bytes  (eg 0x{32+ bytes hex}) into a list of 32 byte words when used in function calls. The Solidity ABI specifies that these these multi-word types are presented in function calls as an **offset** to the object. So this is how to invoke functions of ```string``` and ```bytes``` in Brevity v1:
+Brevity v1 has basic support for multi-word types like ```string``` and ```bytes``` with preprocessor symbols. These Solidity types are stored in EVM memory and calldata as a list of 32 bytes words: ```length, bytes0_31, bytes32_64, etc```. Brevity v1 translates preprocessor symbols of strings (eg ```"hello"```) and 32+ length bytes  (eg 0x{32+ bytes hex}) into a list of length + data words when used in function calls. The Solidity ABI specifies that these these multi-word types are presented in function calls as an **offset** to the object. So this is how to invoke functions of ```string``` and ```bytes``` in Brevity v1:
 ```
 foo := foo(string)
 s := "hello"

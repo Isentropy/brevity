@@ -1,0 +1,52 @@
+
+
+/*
+struct PoolKey {
+    /// @notice The lower currency of the pool, sorted numerically
+    Currency currency0;
+    /// @notice The higher currency of the pool, sorted numerically
+    Currency currency1;
+    /// @notice The pool LP fee, capped at 1_000_000. If the highest bit is 1, the pool has a dynamic fee and must be exactly equal to 0x800000
+    uint24 fee;
+    /// @notice Ticks that involve positions must be a multiple of tick spacing
+    int24 tickSpacing;
+    /// @notice The hooks of the pool
+    IHooks hooks;
+}
+struct ModifyLiquidityParams {
+    // the lower and upper tick of the position
+    int24 tickLower;
+    int24 tickUpper;
+    // how to modify the liquidity
+    int256 liquidityDelta;
+    // a value to set if you want unique liquidity positions at the same range
+    bytes32 salt;
+}
+function modifyLiquidity(PoolKey memory key, ModifyLiquidityParams memory params, bytes calldata hookData)
+returns (BalanceDelta callerDelta, BalanceDelta feesAccrued);
+
+*/
+poolManager := 0x000000000004444c5dc75cb358380d2e3de08a90
+modifyLiquidity := 0x5a6bcfda
+donate := 0x234266d7
+swap := 0xf3cd914c
+
+weth := 0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2
+usdc := 0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48
+fee := 3000
+tickSpacing := 60
+tickUpper := 0x0000000000000000000000000000000000000000000000000000000000000078
+tickLower := 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff88
+liquidityDelta := 0x00000000000000000000000000000000000000000000000000000000000f4240
+
+poolKey := usdc, weth, fee, tickSpacing, 0
+modifyLiquidityParams := tickLower, tickUpper, liquidityDelta, 0
+
+/*
+96 = 3 first args
+288 = 96 + 6*32
+448 = 96 + 11*32
+*/
+
+var callerDelta, feesAccrued = CALL poolManager.modifyLiquidity( poolKey, modifyLiquidityParams, 320, 0)
+
