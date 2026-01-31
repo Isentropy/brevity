@@ -212,7 +212,6 @@ export class BrevityParser {
                 if (parentheses < 0) throw Error(`Error parsing quantity "${s}: ')' without '('`)
                 continue;
             }
-            //TODO: only works for 1-2 char ops. consider trie if needed
             if (parentheses === 0) {
                 const nextParen = s.substring(i).indexOf('(')
                 const match = TwoArgKwsRegex.exec(s.substring(i, nextParen == -1 ? 

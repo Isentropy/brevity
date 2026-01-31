@@ -1,0 +1,28 @@
+modifyLiquidity := 0x5a6bcfda
+donate := 0x234266d7
+swap := 0xf3cd914c
+take := 0x0b0d9c09
+sync := 0xa5841194
+transfer := transfer(address,uint256)
+balanceOf := balanceOf(address)
+poolManager := 0x000000000004444c5dc75cb358380d2e3de08a90
+weth := 0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2
+usdc := 0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48
+
+flashLoanToken := usdc
+flashLoanAmount := 1000000
+
+// take out flash loan
+CALL poolManager.take(flashLoanToken, this, flashLoanAmount)
+
+// do stuff
+var bal = STATICCALL flashLoanToken.balanceOf(this)
+
+// repay flash loan
+CALL poolManager.sync(flashLoanToken)
+CALL flashLoanToken.transfer(poolManager, flashLoanAmount)
+var paid0 = CALL poolManager.settle()()
+
+
+// dumpMem
+

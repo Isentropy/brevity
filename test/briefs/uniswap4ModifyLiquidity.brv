@@ -6,6 +6,7 @@ modifyLiquidity := 0x5a6bcfda
 donate := 0x234266d7
 swap := 0xf3cd914c
 take := 0x0b0d9c09
+sync := 0xa5841194
 
 weth := 0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2
 usdc := 0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48
@@ -20,24 +21,38 @@ tickLower := -887220
 //tickUpper := 0x0000000000000000000000000000000000000000000000000000000000000078
 //tickLower := 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff88
 liquidityDelta := 0x00000000000000000000000000000000000000000000000000000000000f4240
-
+TWOTO127 := 0x0000000000000000000000000000000080000000000000000000000000000000
+UNSETTWOSCOMP := 0x000000000000000000000000000000007fffffffffffffffffffffffffffffff
 poolKey := token0, token1, fee, tickSpacing, 0
 modifyLiquidityParams := tickLower, tickUpper, liquidityDelta, 0
 
 
-var callerDelta, feesAccrued = CALL poolManager.modifyLiquidity(poolKey, modifyLiquidityParams, 320, 0)
+//var callerDelta, feesAccrued = CALL poolManager.modifyLiquidity(poolKey,modifyLiquidityParams, 320, 0)
 
-var amount0delta = callerDelta >> 128
-var amount1delta = (callerDelta << 128) >> 128
+// theses are signed int128s ug. this inverts the negatives
+//var amount0delta = TWOTO127 - ((callerDelta >> 128) & UNSETTWOSCOMP)
+//var amount1delta = TWOTO127 - (callerDelta  & UNSETTWOSCOMP)
 
-CALL poolManager.take(token1, this, 1909631130945434630)
+amount0delta := 50
+amount1delta := 20379905238
+
+CALL poolManager.take(token0, this, amount0delta)
+CALL poolManager.take(token1, this, amount1delta)
 balanceOf := balanceOf(address)
 transfer := transfer(address,uint256)
 
 var ba0 = STATICCALL token0.balanceOf(this)
 var ba1 = STATICCALL token1.balanceOf(this)
-//CALL poolManager.settle()()
-//CALL token1.transfer(poolManager, amount1delta)
+
+
+CALL poolManager.sync(token0)
+CALL token0.transfer(poolManager, amount0delta)
+var paid0 = CALL poolManager.settle()()
+
+
+CALL poolManager.sync(token1)
+CALL token1.transfer(poolManager, amount1delta)
+var paid1 = CALL poolManager.settle()()
 
 dumpMem
 

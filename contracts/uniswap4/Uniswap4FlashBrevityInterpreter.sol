@@ -27,19 +27,6 @@ contract Uniswap4FlashBrevityInterpreter is
         IPoolManager poolManager_
     ) OwnedBrevityInterpreter(owner_) SafeCallback(poolManager_) {
     }
-/*
-    function modifyLiquidityAndRun(Program calldata p, PoolKey memory key, 
-        ModifyLiquidityParams memory params) public onlyOwner {
-        poolManager.modifyLiquidity(key, params, hookData);
-        poolManager.unlock(abi.encode(LiquityCmdAndProgram({
-            program: p,
-            poolKey: key,
-            cmd: LiquidityCommands.modifyLiquidity,
-            args: ""
-        })));
-        
-    }
-*/
     
     function unlockAndRun(Program calldata p) public onlyOwner {
         poolManager.unlock(abi.encode(p));
@@ -54,9 +41,9 @@ contract Uniswap4FlashBrevityInterpreter is
             // decode in calldata. its already abi.encoded
             p := add(data.offset, 32)
         }
-        console.log("pre run");
+        //console.log("pre run");
         _run(p.config, p.instructions, p.quantities);
-        console.log("run");
+        //console.log("run");
         return "";
     }
 }
