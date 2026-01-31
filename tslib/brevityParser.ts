@@ -98,7 +98,10 @@ const TwoArgQuantityKWs = new Map<string, number>([
     ['%', QUANTITY_OP_MOD],
     ['==', QUANTITY_OP_EQ]
 ]);
-
+  const TwoArgKwsRegex = new RegExp(Array.from(TwoArgQuantityKWs.keys())
+    .sort((a, b) => b.length - a.length)
+    .map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .join('|'));
 
 const KWS: Set<string> = new Set<string>([...ZeroArgQuantityKWs.keys()].concat([...OneArgQuantityKWs.keys()]).concat([...TwoArgQuantityKWs.keys()]).concat([KW_REVERT, KW_RETURN, KW_GOTO, KW_IF, KW_CALL, KW_SEND, KW_STATICCALL, KW_DELEGATECALL, KW_VAR, KW_DUMPMEM]))
 
@@ -195,8 +198,9 @@ export class BrevityParser {
 
     // searches infix returns [opStartingPos, op]
     private findFirstValidOpCharacter(s: string): [number, string] {
+        //console.log(`findFirstValidOpCharacter: ${s}`)
         let parentheses = 0
-        let prevChar
+        //let prevChar
         for (let i = 0; i < s.length; i++) {
             const c = s.charAt(i)
             if (c === '(') {
@@ -210,10 +214,16 @@ export class BrevityParser {
             }
             //TODO: only works for 1-2 char ops. consider trie if needed
             if (parentheses === 0) {
-                if (prevChar && TwoArgQuantityKWs.has(prevChar + c)) return [i - 1, prevChar + c]
-                if (TwoArgQuantityKWs.has(c)) return [i, c];
+                const nextParen = s.substring(i).indexOf('(')
+                const match = TwoArgKwsRegex.exec(s.substring(i, nextParen == -1 ? 
+                    s.length : nextParen))
+                if(match) {
+                    //console.log(`match ${JSON.stringify(match)} ${match.}`)
+                    return [i + match.index, match[0]]
+                }
+ 
             }
-            prevChar = c
+            //prevChar = c
         }
         return [-1, ''];
     }
@@ -403,7 +413,7 @@ export class BrevityParser {
                 // if it's a list of "," separated hex words, it works fine as is
                 return dealiased
             }).join(',')
-            console.log(`dealiased args ${dealiasedArgs}`)
+            //console.log(`dealiased args ${dealiasedArgs}`)
             fnArgs = dealiasedArgs.trim().length === 0 ? [] : dealiasedArgs.split(',').map((arg) => { return toBytes32(this.parseQuantity(arg, parsingContext)) })
         }
 
