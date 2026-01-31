@@ -26,7 +26,7 @@ With Brevity, end users can run ANY DeFi workflow in 1 click in an easy [GUI](ht
 Brevity supports a [hook to EVM CALLs](https://github.com/Isentropy/brevity/blob/7c30196bd119d7d91d99469c9ec88dc7dd5a219e/contracts/BrevityInterpreter.sol#L117) that can be used to apply restrictons on which external methods are called. So you  can **whitelist** particular DeFi operations. In Solidity you'd have to write your own hook to external calls and vet the code to ensure it's always used.
 
 ### Flash Loan Integration
-Super easy in Brevity, difficult to write your own. UniswapV4FlashBrevityInterpreter allows you pass in a Brevity script to be run as callback to IPoolManager.unlock().
+Super easy in Brevity, difficult to write your own. [UniswapV4FlashBrevityInterpreter](contracts/uniswap4/Uniswap4FlashBrevityInterpreter.sol) allows you pass in a Brevity script to be run as callback to IPoolManager.unlock(). See [Uniswapv4FlashLoan.brv](test/briefs/Uniswapv4FlashLoan.brv) for an exampler Brevity script that takes out a flash loan.
 
 ### MetaTransactions
 Brevity calls can be submitted as EIP712 metaTxs, enabling Brevity Interpreters to be controlled by wallets that hold no tokens. This functionality is built into [Brevity CLI](tslib/cli.ts). A custom smart contract requires tricky code changes if the Workflow instruction changes. Brevity can even send metaTransactions **across bridges**.
