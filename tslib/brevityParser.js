@@ -61,6 +61,7 @@ const KW_DUMPMEM = 'dumpMem';
 const KW_CLEARMEMSTACK = 'clearMemStack';
 // clears all preprocessor symbols that are not all uppercase
 const KW_CLEARPARAMS = 'clearParams';
+const PREPROC_ADDITIONAL_CONFIGFLAGS = 'ADDITIONAL_CONFIGFLAGS';
 // minus 1 in 32 byte 2s compliment
 const BN_MINUS1 = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF');
 //const RUN_SELECTOR = BrevityInterpreter__factory.createInterface().getFunction("run").selector
@@ -414,7 +415,7 @@ class BrevityParser {
         return undefined;
     }
     // returns Solidity call data
-    parseBrevityScript(script, additionalConfigFlags) {
+    parseBrevityScript(script) {
         const woComments = script.replace(COMMENT_REGEX, '\n');
         //console.log(`woComments ${woComments}`)
         const lines = woComments.split(/\n/);
@@ -601,8 +602,9 @@ class BrevityParser {
             }
             return inst;
         });
+        const additionalConfigFlags = parsingContext.preprocessorSymbols.get(PREPROC_ADDITIONAL_CONFIGFLAGS);
         // config is a u256 of : [configFlags u128 : requiredBrevityVersion u64 : maxMemSize u128]
-        let configBigint = ((this.config.configFlags ?? BigInt(0)) | (additionalConfigFlags ?? BigInt(0))) * (BigInt(2) ** BigInt(128));
+        let configBigint = ((this.config.configFlags ?? BigInt(0)) | (additionalConfigFlags ? BigInt(additionalConfigFlags) : BigInt(0))) * (BigInt(2) ** BigInt(128));
         configBigint |= BigInt(this.config.requiredBrevityVersion ?? 0) * (BigInt(2) ** BigInt(64));
         configBigint |= BigInt(maxMemSize);
         const config = toBytes32(configBigint);

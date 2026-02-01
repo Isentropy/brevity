@@ -1,3 +1,7 @@
+// this tells the interpreter to run this as a callback from Uniswap4 unlock()
+ADDITIONAL_CONFIGFLAGS := 1
+
+
 modifyLiquidity := 0x5a6bcfda
 donate := 0x234266d7
 swap := 0xf3cd914c

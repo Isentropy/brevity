@@ -1,4 +1,6 @@
 
+// this tells the interpreter to run this as a callback from Uniswap4 unlock()
+ADDITIONAL_CONFIGFLAGS := 1
 
 
 poolManager := 0x000000000004444c5dc75cb358380d2e3de08a90

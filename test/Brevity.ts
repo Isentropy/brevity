@@ -70,7 +70,7 @@ describe("Brevity", function () {
       const { loopTest, brevityParser, brevityInterpreter, owner, uniswapv4BrevityInterpreter, } = await loadFixture(fixture);
       //const input = 'test/briefs/example.brv'
       const inputText = fs.readFileSync('test/briefs/Uniswapv4FlashLoan.brv', { encoding: 'utf-8' })
-      const o = brevityParser.parseBrevityScript(inputText, CONFIGFLAG_UNISWAP4UNLOCK)
+      const o = brevityParser.parseBrevityScript(inputText)
       await uniswapv4BrevityInterpreter.run(o)
     })
  
