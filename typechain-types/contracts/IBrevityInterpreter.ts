@@ -53,7 +53,13 @@ export type ProgramStructOutput = [
 
 export interface IBrevityInterpreterInterface extends Interface {
   getFunction(
-    nameOrSignature: "nonces" | "noop" | "run" | "runMeta" | "version"
+    nameOrSignature:
+      | "nonces"
+      | "noop"
+      | "run"
+      | "runMeta"
+      | "supportedConfigFlags"
+      | "version"
   ): FunctionFragment;
 
   encodeFunctionData(functionFragment: "nonces", values: [AddressLike]): string;
@@ -63,12 +69,20 @@ export interface IBrevityInterpreterInterface extends Interface {
     functionFragment: "runMeta",
     values: [ProgramStruct, BigNumberish, BytesLike]
   ): string;
+  encodeFunctionData(
+    functionFragment: "supportedConfigFlags",
+    values?: undefined
+  ): string;
   encodeFunctionData(functionFragment: "version", values?: undefined): string;
 
   decodeFunctionResult(functionFragment: "nonces", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "noop", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "run", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "runMeta", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "supportedConfigFlags",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "version", data: BytesLike): Result;
 }
 
@@ -127,6 +141,8 @@ export interface IBrevityInterpreter extends BaseContract {
     "payable"
   >;
 
+  supportedConfigFlags: TypedContractMethod<[], [bigint], "view">;
+
   version: TypedContractMethod<[], [bigint], "view">;
 
   getFunction<T extends ContractMethod = ContractMethod>(
@@ -149,6 +165,9 @@ export interface IBrevityInterpreter extends BaseContract {
     [void],
     "payable"
   >;
+  getFunction(
+    nameOrSignature: "supportedConfigFlags"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "version"
   ): TypedContractMethod<[], [bigint], "view">;

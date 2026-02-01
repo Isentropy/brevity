@@ -5,7 +5,7 @@ import "./Constants.sol";
 import "@openzeppelin/contracts/utils/Nonces.sol";
 
 interface IBrevityInterpreter {
-
+    function supportedConfigFlags() external pure returns (uint128);    
     function version() external pure returns (uint);
     function run(Program calldata p) external payable;
     function noop(Program calldata p) external payable;

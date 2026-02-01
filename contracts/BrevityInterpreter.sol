@@ -108,10 +108,15 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
     }
 
 
-    function _checkBrevityVersion(uint foundVersion) internal view {
-        if(foundVersion == 0) return;
-        uint version = IBrevityInterpreter(address(this)).version();
-        if(foundVersion != version) revert WrongBrevityVersion(version, foundVersion);
+    function _validateConfig(uint256 config) internal view {
+        uint64 configVersion = uint64((config >> 64) & LOW64BITSMASK);
+        if(configVersion != 0) {
+            uint version = IBrevityInterpreter(address(this)).version();
+            if(configVersion != version) revert WrongBrevityVersion(version, configVersion);
+        }
+        uint128 requestedFlags = uint128(config >> 128);
+        console.log("flags", requestedFlags, this.supportedConfigFlags());
+        require(requestedFlags & this.supportedConfigFlags() == requestedFlags, UnsupportedConfigFlags      (requestedFlags & ~this.supportedConfigFlags()));
     }
 
     function _beforeCall(address to, uint value, uint[] memory resolvedArgs) internal virtual {}
@@ -123,24 +128,24 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
     /*
     config is: uint128 flags, uint64 requiredBrevityVersion (or 0 for none), uint64 memSize 
     */
+    function supportedConfigFlags() public virtual pure returns (uint128) {
+        return 0;
+    } 
 
     function _run(
-        uint config,
-        Instruction[] calldata instructions,
-        Quantity[] calldata quantities
-    ) internal {
+        Program calldata p
+    ) internal virtual {
         uint pc = 0;
         //uint steps = 0;
         //uint gasBeforeStart = gasleft();
-        _checkBrevityVersion((config >> 64) & LOW64BITSMASK);
-        uint[] memory mem = new uint[](config & LOW64BITSMASK);
+        uint[] memory mem = new uint[](p.config & LOW64BITSMASK);
         //console.log('allocate registers gas', gasBeforeStart - gasleft());
-        while (pc < instructions.length) {
+        while (pc < p.instructions.length) {
             // console.log("step", steps);
             //uint gasBefore = gasleft();
             //steps++;
-            uint opcode = instructions[pc].opcode;
-            bytes32[] calldata args = instructions[pc].args;
+            uint opcode = p.instructions[pc].opcode;
+            bytes32[] calldata args = p.instructions[pc].args;
             if (opcode < 3) {
                 uint[] memory resolvedArgs;
 
@@ -156,7 +161,7 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
                         resolvedArgs[i - tmp] = _resolve(
                             uint(args[i]),
                             mem,
-                            quantities
+                            p.quantities
                         );
                     }
                 }
@@ -167,7 +172,7 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
                 // call, staticcall, delegatecall
                 // let callArgs = [registerWriteInfo, toBytes32(address), GAS]
                 address to = address(
-                    uint160(_resolve(uint(args[1]), mem, quantities))
+                    uint160(_resolve(uint(args[1]), mem, p.quantities))
                 );
 
                 // tmp will be assigned to success after call
@@ -187,7 +192,7 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
                     }
                 } else if (opcode == OPCODE_CALL) {
                     // tmp is reused here as VALUE to limit stack overgrowth
-                    tmp = _resolve(uint(args[2]), mem, quantities);
+                    tmp = _resolve(uint(args[2]), mem, p.quantities);
                     _beforeCall(to, tmp, resolvedArgs);
                     //if no function selector, it's just eth end wo data
                     if (resolvedArgs.length == 0) {
@@ -235,7 +240,7 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
             } else if (opcode == OPCODE_JUMP) {
                 // args: dest
                 uint dest = uint(args[0]);
-                if (dest <= instructions.length) {
+                if (dest <= p.instructions.length) {
                     pc = dest;
                     continue;
                 }
@@ -244,12 +249,12 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
                 revert BadJump(pc, dest);
             } else if (opcode == OPCODE_CMP_BRANCH) {
                 // args: quantityNum : qWord, to: uint
-                uint val = _resolve(uint(args[0]), mem, quantities);
+                uint val = _resolve(uint(args[0]), mem, p.quantities);
                 //console.log('branch v = ', v);
                 if (val != 0) {
                     //console.log("op", opcode, "gasUsed", gasBefore - gasleft());
                     uint dest = uint(args[1]);
-                    if (dest <= instructions.length) {
+                    if (dest <= p.instructions.length) {
                         pc = dest;
                         continue;
                     }
@@ -263,7 +268,7 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
                 mem[opcode - OPCODE_MSTORE_R0] = _resolve(
                     uint(args[0]),
                     mem,
-                    quantities
+                    p.quantities
                 );
             } else if (opcode == OPCODE_DUMPMEM) {
                 printMem(mem, 0, mem.length);
@@ -273,7 +278,7 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
             //console.log("op", opcode, "gasUsed", gasBefore - gasleft());
             pc++;
         }
-        _afterRun(config, instructions, quantities);
+        _afterRun(p.config, p.instructions, p.quantities);
     }
 
     function printMem(uint[] memory mem, uint from, uint to) public pure {

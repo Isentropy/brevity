@@ -2,6 +2,8 @@ import { BigNumberish, dataLength, FunctionFragment, getBytes, hexlify, toBeHex 
 import { bytesMemoryObject } from './utils';
 import { Buffer } from 'buffer';
 
+export const CONFIGFLAG_UNISWAP4UNLOCK = BigInt(1)
+
 const SYMBOL_REGEX = /[a-zA-Z][a-zA-Z_0-9]*/
 const NEGATIVE_INT = /^-[0-9]+$/
 const COMMENT_REGEX = /\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm
@@ -116,10 +118,6 @@ export interface Quantity {
     args: string[]
 }
 
-export function configFlagRequireVersion(v: number): bigint {
-    return BigInt(v) << BigInt(64)
-}
-
 
 /*
 like JSON.parse for maps but allows k/v wo "
@@ -177,9 +175,15 @@ function toBytes32(n: BigNumberish): string {
 }
 
 export interface BrevityParserConfig {
+    //uint64
     maxMem: number,
-    // these will be ORed with the memsize
+    //uint64
+    requiredBrevityVersion?: number,
+    //uint128
     configFlags?: bigint
+
+    // these will be ORed with the memsize
+    //config?: bigint
 }
 
 export interface BrevityParserOutput {
@@ -453,7 +457,7 @@ export class BrevityParser {
     }
 
     // returns Solidity call data
-    parseBrevityScript(script: string): BrevityParserOutput {
+    parseBrevityScript(script: string, additionalConfigFlags? : bigint): BrevityParserOutput {
         const woComments = script.replace(COMMENT_REGEX, '\n')
         //console.log(`woComments ${woComments}`)
         const lines = woComments.split(/\n/)
@@ -633,7 +637,11 @@ export class BrevityParser {
             }
             return inst
         })
-        const config = toBytes32(BigInt(maxMemSize) | (this.config.configFlags ? this.config.configFlags : BigInt(0)))
+        // config is a u256 of : [configFlags u128 : requiredBrevityVersion u64 : maxMemSize u128]
+        let configBigint = ((this.config.configFlags ?? BigInt(0)) | (additionalConfigFlags ?? BigInt(0))) * (BigInt(2) ** BigInt(128)) 
+        configBigint |= BigInt(this.config.requiredBrevityVersion ?? 0) * (BigInt(2) ** BigInt(64))
+        configBigint |= BigInt(maxMemSize) 
+        const config = toBytes32(configBigint) 
         return { config, instructions: resolved, quantities: parsingContext.quantites }
     }
 

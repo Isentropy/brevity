@@ -59,6 +59,7 @@ export interface BrevityInterpreterInterface extends Interface {
       | "printMem"
       | "run"
       | "runMeta"
+      | "supportedConfigFlags"
       | "version"
   ): FunctionFragment;
 
@@ -73,6 +74,10 @@ export interface BrevityInterpreterInterface extends Interface {
     functionFragment: "runMeta",
     values: [ProgramStruct, BigNumberish, BytesLike]
   ): string;
+  encodeFunctionData(
+    functionFragment: "supportedConfigFlags",
+    values?: undefined
+  ): string;
   encodeFunctionData(functionFragment: "version", values?: undefined): string;
 
   decodeFunctionResult(functionFragment: "nonces", data: BytesLike): Result;
@@ -80,6 +85,10 @@ export interface BrevityInterpreterInterface extends Interface {
   decodeFunctionResult(functionFragment: "printMem", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "run", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "runMeta", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "supportedConfigFlags",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "version", data: BytesLike): Result;
 }
 
@@ -144,6 +153,8 @@ export interface BrevityInterpreter extends BaseContract {
     "payable"
   >;
 
+  supportedConfigFlags: TypedContractMethod<[], [bigint], "view">;
+
   version: TypedContractMethod<[], [bigint], "view">;
 
   getFunction<T extends ContractMethod = ContractMethod>(
@@ -173,6 +184,9 @@ export interface BrevityInterpreter extends BaseContract {
     [void],
     "payable"
   >;
+  getFunction(
+    nameOrSignature: "supportedConfigFlags"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "version"
   ): TypedContractMethod<[], [bigint], "view">;

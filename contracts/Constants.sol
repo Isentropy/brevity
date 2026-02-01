@@ -62,6 +62,13 @@ uint8 constant QUANTITY_BALANCE = 0x31;
 uint8 constant QUANTITY_CALLER = 0x33;
 uint8 constant QUANTITY_CALLVALUE = 0x34;
 uint8 constant QUANTITY_BLOCKTIMESTAMP = 0x42;
+
+// config flags
+// this tells interpreterer to run the whole script in Uniswap4 unlock() as a callback
+uint128 constant CONFIGFLAG_UNISWAP4UNLOCK = 1;
+
+
+
 //EIP712 metaTx functions
 bytes32 constant _PROGRAM_TYPEHASH = keccak256(
     "Program(uint256 config,Instruction[] instructions,Quantity[] quantities,uint256 nonce,uint256 deadline)Instruction(uint256 opcode,bytes32[] args)Quantity(uint256 quantityType,bytes32[] args)"
@@ -96,7 +103,7 @@ struct Program {
     Instruction[] instructions;
     Quantity[] quantities;
 }
-
+error UnsupportedConfigFlags(uint128 flags);
 error WrongBrevityVersion(uint expected, uint found);
 error NotPermitted(uint pc, uint opcode);
 error Reverted(uint pc);

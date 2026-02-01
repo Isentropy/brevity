@@ -32,20 +32,22 @@ contract OwnedBrevityInterpreter is EIP712, BrevityInterpreter, DebugTools {
     }
 
     function run(Program calldata p) external payable virtual override {
+        _validateConfig(p.config);
         require(owner == msg.sender, NotOwner());
-        _run(p.config, p.instructions, p.quantities);
+        _run(p);
     }
 
     function runMeta(
         Program calldata p,
         uint deadline,
         bytes calldata sig) external payable virtual override {
+        _validateConfig(p.config);
         //arrays hashed per https://github.com/ethereum/EIPs/blob/master/EIPS/eip-712.md
         require(deadline >= block.timestamp, "expired");
         bytes32 structHash = keccak256(abi.encode(_PROGRAM_TYPEHASH, p.config, _encodeInstructionsArray(p.instructions), _encodeQuantityArray(p.quantities), _useNonce(owner), deadline));
         bytes32 hash = _hashTypedDataV4(structHash);
         require(owner == ECDSA.recover(hash, sig), "invalid signature");
-        _run(p.config, p.instructions, p.quantities);
+        _run(p);
     }
 
     function withdraw(address token, uint amount) public onlyOwner {

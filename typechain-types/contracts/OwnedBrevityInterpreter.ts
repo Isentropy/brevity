@@ -71,6 +71,7 @@ export interface OwnedBrevityInterpreterInterface extends Interface {
       | "run"
       | "runMeta"
       | "setOwner"
+      | "supportedConfigFlags"
       | "version"
       | "withdraw"
       | "withdrawAll"
@@ -124,6 +125,10 @@ export interface OwnedBrevityInterpreterInterface extends Interface {
     functionFragment: "setOwner",
     values: [AddressLike]
   ): string;
+  encodeFunctionData(
+    functionFragment: "supportedConfigFlags",
+    values?: undefined
+  ): string;
   encodeFunctionData(functionFragment: "version", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "withdraw",
@@ -163,6 +168,10 @@ export interface OwnedBrevityInterpreterInterface extends Interface {
   decodeFunctionResult(functionFragment: "run", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "runMeta", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "setOwner", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "supportedConfigFlags",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "version", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
   decodeFunctionResult(
@@ -323,6 +332,8 @@ export interface OwnedBrevityInterpreter extends BaseContract {
 
   setOwner: TypedContractMethod<[owner_: AddressLike], [void], "nonpayable">;
 
+  supportedConfigFlags: TypedContractMethod<[], [bigint], "view">;
+
   version: TypedContractMethod<[], [bigint], "view">;
 
   withdraw: TypedContractMethod<
@@ -443,6 +454,9 @@ export interface OwnedBrevityInterpreter extends BaseContract {
   getFunction(
     nameOrSignature: "setOwner"
   ): TypedContractMethod<[owner_: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "supportedConfigFlags"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "version"
   ): TypedContractMethod<[], [bigint], "view">;

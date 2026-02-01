@@ -202,6 +202,19 @@ const _abi = [
   },
   {
     inputs: [],
+    name: "supportedConfigFlags",
+    outputs: [
+      {
+        internalType: "uint128",
+        name: "",
+        type: "uint128",
+      },
+    ],
+    stateMutability: "pure",
+    type: "function",
+  },
+  {
+    inputs: [],
     name: "version",
     outputs: [
       {

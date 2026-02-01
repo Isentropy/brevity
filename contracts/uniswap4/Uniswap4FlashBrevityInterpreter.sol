@@ -16,9 +16,23 @@ contract Uniswap4FlashBrevityInterpreter is
         IPoolManager poolManager_
     ) OwnedBrevityInterpreter(owner_) SafeCallback(poolManager_) {
     }
-    
-    function unlockAndRun(Program calldata p) public onlyOwner {
-        poolManager.unlock(abi.encode(p));
+
+    function supportedConfigFlags() public virtual override pure returns (uint128) {
+        return CONFIGFLAG_UNISWAP4UNLOCK;
+    } 
+
+    function _run(
+        Program calldata p
+    ) internal virtual override {
+        //top uint128 is flags
+        if((p.config >> 128) & CONFIGFLAG_UNISWAP4UNLOCK != 0) {
+            poolManager.unlock(abi.encode(p));
+        } else {
+            super._run(p);
+        }
+    }
+
+    function _(Program calldata p) public onlyOwner {
     }
     
 
@@ -31,7 +45,7 @@ contract Uniswap4FlashBrevityInterpreter is
             p := add(data.offset, 32)
         }
         //console.log("pre run");
-        _run(p.config, p.instructions, p.quantities);
+        super._run(p);
         //console.log("run");
         return "";
     }

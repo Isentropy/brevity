@@ -2,7 +2,7 @@ import {
   loadFixture,
 } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import hre, { ethers } from "hardhat";
-import { BrevityParser, BrevityParserOutput, configFlagRequireVersion } from "../tslib/brevityParser";
+import { BrevityParser, BrevityParserOutput, CONFIGFLAG_UNISWAP4UNLOCK } from "../tslib/brevityParser";
 import { dataLength, parseEther, BigNumberish } from 'ethers'
 import * as fs from 'fs'
 import { OwnedBrevityInterpreter__factory, IBrevityInterpreter, CloneFactory__factory, OwnedBrevityInterpreter, Uniswap4FlashBrevityInterpreter__factory } from "../typechain-types";
@@ -59,7 +59,7 @@ describe("Brevity", function () {
 
     const brevityParser = new BrevityParser({
       maxMem: 100,
-      configFlags: configFlagRequireVersion(1)
+      requiredBrevityVersion: 1
     })
     return { loopTest, tokenA, tokenB, brevityParser, brevityInterpreter: proxy, proxy, owner, otherAccount, test, uniswapv4BrevityInterpreter };
   }
@@ -70,8 +70,8 @@ describe("Brevity", function () {
       const { loopTest, brevityParser, brevityInterpreter, owner, uniswapv4BrevityInterpreter, } = await loadFixture(fixture);
       //const input = 'test/briefs/example.brv'
       const inputText = fs.readFileSync('test/briefs/Uniswapv4FlashLoan.brv', { encoding: 'utf-8' })
-      const o = brevityParser.parseBrevityScript(inputText)
-      await uniswapv4BrevityInterpreter.unlockAndRun(o)
+      const o = brevityParser.parseBrevityScript(inputText, CONFIGFLAG_UNISWAP4UNLOCK)
+      await uniswapv4BrevityInterpreter.run(o)
     })
  
 
