@@ -11,17 +11,6 @@ contract Uniswap4FlashBrevityInterpreter is
     OwnedBrevityInterpreter,
     SafeCallback
 {
-    enum LiquidityCommands {
-        modifyLiquidity, swap, donate
-    }
-
-    struct LiquityCmdAndProgram {
-        Program program;
-        PoolKey poolKey;
-        LiquidityCommands cmd;
-        bytes args;
-    }
-
     constructor(
         address owner_,
         IPoolManager poolManager_
