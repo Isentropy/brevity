@@ -115,7 +115,7 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
             if(configVersion != version) revert WrongBrevityVersion(version, configVersion);
         }
         uint128 requestedFlags = uint128(config >> 128);
-        console.log("flags", requestedFlags, this.supportedConfigFlags());
+        //console.log("flags", requestedFlags, this.supportedConfigFlags());
         require(requestedFlags & this.supportedConfigFlags() == requestedFlags, UnsupportedConfigFlags      (requestedFlags & ~this.supportedConfigFlags()));
     }
 

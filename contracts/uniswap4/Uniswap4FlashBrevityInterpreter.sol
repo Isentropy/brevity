@@ -32,10 +32,6 @@ contract Uniswap4FlashBrevityInterpreter is
         }
     }
 
-    function _(Program calldata p) public onlyOwner {
-    }
-    
-
     function _unlockCallback(
         bytes calldata data
     ) internal virtual override returns (bytes memory) {
