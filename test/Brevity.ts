@@ -91,7 +91,7 @@ describe("Brevity", function () {
       let tx = await loopTest.loop(ITERATIONS)
       const gasTestLoop = (await tx.wait())?.gasUsed
       if (!gasTestDeploy || !gasTestLoop) throw Error("undef")
-      await estimateGas(brevityInterpreter, o)
+      await estimateGas(brevityInterpreter, o, owner.address)
       console.log(`Solidity Test gas: total = ${gasTestDeploy + gasTestLoop}, deploy = ${gasTestDeploy}, execution = ${gasTestLoop}`)
     })
 
@@ -111,7 +111,7 @@ describe("Brevity", function () {
       const o = brevityParser.parseBrevityScript(inputText)
       //console.log(`${JSON.stringify(o, null, 2)}`)
       await tokenA.mint(bi, parseEther("100"))
-      await estimateGas(brevityInterpreter, o)
+      await estimateGas(brevityInterpreter, o, owner.address)
       const Arb = await hre.ethers.getContractFactory("Arb");
       const arb = await Arb.deploy()
       const deployTx = arb.deploymentTransaction()
@@ -170,7 +170,7 @@ describe("Brevity", function () {
       const inputText = prepend + fs.readFileSync(input, { encoding: 'utf-8' })
       const o = brevityParser.parseBrevityScript(inputText)
       //console.log(JSON.stringify(o, null, 2))
-      await estimateGas(brevityInterpreter, o, parseEther(".001"))      
+      await estimateGas(brevityInterpreter, o, owner.address, parseEther(".001"))      
     })
 
 

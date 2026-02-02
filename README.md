@@ -78,7 +78,7 @@ commands
 _______________
 build: transpile script into Breviety Interpreter instructions 
 deploy: deploy OwnedBrevityInterpreter, TX paid by PRVKEY, owner = target if defined, otherwise address of PRVKEY
-estimateGas: estimate gas only. no TX
+estimateGas [from?]: estimate gas only. no TX. default 'from' is PRVKEY address
 run: run script using privateKey in PRVKEY envvar
 runMeta: run script signed by PRVKEY, TX paid by METATXKEY
 signMeta: sign metaTx with PRVKEY. returns "data" field of metaTx. no TX

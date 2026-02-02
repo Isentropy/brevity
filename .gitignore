@@ -3,7 +3,7 @@ build
 node_modules
 .env
 .npmrc
-
+.package-lock.json
 # Hardhat files
 /cache
 /artifacts

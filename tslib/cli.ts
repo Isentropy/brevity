@@ -1,10 +1,11 @@
-import { BigNumberish, BytesLike, JsonRpcProvider, parseEther, Provider, Signer, toBeHex, Wallet } from "ethers"
+import { AddressLike, BigNumberish, BytesLike, JsonRpcProvider, parseEther, Provider, Signer, toBeHex, Wallet } from "ethers"
 import { BrevityParser, BrevityParserConfig } from "./brevityParser"
 import { readFileSync, writeFileSync } from 'fs'
 import { parse } from "path"
 import { BrevityInterpreter__factory, CloneFactory__factory, IBrevityInterpreter__factory, OwnedBrevityInterpreter__factory, TestToken__factory } from "../typechain-types"
 import { bytesMemoryObject, estimateGas, signMetaTx } from "./utils"
 import { writeFile } from "fs/promises"
+import { argv } from "process"
 const defaultConfig: BrevityParserConfig = {
     maxMem: 100
 }
@@ -27,7 +28,7 @@ commands
 _______________
 No transaction:
 build: transpile script into Breviety Interpreter instructions 
-estimateGas: estimate gas only. no TX
+estimateGas [from?]: estimate gas only. no TX. default 'from' is PRVKEY address
 signMeta: sign metaTx with PRVKEY. returns "data" field of metaTx
 
 Runs transaction:
@@ -150,12 +151,24 @@ async function cli() {
         console.error(`No RPC given`)
         process.exit(1)
     }
-    if(!signer) {
-        console.error(`No signer specified. Put private key in PRVKEY envvar`)
-        process.exit(1)
-    }
     if(!targetAddress) {
         console.error(`No target interpreter given`)
+        process.exit(1)
+    }
+
+    if (cmd == 'estimateGas') {
+        let from: AddressLike
+        if(process.argv.length == i + 1) {
+            if(!signer) throw Error("if no PRVKEY, must pass from to estimateGas")
+            from = await signer.getAddress()
+        } else {
+            from = process.argv[++i]
+        }
+        await estimateGas(IBrevityInterpreter__factory.connect(targetAddress, provider), compiled, from)
+        process.exit(0)
+    }
+    if(!signer) {
+        console.error(`No signer specified. Put private key in PRVKEY envvar`)
         process.exit(1)
     }
     const targetInterpreter =  IBrevityInterpreter__factory.connect(targetAddress, txPayer)
@@ -187,8 +200,6 @@ async function cli() {
         const sig = await signMetaTx(signer, interpreterAddress, network.chainId, compiled, deadline)
         const tx = await cloneFactory.getFunction("cloneIfNeededThenRun").populateTransaction(implementation, salt, owner, compiled, deadline, sig)
         console.log(tx.data)
-    } else if (cmd == 'estimateGas') {
-        estimateGas(targetInterpreter, compiled)
     } else {
         console.error(`Unknown cmd: ${cmd}`)
         process.exit(1)

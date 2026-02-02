@@ -1,6 +1,6 @@
 import { IBrevityInterpreter, IBrevityInterpreter__factory, OwnedBrevityInterpreter } from "../typechain-types";
 import { BrevityParserOutput } from "./brevityParser";
-import { Signer, BigNumberish, BytesLike, dataLength, toUtf8Bytes, toBeArray, AbiCoder, toBeHex, zeroPadBytes } from 'ethers'
+import { Signer, BigNumberish, BytesLike, dataLength, toUtf8Bytes, toBeArray, AbiCoder, toBeHex, zeroPadBytes, AddressLike } from 'ethers'
 
 const METATX_TYPES = {
   Instruction: [
@@ -34,9 +34,9 @@ export function bytesMemoryObject(data : string) : string {
 }
 
 
-export async function estimateGas(brevityInterpreter: IBrevityInterpreter, o: BrevityParserOutput, value: BigNumberish = BigInt(0)) {
-  const runGas = await brevityInterpreter.getFunction("run").estimateGas(o, {value})
-  const noopGas = await brevityInterpreter.getFunction("noop").estimateGas(o, {value})
+export async function estimateGas(brevityInterpreter: IBrevityInterpreter, o: BrevityParserOutput, from: AddressLike, value: BigNumberish = BigInt(0)) {
+  const runGas = await brevityInterpreter.getFunction("run").estimateGas(o, {from, value})
+  const noopGas = await brevityInterpreter.getFunction("noop").estimateGas(o, {from, value})
   if (!runGas || !noopGas) throw Error()
   console.log(`Brevity gas: total = ${runGas}, calldata = ${noopGas}, execution = ${runGas - noopGas}`)
 }

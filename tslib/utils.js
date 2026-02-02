@@ -34,9 +34,9 @@ function bytesMemoryObject(data) {
     return rslt;
 }
 exports.bytesMemoryObject = bytesMemoryObject;
-async function estimateGas(brevityInterpreter, o, value = BigInt(0)) {
-    const runGas = await brevityInterpreter.getFunction("run").estimateGas(o, { value });
-    const noopGas = await brevityInterpreter.getFunction("noop").estimateGas(o, { value });
+async function estimateGas(brevityInterpreter, o, from, value = BigInt(0)) {
+    const runGas = await brevityInterpreter.getFunction("run").estimateGas(o, { from, value });
+    const noopGas = await brevityInterpreter.getFunction("noop").estimateGas(o, { from, value });
     if (!runGas || !noopGas)
         throw Error();
     console.log(`Brevity gas: total = ${runGas}, calldata = ${noopGas}, execution = ${runGas - noopGas}`);

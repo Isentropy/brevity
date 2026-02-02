@@ -26,7 +26,7 @@ commands
 _______________
 No transaction:
 build: transpile script into Breviety Interpreter instructions 
-estimateGas: estimate gas only. no TX
+estimateGas [from?]: estimate gas only. no TX. default 'from' is PRVKEY address
 signMeta: sign metaTx with PRVKEY. returns "data" field of metaTx
 
 Runs transaction:
@@ -154,12 +154,25 @@ async function cli() {
         console.error(`No RPC given`);
         process.exit(1);
     }
-    if (!signer) {
-        console.error(`No signer specified. Put private key in PRVKEY envvar`);
-        process.exit(1);
-    }
     if (!targetAddress) {
         console.error(`No target interpreter given`);
+        process.exit(1);
+    }
+    if (cmd == 'estimateGas') {
+        let from;
+        if (process.argv.length == i + 1) {
+            if (!signer)
+                throw Error("if no PRVKEY, must pass from to estimateGas");
+            from = await signer.getAddress();
+        }
+        else {
+            from = process.argv[++i];
+        }
+        await (0, utils_1.estimateGas)(typechain_types_1.IBrevityInterpreter__factory.connect(targetAddress, provider), compiled, from);
+        process.exit(0);
+    }
+    if (!signer) {
+        console.error(`No signer specified. Put private key in PRVKEY envvar`);
         process.exit(1);
     }
     const targetInterpreter = typechain_types_1.IBrevityInterpreter__factory.connect(targetAddress, txPayer);
@@ -194,9 +207,6 @@ async function cli() {
         const sig = await (0, utils_1.signMetaTx)(signer, interpreterAddress, network.chainId, compiled, deadline);
         const tx = await cloneFactory.getFunction("cloneIfNeededThenRun").populateTransaction(implementation, salt, owner, compiled, deadline, sig);
         console.log(tx.data);
-    }
-    else if (cmd == 'estimateGas') {
-        (0, utils_1.estimateGas)(targetInterpreter, compiled);
     }
     else {
         console.error(`Unknown cmd: ${cmd}`);
