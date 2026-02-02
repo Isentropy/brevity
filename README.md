@@ -2,7 +2,7 @@
 
 Copyright 2024 -2026 Isentropy LLC
 
-Brevity is a language, similar in syntax to Solidity, that is compactly transpiled to an EVM transaction and **run with 1 click** on a general purpose smart contract, the Brevity Interpreter. Brevity instructions live in **calldata**, so it's the perfect instruction format to pass to callbacks like [UniswapV4's unlock()](https://docs.uniswap.org/contracts/v4/guides/unlock-callback) (eg for flash loans). Because Brevity is interpreted, it doesn't need to deploy new smart contracts to implement new workflows.
+Brevity is a language, similar in syntax to Solidity, that is compactly transpiled to an EVM transaction and **run with 1 click** on a general purpose smart contract, the Brevity Interpreter. Brevity scripts live in **calldata**, so it's the perfect instruction format to pass to callbacks like [UniswapV4's unlock()](https://docs.uniswap.org/contracts/v4/guides/unlock-callback) (eg for flash loans). Because Brevity is interpreted, it doesn't need to deploy new smart contracts to implement new workflows.
 
 #### Please Note
 
