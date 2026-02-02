@@ -284,6 +284,9 @@ export class BrevityParser {
         */
         for (let op of OneArgQuantityKWs.keys()) {
             if (!q.startsWith(op)) continue
+            // For word-based operators like 'balance', require parentheses
+            // (handled below in "1 arg fns" section). Only use prefix matching for symbol operators like '!'
+            if (/^[a-zA-Z]/.test(op)) continue
             const oneArg: Quantity = {
                 quantityType: OneArgQuantityKWs.get(op)!,
                 args: [toBytes32(this.parseQuantity(q.substring(op.length), parsingContext))]

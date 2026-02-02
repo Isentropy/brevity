@@ -20,13 +20,10 @@ flashLoanAmount := 1000000
 CALL poolManager.take(flashLoanToken, this, flashLoanAmount)
 
 // do stuff
-var bal = STATICCALL flashLoanToken.balanceOf(this)
 
 // repay flash loan
 CALL poolManager.sync(flashLoanToken)
 CALL flashLoanToken.transfer(poolManager, flashLoanAmount)
 var paid0 = CALL poolManager.settle()()
 
-
-dumpMem
 
