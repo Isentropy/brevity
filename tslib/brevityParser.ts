@@ -641,7 +641,7 @@ export class BrevityParser {
             return inst
         })
         const additionalConfigFlags = parsingContext.preprocessorSymbols.get(PREPROC_ADDITIONAL_CONFIGFLAGS)
-        // config is a u256 of : [configFlags u128 : requiredBrevityVersion u64 : maxMemSize u128]
+        // config is a u256 of : [configFlags u128 : requiredBrevityVersion u64 : maxMemSize u64]
         let configBigint = ((this.config.configFlags ?? BigInt(0)) | (additionalConfigFlags ? BigInt(additionalConfigFlags) : BigInt(0))) * (BigInt(2) ** BigInt(128)) 
         configBigint |= BigInt(this.config.requiredBrevityVersion ?? 0) * (BigInt(2) ** BigInt(64))
         configBigint |= BigInt(maxMemSize) 
