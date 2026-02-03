@@ -87,8 +87,8 @@ signMeta: sign metaTx with PRVKEY. returns "data" field of metaTx. no TX
 envvars
 _______________
 the private keys are stored in envvars:
-PRVKEY : the key that owns Brevity Interpreter (needed for all commands except "build")
-METATXKEY : the key that pays for TX (need for command "runMeta")
+PRVKEY : the key that owns Brevity Interpreter (needed for commands: deploy, run, runMeta, signMeta)
+METATXKEY : the key that pays for TX (need for commands: runMeta, signMeta)
 ```
 
 ## Script Syntax
