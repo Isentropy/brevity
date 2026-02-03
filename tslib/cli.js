@@ -20,6 +20,7 @@ _______________
 -o | --outfile <file> : optional output to file instead of stdout
 -t | --target <address> : target Brevity Interpreter address
 -r | --rpc <rpcUrl> : RPC URL
+-p | --prepend <script text> : prepend script text lines. multiple prepends appended in order
 -h | --help : help
 
 commands
@@ -45,6 +46,7 @@ METATXKEY : the key that pays for TX (need for command "runMeta")
 async function cli() {
     let inputScript;
     let outputFile;
+    let infile;
     //let initalFlags: BytesLike = 0
     let provider;
     let signer;
@@ -52,9 +54,10 @@ async function cli() {
     let targetAddress;
     let value = 0;
     let i = 2;
+    let prepend = '';
     for (; i < process.argv.length - 1; i++) {
         if (process.argv[i] == '-i' || process.argv[i] == '--infile') {
-            inputScript = (0, fs_1.readFileSync)(process.argv[++i], { encoding: 'utf-8' });
+            infile = process.argv[++i];
         }
         else if (process.argv[i] == '-f' || process.argv[i] == '--flags') {
             //initalFlags = process.argv[++i]
@@ -77,10 +80,14 @@ async function cli() {
             if (value.toLowerCase().endsWith('eth'))
                 value = (0, ethers_1.parseEther)(value.substring(0, value.length - 3));
         }
+        else if (process.argv[i] == '-p' || process.argv[i] == '--prepend') {
+            prepend += process.argv[++i] + '\n';
+        }
         else {
             break;
         }
     }
+    inputScript = prepend + (infile ? (0, fs_1.readFileSync)(infile, { encoding: 'utf-8' }) : '');
     const cmd = process.argv[i];
     if (!cmd || cmd == '-h' || cmd == '--help') {
         help();

@@ -72,6 +72,7 @@ _______________
 -o | --outfile <file> : optional output to file instead of stdout
 -t | --target <address> : target Brevity Interpreter address
 -r | --rpc <rpcUrl> : RPC URL
+-p | --prepend <script text> : prepend script text lines. multiple prepends appended in order
 -h | --help : help
 
 commands

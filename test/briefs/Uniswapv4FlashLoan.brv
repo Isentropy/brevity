@@ -13,6 +13,7 @@ poolManager := 0x000000000004444c5dc75cb358380d2e3de08a90
 weth := 0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2
 usdc := 0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48
 
+
 flashLoanToken := usdc
 flashLoanAmount := 1000000
 // take out flash loan
@@ -25,5 +26,5 @@ CALL poolManager.sync(flashLoanToken)
 CALL flashLoanToken.transfer(poolManager, flashLoanAmount)
 var paid0 = CALL poolManager.settle()()
 
-//dumpMem
+// dumpMem
 

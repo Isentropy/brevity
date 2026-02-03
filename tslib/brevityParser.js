@@ -116,14 +116,6 @@ function parseMap(map) {
     return rslt;
 }
 class ParsingContext {
-    constructor() {
-        this.preprocessorSymbols = new Map();
-        this.memAddressNames = new Map();
-        this.jumppointNames = new Map();
-        this.quantityEncodedToIndex = new Map();
-        this.quantites = [];
-        this.lineNumber = 1;
-    }
     quantityIndex(q) {
         //console.log(`quantityIndex ${JSON.stringify(q, null, 2)}`)
         const k = JSON.stringify(q);
@@ -135,6 +127,14 @@ class ParsingContext {
         this.quantites.push(q);
         this.quantityEncodedToIndex.set(k, idx);
         return BigInt(idx) | BIT254_NOTMEM | BIT255_NOTLITERAL;
+    }
+    constructor() {
+        this.preprocessorSymbols = new Map();
+        this.memAddressNames = new Map();
+        this.jumppointNames = new Map();
+        this.quantityEncodedToIndex = new Map();
+        this.quantites = [];
+        this.lineNumber = 1;
     }
 }
 function toBytes32(n) {
@@ -229,6 +229,10 @@ class BrevityParser {
         */
         for (let op of OneArgQuantityKWs.keys()) {
             if (!q.startsWith(op))
+                continue;
+            // For word-based operators like 'balance', require parentheses
+            // (handled below in "1 arg fns" section). Only use prefix matching for symbol operators like '!'
+            if (/^[a-zA-Z]/.test(op))
                 continue;
             const oneArg = {
                 quantityType: OneArgQuantityKWs.get(op),
@@ -603,7 +607,7 @@ class BrevityParser {
             return inst;
         });
         const additionalConfigFlags = parsingContext.preprocessorSymbols.get(PREPROC_ADDITIONAL_CONFIGFLAGS);
-        // config is a u256 of : [configFlags u128 : requiredBrevityVersion u64 : maxMemSize u128]
+        // config is a u256 of : [configFlags u128 : requiredBrevityVersion u64 : maxMemSize u64]
         let configBigint = ((this.config.configFlags ?? BigInt(0)) | (additionalConfigFlags ? BigInt(additionalConfigFlags) : BigInt(0))) * (BigInt(2) ** BigInt(128));
         configBigint |= BigInt(this.config.requiredBrevityVersion ?? 0) * (BigInt(2) ** BigInt(64));
         configBigint |= BigInt(maxMemSize);
