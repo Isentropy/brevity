@@ -1,6 +1,6 @@
 import { IBrevityInterpreter, IBrevityInterpreter__factory, OwnedBrevityInterpreter } from "../typechain-types";
 import { BrevityParserOutput } from "./brevityParser";
-import { Signer, BigNumberish, BytesLike, dataLength, toUtf8Bytes, toBeArray, AbiCoder, toBeHex, zeroPadBytes, AddressLike } from 'ethers'
+import { Signer, BigNumberish, BytesLike, dataLength, toUtf8Bytes, toBeArray, AbiCoder, toBeHex, zeroPadBytes, AddressLike, TransactionReceipt } from 'ethers'
 
 const METATX_TYPES = {
   Instruction: [
@@ -33,6 +33,18 @@ export function bytesMemoryObject(data : string) : string {
   return rslt
 }
 
+export function getKeyValues(receipt: TransactionReceipt, interpreter: IBrevityInterpreter): Map<bigint, bigint> {
+    const events = new Map<bigint, bigint>()
+    const addr = (interpreter.target as string).toLowerCase()
+    for (const log of receipt.logs) {
+      if (log.address.toLowerCase() !== addr) continue
+      try {
+        const parsed = interpreter.interface.parseLog(log)
+        if (parsed?.name === 'KeyValue') events.set(parsed.args[0], parsed.args[1])
+      } catch {}
+    }
+    return events
+  }
 
 export async function estimateGas(brevityInterpreter: IBrevityInterpreter, o: BrevityParserOutput, from: AddressLike, value: BigNumberish = BigInt(0)) {
   const runGas = await brevityInterpreter.getFunction("run").estimateGas(o, {from, value})

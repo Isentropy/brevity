@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.signMetaTx = exports.estimateGas = exports.bytesMemoryObject = void 0;
+exports.signMetaTx = exports.estimateGas = exports.getKeyValues = exports.bytesMemoryObject = void 0;
 const typechain_types_1 = require("../typechain-types");
 const ethers_1 = require("ethers");
 const METATX_TYPES = {
@@ -34,6 +34,22 @@ function bytesMemoryObject(data) {
     return rslt;
 }
 exports.bytesMemoryObject = bytesMemoryObject;
+function getKeyValues(receipt, interpreter) {
+    const events = new Map();
+    const addr = interpreter.target.toLowerCase();
+    for (const log of receipt.logs) {
+        if (log.address.toLowerCase() !== addr)
+            continue;
+        try {
+            const parsed = interpreter.interface.parseLog(log);
+            if (parsed?.name === 'KeyValue')
+                events.set(parsed.args[0], parsed.args[1]);
+        }
+        catch { }
+    }
+    return events;
+}
+exports.getKeyValues = getKeyValues;
 async function estimateGas(brevityInterpreter, o, from, value = BigInt(0)) {
     const runGas = await brevityInterpreter.getFunction("run").estimateGas(o, { from, value });
     const noopGas = await brevityInterpreter.getFunction("noop").estimateGas(o, { from, value });
