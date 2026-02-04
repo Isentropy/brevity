@@ -48,27 +48,20 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
         return keccak256(abi.encodePacked(slots));
     }
 
-    // DELEGATECALL disabled by default
-    //uint256 constant CONFIGFLAG_NO_DELEGATECALL =
-    //    0x0000000000000000000000000000000100000000000000000000000000000000;
-
-
     function _resolve(
         uint qWord,
         uint[] memory mem,
         Quantity[] calldata quantities
     ) internal view returns (uint) {
-        //console.log('qIndex', qIndex);
+        // check metadata bits 255-128
         if (qWord & BIT255_NOTLITERAL == 0) {
             return qWord;
         }
         if (qWord & BIT254_NOTMEM == 0) {
             return mem[qWord ^ BIT255_NOTLITERAL];
         }
-        // unset bits 255 and 254
-        qWord ^= (BIT255_NOTLITERAL | BIT254_NOTMEM);
-
-        Quantity calldata q = quantities[qWord];
+        // 
+        Quantity calldata q = quantities[qWord & LOW128BITSMASK];
         uint quantityType = q.quantityType;
         // dont need quantities[] to resolve:
         if (quantityType == QUANTITY_LITERAL) return uint(q.args[0]);
@@ -91,9 +84,18 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
         }
         // 2 arg OPs
         uint r2 = _resolve(uint(q.args[1]), mem, quantities);
-        if (quantityType == QUANTITY_OP_ADD) return r1 + r2;
-        if (quantityType == QUANTITY_OP_MUL) return r1 * r2;
-        if (quantityType == QUANTITY_OP_SUB) return r1 - r2;
+        if(qWord & BIT128_UNCHECKED_ARITHMATIC != 0) {
+            unchecked {
+                if (quantityType == QUANTITY_OP_ADD) return r1 + r2;
+                if (quantityType == QUANTITY_OP_MUL) return r1 * r2;
+                if (quantityType == QUANTITY_OP_SUB) return r1 - r2;                
+            }
+        } else {
+            if (quantityType == QUANTITY_OP_ADD) return r1 + r2;
+            if (quantityType == QUANTITY_OP_MUL) return r1 * r2;
+            if (quantityType == QUANTITY_OP_SUB) return r1 - r2;                            
+        }
+
         if (quantityType == QUANTITY_OP_DIV) return r1 / r2;
         if (quantityType == QUANTITY_OP_MOD) return r1 % r2;
         if (quantityType == QUANTITY_OP_LT) return r1 < r2 ? MAXUINT256 : 0;

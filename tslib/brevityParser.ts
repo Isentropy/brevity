@@ -47,6 +47,7 @@ const QUANTITY_BLOCKTIMESTAMP = 0x42;
 //const QUANTITY_R0 = 128;
 const BIT255_NOTLITERAL = BigInt(1) << BigInt(255)
 const BIT254_NOTMEM = BigInt(1) << BigInt(254)
+const BIT128_UNCHECKED = BigInt(1) << BigInt(128)
 // top bit unset
 // const MAXINT_LITERAL = '0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
 //export const CONFIGFLAG_NO_DELEGATECALL = BigInt('0x0000000000000000000000000000000100000000000000000000000000000000')
@@ -67,6 +68,9 @@ const KW_DUMPMEM = 'dumpMem'
 const KW_CLEARMEMSTACK = 'clearMemStack'
 // clears all preprocessor symbols that are not all uppercase
 const KW_CLEARPARAMS = 'clearParams'
+const KW_UNCHECKED = 'uncheckedArithmatic'                      
+const KW_CHECKED = 'checkedArithmatic'
+
 const PREPROC_ADDITIONAL_CONFIGFLAGS = 'ADDITIONAL_CONFIGFLAGS'
 
 // minus 1 in 32 byte 2s compliment
@@ -100,12 +104,14 @@ const TwoArgQuantityKWs = new Map<string, number>([
     ['%', QUANTITY_OP_MOD],
     ['==', QUANTITY_OP_EQ]
 ]);
-  const TwoArgKwsRegex = new RegExp(Array.from(TwoArgQuantityKWs.keys())
+const TwoArgKwsRegex = new RegExp(Array.from(TwoArgQuantityKWs.keys())
     .sort((a, b) => b.length - a.length)
     .map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
     .join('|'));
 
-const KWS: Set<string> = new Set<string>([...ZeroArgQuantityKWs.keys()].concat([...OneArgQuantityKWs.keys()]).concat([...TwoArgQuantityKWs.keys()]).concat([KW_REVERT, KW_RETURN, KW_GOTO, KW_IF, KW_CALL, KW_SEND, KW_STATICCALL, KW_DELEGATECALL, KW_VAR, KW_DUMPMEM]))
+ const SOLO_KWS = [KW_CHECKED, KW_UNCHECKED, KW_REVERT, KW_RETURN, KW_GOTO, KW_IF, KW_CALL, KW_SEND, KW_STATICCALL, KW_DELEGATECALL, KW_VAR, KW_DUMPMEM]
+
+const KWS: Set<string> = new Set<string>([...ZeroArgQuantityKWs.keys()].concat([...OneArgQuantityKWs.keys()]).concat([...TwoArgQuantityKWs.keys()]).concat(SOLO_KWS))
 
 
 export interface Instruction {
@@ -114,7 +120,7 @@ export interface Instruction {
 }
 
 export interface Quantity {
-    quantityType: number,
+    quantityType: number | bigint,
     args: string[]
 }
 
@@ -148,6 +154,7 @@ class ParsingContext {
     quantityEncodedToIndex: Map<string, number> = new Map<string, number>()
     quantites: Quantity[] = []
     lineNumber: number = 1
+    uncheckedArithmatic = false
     quantityIndex(q: Quantity): bigint {
         //console.log(`quantityIndex ${JSON.stringify(q, null, 2)}`)
         const k = JSON.stringify(q)
@@ -270,7 +277,7 @@ export class BrevityParser {
         const [opPos, op] = this.findFirstValidOpCharacter(q)
         if (opPos !== -1) {
             const twoArg: Quantity = {
-                quantityType: TwoArgQuantityKWs.get(op)!,
+                quantityType: parsingContext.uncheckedArithmatic ? BIT128_UNCHECKED | BigInt(TwoArgQuantityKWs.get(op)!) : TwoArgQuantityKWs.get(op)!,
                 args: [toBytes32(this.parseQuantity(q.substring(0, opPos), parsingContext)), toBytes32(this.parseQuantity(q.substring(opPos + op.length, q.length), parsingContext))]
             }
             return parsingContext.quantityIndex(twoArg)
@@ -495,6 +502,14 @@ export class BrevityParser {
                 this.checkNewSymbolName(sym, parsingContext)
                 parsingContext.jumppointNames.set(sym, instructions.length)
                 continue;
+            }
+            if (line.startsWith(KW_CHECKED)) {
+                parsingContext.uncheckedArithmatic = false
+                continue
+            }
+            if (line.startsWith(KW_UNCHECKED)) {
+                parsingContext.uncheckedArithmatic = true
+                continue
             }
             if (line.startsWith(KW_DUMPMEM)) {
                 instructions.push({
