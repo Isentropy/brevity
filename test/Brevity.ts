@@ -5,11 +5,10 @@ import hre, { ethers } from "hardhat";
 import { BrevityParser, BrevityParserOutput, CONFIGFLAG_UNISWAP4UNLOCK } from "../tslib/brevityParser";
 import { dataLength, parseEther, BigNumberish } from 'ethers'
 import * as fs from 'fs'
-import { OwnedBrevityInterpreter__factory, IBrevityInterpreter, CloneFactory__factory, OwnedBrevityInterpreter, Uniswap4FlashBrevityInterpreter__factory } from "../typechain-types";
+import { OwnedBrevityInterpreter__factory, IBrevityInterpreter, CloneFactory__factory, OwnedBrevityInterpreter } from "../typechain-types";
 import { signMetaTx, estimateGas } from "../tslib/utils";
 //hardhat default
 //const chainId = 31337
-const UNISWAP_POOL_MANAGER_MAINNET = '0x000000000004444c5dc75cb358380d2e3de08a90'
 const ITERATIONS = 10
 function brevityLoopProgram(n: number, toFoo: string): string {
   const lines: string[] = [`n := ${n - 1}`]
@@ -33,11 +32,7 @@ describe("Brevity", function () {
     const [owner, otherAccount] = await hre.ethers.getSigners();
 
     const OwnedBrevityInterpreter = await new OwnedBrevityInterpreter__factory(owner)
-    //const ubi = await hre.ethers.getContractFactory("Uniswap4FlashBrevityInterpreter");
-    const ubi = new Uniswap4FlashBrevityInterpreter__factory(owner)
-    let uniswapv4BrevityInterpreter = await ubi.deploy(owner.address, UNISWAP_POOL_MANAGER_MAINNET)
     let brevityInterpreter = await OwnedBrevityInterpreter.deploy(owner.address);
-//    let uniswapv4BrevityInterpreter = await ubi.deploy(owner.address, UNISWAP_POOL_MANAGER_MAINNET)
     const CloneFactory = await hre.ethers.getContractFactory("CloneFactory");
     const bi = await brevityInterpreter.getAddress()
     const factory = await CloneFactory.deploy()
@@ -61,20 +56,11 @@ describe("Brevity", function () {
       maxMem: 100,
       requiredBrevityVersion: 1
     })
-    return { loopTest, tokenA, tokenB, brevityParser, brevityInterpreter: proxy, proxy, owner, otherAccount, test, uniswapv4BrevityInterpreter };
+    return { loopTest, tokenA, tokenB, brevityParser, brevityInterpreter: proxy, proxy, owner, otherAccount, test };
   }
 
 
   describe("Run", function () {
-    it("Flash loan", async function () {
-      const { loopTest, brevityParser, brevityInterpreter, owner, uniswapv4BrevityInterpreter, } = await loadFixture(fixture);
-      //const input = 'test/briefs/example.brv'
-      const inputText = fs.readFileSync('test/briefs/Uniswapv4FlashLoan.brv', { encoding: 'utf-8' })
-      const o = brevityParser.parseBrevityScript(inputText)
-      await uniswapv4BrevityInterpreter.run(o)
-    })
- 
-
     it("Loop", async function () {
       const { loopTest, brevityParser, brevityInterpreter, owner, otherAccount, } = await loadFixture(fixture);
       //const input = 'test/briefs/example.brv'
@@ -129,7 +115,7 @@ describe("Brevity", function () {
       const noopGas = tr.gasUsed
       console.log(`Solidity Test gas: total = ${gasTestDeploy + gasTestArb}, deploy = ${gasTestDeploy}, calldata = ${noopGas}, execution = ${gasTestArb - noopGas}`)
     })
-  
+
     it("MetaTx", async () => {
       const { tokenA, tokenB, test, brevityParser, brevityInterpreter, owner, otherAccount } = await loadFixture(fixture);
       const input = 'test/briefs/example.brv'
@@ -145,7 +131,7 @@ describe("Brevity", function () {
       const o = brevityParser.parseBrevityScript(inputText)
       //console.log(`${JSON.stringify(o, null, 2)}`)
       await tokenA.mint(bi, parseEther("100"))
-      
+
       const net = await owner.provider.getNetwork()
       const deadline =  3600 + Math.floor(new Date().getTime()/1000)
       const sig = await signMetaTx(owner, bi, net.chainId, o, deadline)
@@ -154,25 +140,5 @@ describe("Brevity", function () {
       if(!tr) throw Error()
       console.log(`MetaTx gas: total = ${tr.gasUsed}`)
     })
-    
-    
-    it("Uniswap.brv", async function () {
-      const { tokenA, tokenB, test, brevityParser, brevityInterpreter, owner, otherAccount } = await loadFixture(fixture);
-      const input = 'test/briefs/uniswapAddLiquidity.brv'
-      const tokenAAddress = await tokenA.getAddress()
-      const tokenBAddress = await tokenB.getAddress()
-      const bi = await brevityInterpreter.getAddress()
-      await owner.sendTransaction({ to: bi, value: parseEther('1') })
-      let prepend = `tokenA := ${tokenAAddress}\ntokenB := ${tokenBAddress}\n`
-
-//      const testAddress = await test.getAddress()
-//      prepend += `exchange1 := ${testAddress}\nexchange2 := ${testAddress}\n`
-      const inputText = prepend + fs.readFileSync(input, { encoding: 'utf-8' })
-      const o = brevityParser.parseBrevityScript(inputText)
-      //console.log(JSON.stringify(o, null, 2))
-      await estimateGas(brevityInterpreter, o, owner.address, parseEther(".001"))      
-    })
-
-
   })
 })
