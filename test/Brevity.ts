@@ -1,6 +1,7 @@
 import {
   loadFixture,
 } from "@nomicfoundation/hardhat-toolbox/network-helpers";
+import { expect } from "chai";
 import hre, { ethers } from "hardhat";
 import { BrevityParser, BrevityParserOutput, CONFIGFLAG_UNISWAP4UNLOCK } from "../tslib/brevityParser";
 import { dataLength, parseEther, BigNumberish } from 'ethers'
@@ -10,6 +11,7 @@ import { signMetaTx, estimateGas } from "../tslib/utils";
 //hardhat default
 //const chainId = 31337
 const ITERATIONS = 10
+const MAXUINT256 = '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
 function brevityLoopProgram(n: number, toFoo: string): string {
   const lines: string[] = [`n := ${n - 1}`]
   lines.push('foo := foo(uint256)')
@@ -140,6 +142,109 @@ describe("Brevity", function () {
       const tr = await tx.wait()
       if(!tr) throw Error()
       console.log(`MetaTx gas: total = ${tr.gasUsed}`)
+    })
+  })
+
+  describe("Arithmetic", function () {
+    it("Checked add/sub/mul", async function () {
+      const { brevityParser, brevityInterpreter } = await loadFixture(fixture);
+      const script = [
+        'emitKeyValue := emitKeyValue(uint256,uint256)',
+        'var x = 5 + 3',
+        'CALL this.emitKeyValue(0, x)',
+        'var y = 10 - 3',
+        'CALL this.emitKeyValue(1, y)',
+        'var z = 4 * 5',
+        'CALL this.emitKeyValue(2, z)',
+      ].join('\n')
+      const o = brevityParser.parseBrevityScript(script)
+      await expect(brevityInterpreter.run(o))
+        .to.emit(brevityInterpreter, "KeyValue").withArgs(0, 8)
+        .and.to.emit(brevityInterpreter, "KeyValue").withArgs(1, 7)
+        .and.to.emit(brevityInterpreter, "KeyValue").withArgs(2, 20)
+    })
+
+    it("Checked add overflow reverts", async function () {
+      const { brevityParser, brevityInterpreter } = await loadFixture(fixture);
+      const script = [
+        `maxVal := ${MAXUINT256}`,
+        'var x = maxVal + 1',
+      ].join('\n')
+      const o = brevityParser.parseBrevityScript(script)
+      await expect(brevityInterpreter.run(o)).to.be.reverted
+    })
+
+    it("Checked sub underflow reverts", async function () {
+      const { brevityParser, brevityInterpreter } = await loadFixture(fixture);
+      const script = 'var x = 0 - 1'
+      const o = brevityParser.parseBrevityScript(script)
+      await expect(brevityInterpreter.run(o)).to.be.reverted
+    })
+
+    it("Checked mul overflow reverts", async function () {
+      const { brevityParser, brevityInterpreter } = await loadFixture(fixture);
+      const script = [
+        `maxVal := ${MAXUINT256}`,
+        'var x = maxVal * 2',
+      ].join('\n')
+      const o = brevityParser.parseBrevityScript(script)
+      await expect(brevityInterpreter.run(o)).to.be.reverted
+    })
+
+    it("Unchecked sub underflow wraps", async function () {
+      const { brevityParser, brevityInterpreter } = await loadFixture(fixture);
+      const script = [
+        'emitKeyValue := emitKeyValue(uint256,uint256)',
+        'uncheckedArithmatic',
+        'var x = 0 - 1',
+        'CALL this.emitKeyValue(0, x)',
+      ].join('\n')
+      const o = brevityParser.parseBrevityScript(script)
+      await expect(brevityInterpreter.run(o))
+        .to.emit(brevityInterpreter, "KeyValue").withArgs(0, MAXUINT256)
+    })
+
+    it("Unchecked add overflow wraps", async function () {
+      const { brevityParser, brevityInterpreter } = await loadFixture(fixture);
+      const script = [
+        'emitKeyValue := emitKeyValue(uint256,uint256)',
+        `maxVal := ${MAXUINT256}`,
+        'uncheckedArithmatic',
+        'var x = maxVal + 1',
+        'CALL this.emitKeyValue(0, x)',
+      ].join('\n')
+      const o = brevityParser.parseBrevityScript(script)
+      await expect(brevityInterpreter.run(o))
+        .to.emit(brevityInterpreter, "KeyValue").withArgs(0, 0)
+    })
+
+    it("Unchecked mul overflow wraps", async function () {
+      const { brevityParser, brevityInterpreter } = await loadFixture(fixture);
+      const script = [
+        'emitKeyValue := emitKeyValue(uint256,uint256)',
+        `maxVal := ${MAXUINT256}`,
+        'uncheckedArithmatic',
+        'var x = maxVal * 2',
+        'CALL this.emitKeyValue(0, x)',
+      ].join('\n')
+      const o = brevityParser.parseBrevityScript(script)
+      // maxuint * 2 = maxuint << 1 = 0xFFFFF...FFFFE
+      await expect(brevityInterpreter.run(o))
+        .to.emit(brevityInterpreter, "KeyValue").withArgs(0, BigInt(MAXUINT256) * 2n & BigInt(MAXUINT256))
+    })
+
+    it("Switch from unchecked back to checked reverts", async function () {
+      const { brevityParser, brevityInterpreter } = await loadFixture(fixture);
+      const script = [
+        'emitKeyValue := emitKeyValue(uint256,uint256)',
+        'uncheckedArithmatic',
+        'var x = 0 - 1',
+        'CALL this.emitKeyValue(0, x)',
+        'checkedArithmatic',
+        'var y = 0 - 1',
+      ].join('\n')
+      const o = brevityParser.parseBrevityScript(script)
+      await expect(brevityInterpreter.run(o)).to.be.reverted
     })
   })
 })
