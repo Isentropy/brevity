@@ -1,11 +1,15 @@
 pragma solidity ^0.8.27;
 pragma abicoder v2;
-import "hardhat/console.sol";
 import "./IBrevityInterpreter.sol";
 import "./Constants.sol";
 import "@openzeppelin/contracts/utils/Nonces.sol";
+import "./IDebugTools.sol";
 
 abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
+
+    function version() public pure returns (uint) {
+        return 1;
+    }    
     function nonces(address signer) public virtual override(IBrevityInterpreter, Nonces) view returns (uint256) {
         return super.nonces(signer);
     }
@@ -113,8 +117,7 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
     function _validateConfig(uint256 config) internal view {
         uint64 configVersion = uint64((config >> 64) & LOW64BITSMASK);
         if(configVersion != 0) {
-            uint version = IBrevityInterpreter(address(this)).version();
-            if(configVersion != version) revert WrongBrevityVersion(version, configVersion);
+            if(configVersion != version()) revert WrongBrevityVersion(version(), configVersion);
         }
         uint128 requestedFlags = uint128(config >> 128);
         //console.log("flags", requestedFlags, this.supportedConfigFlags());
@@ -273,7 +276,11 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
                     p.quantities
                 );
             } else if (opcode == OPCODE_DUMPMEM) {
-                printMem(mem, 0, mem.length);
+                try IDebugTools(address(this)).printMem(mem, 0, mem.length) {
+                     
+                } catch {
+
+                }
             } else {
                 revert NotPermitted(pc, opcode);
             }
@@ -283,10 +290,4 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
         _afterRun(p.config, p.instructions, p.quantities);
     }
 
-    function printMem(uint[] memory mem, uint from, uint to) public pure {
-        console.log("Mem Dump:");
-        for (uint i = from; i < to; i++) {
-            console.log(i, " = ", mem[i]);
-        }
-    }
 }

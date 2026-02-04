@@ -170,6 +170,13 @@ SEND {value: msg.value / 3 } targetAddress
 goto myJumpPoint
 ```
 
+### Explicitly: return or revert
+
+```
+return
+revert
+```
+
 ### Use if for conditional branching
 ```
 if(x > 1) goto myJumpPoint

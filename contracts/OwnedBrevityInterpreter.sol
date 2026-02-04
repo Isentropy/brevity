@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./DebugTools.sol";
 
 contract OwnedBrevityInterpreter is EIP712, BrevityInterpreter, DebugTools {
-    uint public constant version = 1;
 
     event NewOwner(address indexed newOwner);
     error NotOwner();
