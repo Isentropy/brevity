@@ -2,7 +2,11 @@
 
 Copyright 2024 -2026 Isentropy LLC
 
-Brevity is a language, similar in syntax to Solidity, that is compactly transpiled to an EVM transaction and **run atomicly** on a general purpose smart contract, the Brevity Interpreter. Brevity scripts live in **calldata**, so it's the perfect instruction format to pass to callbacks like [UniswapV4's unlock()](https://docs.uniswap.org/contracts/v4/guides/unlock-callback) (eg for flash loans). Brevity scripts can run new logic without deploying smart contracts. Think ```eth_sendBundle```, but with Turing-complete logic.
+Brevity is a compact, full featured script that's passed entirely in calldata. The script is run on one general purpose smart contract, the Brevity Interpreter. Brevity scripts can run new logic without deploying new smart contracts. 
+
+Brevity is the perfect instruction format to pass to bridges and callbacks like [UniswapV4's unlock()](https://docs.uniswap.org/contracts/v4/guides/unlock-callback) (eg for flash loans), which expect instructions in calldata.
+
+It's deliberately bare bones.  You can CALL and STATICCALL, put variables on a memory stack, do arithmatic, and do flow control. **Brevity has no operations to directly manipulate storage.** It can only manipulate storage via CALLs to exposed functions. Brevity has no code blocks, no subroutines. It does not allow direct manipulation of EVM stack registers.
 
 #### Please Note
 
@@ -93,9 +97,6 @@ METATXKEY : the key that pays for TX (need for commands: runMeta, signMeta)
 ## Script Syntax
 
 See [example](test/briefs/uniswapAddLiquidity.brv)
-
-### Philosophy
-Brevity is deliberately bare bones.  You can CALL and STATICCALL, put variables on a memory stack, and do flow control. **Brevity has no operations to directly manipulate storage.** It can only manipulate storage via CALLs to exposed functions. Brevity has no code blocks, no subroutines. It does not allow direct manipulation of EVM stack registers.
 
 ### Only 1 data type: UINT256  
 Like [B](https://en.wikipedia.org/wiki/B_(programming_language)), Brevity has 1 data type, the word (uint256). Arithmatic operations are all unsigned. The parser translates negative ints into their 2s compliment UINT form.
