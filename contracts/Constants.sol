@@ -113,3 +113,4 @@ error NotPermitted(uint pc, uint opcode);
 error Reverted(uint pc);
 error CallFailed(uint pc);
 error BadJump(uint pc, uint jumpDest);
+error UnknownQuantityType(uint qType);

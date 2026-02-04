@@ -120,7 +120,7 @@ export interface Instruction {
 }
 
 export interface Quantity {
-    quantityType: number | bigint,
+    quantityType: number,
     args: string[]
 }
 
@@ -159,12 +159,12 @@ class ParsingContext {
         //console.log(`quantityIndex ${JSON.stringify(q, null, 2)}`)
         const k = JSON.stringify(q)
         let idx = this.quantityEncodedToIndex.get(k)
-        if (typeof idx === 'number') return BigInt(idx) | BIT254_NOTMEM | BIT255_NOTLITERAL
+        if (idx) return BigInt(idx) | BIT254_NOTMEM | BIT255_NOTLITERAL | (this.uncheckedArithmatic ? BIT128_UNCHECKED : BigInt(0))
         //console.log(`${k} not found`)
         idx = this.quantites.length
         this.quantites.push(q)
         this.quantityEncodedToIndex.set(k, idx)
-        return BigInt(idx) | BIT254_NOTMEM | BIT255_NOTLITERAL
+        return BigInt(idx) | BIT254_NOTMEM | BIT255_NOTLITERAL | (this.uncheckedArithmatic ? BIT128_UNCHECKED : BigInt(0))
     }
     constructor() {
 
@@ -277,9 +277,10 @@ export class BrevityParser {
         const [opPos, op] = this.findFirstValidOpCharacter(q)
         if (opPos !== -1) {
             const twoArg: Quantity = {
-                quantityType: parsingContext.uncheckedArithmatic ? BIT128_UNCHECKED | BigInt(TwoArgQuantityKWs.get(op)!) : TwoArgQuantityKWs.get(op)!,
+                quantityType: TwoArgQuantityKWs.get(op)!,
                 args: [toBytes32(this.parseQuantity(q.substring(0, opPos), parsingContext)), toBytes32(this.parseQuantity(q.substring(opPos + op.length, q.length), parsingContext))]
             }
+            // this method will add the UNCHECKED flag to the qWord if needed
             return parsingContext.quantityIndex(twoArg)
         }
         /*
