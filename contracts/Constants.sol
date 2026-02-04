@@ -40,6 +40,10 @@ uint8 constant OPCODE_MSTORE_R0 = 128;
 uint256 constant BIT255_NOTLITERAL = 1 << 255;
 // BIT254 on means NOT memory address
 uint256 constant BIT254_NOTMEM = 1 << 254;
+
+// this bit indicates that an arithmatic op should be unchecked. it has no effect for non-aritmatic ops
+uint256 constant BIT128_UNCHECKED_ARITHMATIC = 1 << 128;
+
 uint8 constant QUANTITY_LITERAL = 0;
 uint8 constant QUANTITY_OP_ADD = 1;
 uint8 constant QUANTITY_OP_MUL = 2;
@@ -109,3 +113,4 @@ error NotPermitted(uint pc, uint opcode);
 error Reverted(uint pc);
 error CallFailed(uint pc);
 error BadJump(uint pc, uint jumpDest);
+error UnknownQuantityType(uint qType);

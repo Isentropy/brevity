@@ -1,11 +1,15 @@
 pragma solidity ^0.8.27;
 pragma abicoder v2;
-import "hardhat/console.sol";
 import "./IBrevityInterpreter.sol";
 import "./Constants.sol";
 import "@openzeppelin/contracts/utils/Nonces.sol";
+import "./IDebugTools.sol";
 
 abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
+
+    function version() public pure returns (uint) {
+        return 1;
+    }    
     function nonces(address signer) public virtual override(IBrevityInterpreter, Nonces) view returns (uint256) {
         return super.nonces(signer);
     }
@@ -48,27 +52,20 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
         return keccak256(abi.encodePacked(slots));
     }
 
-    // DELEGATECALL disabled by default
-    //uint256 constant CONFIGFLAG_NO_DELEGATECALL =
-    //    0x0000000000000000000000000000000100000000000000000000000000000000;
-
-
     function _resolve(
         uint qWord,
         uint[] memory mem,
         Quantity[] calldata quantities
     ) internal view returns (uint) {
-        //console.log('qIndex', qIndex);
+        // check metadata bits 255-128
         if (qWord & BIT255_NOTLITERAL == 0) {
             return qWord;
         }
         if (qWord & BIT254_NOTMEM == 0) {
             return mem[qWord ^ BIT255_NOTLITERAL];
         }
-        // unset bits 255 and 254
-        qWord ^= (BIT255_NOTLITERAL | BIT254_NOTMEM);
-
-        Quantity calldata q = quantities[qWord];
+        // 
+        Quantity calldata q = quantities[qWord & LOW128BITSMASK];
         uint quantityType = q.quantityType;
         // dont need quantities[] to resolve:
         if (quantityType == QUANTITY_LITERAL) return uint(q.args[0]);
@@ -91,9 +88,18 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
         }
         // 2 arg OPs
         uint r2 = _resolve(uint(q.args[1]), mem, quantities);
-        if (quantityType == QUANTITY_OP_ADD) return r1 + r2;
-        if (quantityType == QUANTITY_OP_MUL) return r1 * r2;
-        if (quantityType == QUANTITY_OP_SUB) return r1 - r2;
+        if(qWord & BIT128_UNCHECKED_ARITHMATIC != 0) {
+            unchecked {
+                if (quantityType == QUANTITY_OP_ADD) return r1 + r2;
+                if (quantityType == QUANTITY_OP_MUL) return r1 * r2;
+                if (quantityType == QUANTITY_OP_SUB) return r1 - r2;                
+            }
+        } else {
+            if (quantityType == QUANTITY_OP_ADD) return r1 + r2;
+            if (quantityType == QUANTITY_OP_MUL) return r1 * r2;
+            if (quantityType == QUANTITY_OP_SUB) return r1 - r2;                            
+        }
+
         if (quantityType == QUANTITY_OP_DIV) return r1 / r2;
         if (quantityType == QUANTITY_OP_MOD) return r1 % r2;
         if (quantityType == QUANTITY_OP_LT) return r1 < r2 ? MAXUINT256 : 0;
@@ -111,8 +117,7 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
     function _validateConfig(uint256 config) internal view {
         uint64 configVersion = uint64((config >> 64) & LOW64BITSMASK);
         if(configVersion != 0) {
-            uint version = IBrevityInterpreter(address(this)).version();
-            if(configVersion != version) revert WrongBrevityVersion(version, configVersion);
+            if(configVersion != version()) revert WrongBrevityVersion(version(), configVersion);
         }
         uint128 requestedFlags = uint128(config >> 128);
         //console.log("flags", requestedFlags, this.supportedConfigFlags());
@@ -271,7 +276,11 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
                     p.quantities
                 );
             } else if (opcode == OPCODE_DUMPMEM) {
-                printMem(mem, 0, mem.length);
+                try IDebugTools(address(this)).printMem(mem, 0, mem.length) {
+                     
+                } catch {
+
+                }
             } else {
                 revert NotPermitted(pc, opcode);
             }
@@ -281,10 +290,4 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
         _afterRun(p.config, p.instructions, p.quantities);
     }
 
-    function printMem(uint[] memory mem, uint from, uint to) public pure {
-        console.log("Mem Dump:");
-        for (uint i = from; i < to; i++) {
-            console.log(i, " = ", mem[i]);
-        }
-    }
 }
