@@ -6,8 +6,8 @@ import {IPoolManager} from "@uniswap/v4-core/src/interfaces/IPoolManager.sol";
 import "../Constants.sol";
 import {PoolKey} from "@uniswap/v4-core/src/types/PoolKey.sol";
 import {ModifyLiquidityParams} from "@uniswap/v4-core/src/types/PoolOperation.sol";
-
-contract Uniswap4FlashBrevityInterpreter is
+import "../DebugTools.sol";
+contract Uniswap4FlashBrevityInterpreter is DebugTools,
     OwnedBrevityInterpreter,
     SafeCallback
 {
