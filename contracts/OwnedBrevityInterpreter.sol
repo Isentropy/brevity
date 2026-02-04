@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./DebugTools.sol";
 
-contract OwnedBrevityInterpreter is EIP712, BrevityInterpreter, DebugTools {
+contract OwnedBrevityInterpreter is EIP712, BrevityInterpreter {
 
     event NewOwner(address indexed newOwner);
     error NotOwner();

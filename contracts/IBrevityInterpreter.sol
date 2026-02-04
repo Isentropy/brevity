@@ -4,7 +4,11 @@ pragma abicoder v2;
 import "./Constants.sol";
 import "@openzeppelin/contracts/utils/Nonces.sol";
 
+
 interface IBrevityInterpreter {
+    event KeyValue(uint key, uint val);
+    // defined for convenience
+    function emitKeyValue(uint key, uint val) external;
     function supportedConfigFlags() external pure returns (uint128);    
     function version() external pure returns (uint);
     function run(Program calldata p) external payable;

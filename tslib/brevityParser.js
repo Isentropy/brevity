@@ -120,6 +120,15 @@ function parseMap(map) {
     return rslt;
 }
 class ParsingContext {
+    constructor() {
+        this.preprocessorSymbols = new Map();
+        this.memAddressNames = new Map();
+        this.jumppointNames = new Map();
+        this.quantityEncodedToIndex = new Map();
+        this.quantites = [];
+        this.lineNumber = 1;
+        this.uncheckedArithmatic = false;
+    }
     quantityIndex(q) {
         //console.log(`quantityIndex ${JSON.stringify(q, null, 2)}`)
         const k = JSON.stringify(q);
@@ -131,15 +140,6 @@ class ParsingContext {
         this.quantites.push(q);
         this.quantityEncodedToIndex.set(k, idx);
         return BigInt(idx) | BIT254_NOTMEM | BIT255_NOTLITERAL | (this.uncheckedArithmatic ? BIT128_UNCHECKED : BigInt(0));
-    }
-    constructor() {
-        this.preprocessorSymbols = new Map();
-        this.memAddressNames = new Map();
-        this.jumppointNames = new Map();
-        this.quantityEncodedToIndex = new Map();
-        this.quantites = [];
-        this.lineNumber = 1;
-        this.uncheckedArithmatic = false;
     }
 }
 function toBytes32(n) {

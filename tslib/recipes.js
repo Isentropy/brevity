@@ -1,13 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SELECTOR_IERC721_ownerOf = exports.SELECTOR_IERC20_balanceOf = void 0;
-exports.erc20Approve = erc20Approve;
-exports.erc20transfer = erc20transfer;
-exports.requireERC20Increase = requireERC20Increase;
-exports.defineFunctionFragment = defineFunctionFragment;
-exports.transferAllErc20 = transferAllErc20;
-exports.transferAllEth = transferAllEth;
-exports.requireEthIncrease = requireEthIncrease;
+exports.requireEthIncrease = exports.transferAllEth = exports.transferAllErc20 = exports.defineFunctionFragment = exports.requireERC20Increase = exports.erc20transfer = exports.erc20Approve = exports.SELECTOR_IERC721_ownerOf = exports.SELECTOR_IERC20_balanceOf = void 0;
 const ethers_1 = require("ethers");
 const brevityParser_1 = require("./brevityParser");
 const SELECTOR_IERC20_approve = ethers_1.FunctionFragment.from('approve(address,uint256)').selector;
@@ -22,9 +15,11 @@ function genRandomHex(size) {
 function erc20Approve(erc20, spender, amount) {
     return `CALL ${erc20}.${SELECTOR_IERC20_approve}(${spender}, ${amount})`;
 }
+exports.erc20Approve = erc20Approve;
 function erc20transfer(erc20, to, amount) {
     return `CALL ${erc20}.${SELECTOR_IERC20_transfer}(${to}, ${amount})`;
 }
+exports.erc20transfer = erc20transfer;
 function requireERC20Increase(brevityScript, erc20Address, requiredIncrease, tmpVarName = null) {
     const preBalVar = `bal_${erc20Address}_pre_${genRandomHex(6)}`;
     const postBalVar = tmpVarName ? tmpVarName : `bal_${erc20Address}_post_${genRandomHex(6)}`;
@@ -33,10 +28,12 @@ function requireERC20Increase(brevityScript, erc20Address, requiredIncrease, tmp
     post += `if(${postBalVar} < ${preBalVar} + ${requiredIncrease}) revert\n`;
     return pre + brevityScript + post;
 }
+exports.requireERC20Increase = requireERC20Increase;
 function defineFunctionFragment(brevityScript, frag) {
     const pre = `${frag.name} := ${frag.selector}\n`;
     return pre + brevityScript;
 }
+exports.defineFunctionFragment = defineFunctionFragment;
 function transferAllErc20(erc20, to) {
     const bal = `bal_${genRandomHex(6)}`;
     const noTransfer = `noTransfer_${genRandomHex(6)}`;
@@ -46,6 +43,7 @@ function transferAllErc20(erc20, to) {
     brevityScript += `#${noTransfer}\n`;
     return brevityScript;
 }
+exports.transferAllErc20 = transferAllErc20;
 function transferAllEth(to) {
     const noTransfer = `noTransfer_${genRandomHex(6)}`;
     let brevityScript = `if(balance(this) == 0) goto ${noTransfer}\n`;
@@ -53,6 +51,7 @@ function transferAllEth(to) {
     brevityScript += `#${noTransfer}\n`;
     return brevityScript;
 }
+exports.transferAllEth = transferAllEth;
 function requireEthIncrease(brevityScript, requiredIncrease, tmpVarName = null) {
     const preBalVar = `bal_eth_pre_${genRandomHex(6)}`;
     const postBalVar = tmpVarName ? tmpVarName : `bal_eth_post_${genRandomHex(6)}`;
@@ -61,6 +60,7 @@ function requireEthIncrease(brevityScript, requiredIncrease, tmpVarName = null) 
     post += `if(${postBalVar} < ${preBalVar} + ${requiredIncrease}) revert\n`;
     return pre + brevityScript + post;
 }
+exports.requireEthIncrease = requireEthIncrease;
 function test() {
     let brevityScript = transferAllErc20("0x1234", "0x3456");
     brevityScript += transferAllEth("0x3456");

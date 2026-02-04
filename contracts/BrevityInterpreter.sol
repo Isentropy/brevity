@@ -9,7 +9,12 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
 
     function version() public pure returns (uint) {
         return 1;
-    }    
+    }
+    function emitKeyValue(uint key, uint val) public {
+        // must call from within Brevity
+        require(msg.sender == address(this));
+        emit IBrevityInterpreter.KeyValue(key, val);
+    }
     function nonces(address signer) public virtual override(IBrevityInterpreter, Nonces) view returns (uint256) {
         return super.nonces(signer);
     }

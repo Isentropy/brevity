@@ -4,11 +4,6 @@ import "./IDebugTools.sol";
 
 
 contract DebugTools is IDebugTools {
-    event KeyValue(uint key, uint val);
-    // defined for convenience
-    function emitKeyValue(uint key, uint val) public {
-        emit KeyValue(key, val);
-    }
     function consoleLog(string memory logData) public  pure {
         console.log(logData);
     }
