@@ -71,7 +71,8 @@ contract OwnedBrevityInterpreter is EIP712, BrevityInterpreter {
 
     function _withdraw(address token, uint amount) internal virtual {
         if (token == address(0)) {
-            payable(owner).transfer(amount);
+            (bool success, ) = payable(owner).call{value: amount}("");
+            require(success, TransferFailed(token, address(this), owner, amount));
         } else {
             require(
                 IERC20(token).transfer(owner, amount),

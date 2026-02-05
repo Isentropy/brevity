@@ -4,7 +4,7 @@ import { Buffer } from 'buffer';
 
 export const CONFIGFLAG_UNISWAP4UNLOCK = BigInt(1)
 
-const SYMBOL_REGEX = /[a-zA-Z][a-zA-Z_0-9]*/
+const SYMBOL_REGEX = /^[a-zA-Z][a-zA-Z_0-9]*$/
 const NEGATIVE_INT = /^-[0-9]+$/
 const COMMENT_REGEX = /\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm
 
@@ -159,7 +159,7 @@ class ParsingContext {
         //console.log(`quantityIndex ${JSON.stringify(q, null, 2)}`)
         const k = JSON.stringify(q)
         let idx = this.quantityEncodedToIndex.get(k)
-        if (idx) return BigInt(idx) | BIT254_NOTMEM | BIT255_NOTLITERAL | (this.uncheckedArithmatic ? BIT128_UNCHECKED : BigInt(0))
+        if (idx !== undefined) return BigInt(idx) | BIT254_NOTMEM | BIT255_NOTLITERAL | (this.uncheckedArithmatic ? BIT128_UNCHECKED : BigInt(0))
         //console.log(`${k} not found`)
         idx = this.quantites.length
         this.quantites.push(q)
@@ -469,7 +469,7 @@ export class BrevityParser {
 
     // returns Solidity call data
     parseBrevityScript(script: string): BrevityParserOutput {
-        const woComments = script.replace(COMMENT_REGEX, '\n')
+        const woComments = script.replace(COMMENT_REGEX, (match) => '\n'.repeat((match.match(/\n/g) || []).length || 1))
         //console.log(`woComments ${woComments}`)
         const lines = woComments.split(/\n/)
         const parsingContext: ParsingContext = new ParsingContext()
@@ -585,8 +585,9 @@ export class BrevityParser {
                 instructions.push(this.parseFunctionCall(line, parsingContext))
                 continue
             }
-            const assignment = line.split('=')
-            if (assignment.length < 2) throw Error(`${parsingContext.lineNumber}: unknown line format:\n${line}`)
+            const assignmentMatch = line.match(/^([^=]*?)=(.*)$/)
+            if (!assignmentMatch) throw Error(`${parsingContext.lineNumber}: unknown line format:\n${line}`)
+            const assignment = [assignmentMatch[1], assignmentMatch[2]]
 
             //assignment
             let left = assignment[0].trim()

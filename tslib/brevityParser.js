@@ -5,7 +5,7 @@ const ethers_1 = require("ethers");
 const utils_1 = require("./utils");
 const buffer_1 = require("buffer");
 exports.CONFIGFLAG_UNISWAP4UNLOCK = BigInt(1);
-const SYMBOL_REGEX = /[a-zA-Z][a-zA-Z_0-9]*/;
+const SYMBOL_REGEX = /^[a-zA-Z][a-zA-Z_0-9]*$/;
 const NEGATIVE_INT = /^-[0-9]+$/;
 const COMMENT_REGEX = /\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm;
 const OPCODE_STATICCALL = 0;
@@ -133,7 +133,7 @@ class ParsingContext {
         //console.log(`quantityIndex ${JSON.stringify(q, null, 2)}`)
         const k = JSON.stringify(q);
         let idx = this.quantityEncodedToIndex.get(k);
-        if (idx)
+        if (idx !== undefined)
             return BigInt(idx) | BIT254_NOTMEM | BIT255_NOTLITERAL | (this.uncheckedArithmatic ? BIT128_UNCHECKED : BigInt(0));
         //console.log(`${k} not found`)
         idx = this.quantites.length;
@@ -426,7 +426,7 @@ class BrevityParser {
     }
     // returns Solidity call data
     parseBrevityScript(script) {
-        const woComments = script.replace(COMMENT_REGEX, '\n');
+        const woComments = script.replace(COMMENT_REGEX, (match) => '\n'.repeat((match.match(/\n/g) || []).length || 1));
         //console.log(`woComments ${woComments}`)
         const lines = woComments.split(/\n/);
         const parsingContext = new ParsingContext();
@@ -541,9 +541,10 @@ class BrevityParser {
                 instructions.push(this.parseFunctionCall(line, parsingContext));
                 continue;
             }
-            const assignment = line.split('=');
-            if (assignment.length < 2)
+            const assignmentMatch = line.match(/^([^=]*?)=(.*)$/);
+            if (!assignmentMatch)
                 throw Error(`${parsingContext.lineNumber}: unknown line format:\n${line}`);
+            const assignment = [assignmentMatch[1], assignmentMatch[2]];
             //assignment
             let left = assignment[0].trim();
             let offset = -1;

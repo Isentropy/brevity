@@ -188,17 +188,21 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
                 // tmp will be assigned to success after call
                 // result, if desired, written directly to mem
                 if (opcode == OPCODE_STATICCALL) {
-                    assembly {
-                        // start from args[4] - 8 bytes for selector
-                        // gas, address, argsOffset, argsSize, retOffset, retSize
-                        tmp := staticcall(
-                            sub(gas(), 10000),
-                            to,
-                            add(resolvedArgs, 60),
-                            add(4, mul(sub(mload(resolvedArgs), 1), 32)),
-                            add(add(mem, 32), mul(offset, 32)),
-                            mul(len, 32)
-                        )
+                    if (resolvedArgs.length == 0) {
+                        // static call with no data does nothing
+                    } else {
+                        assembly {
+                            // start from args[4] - 8 bytes for selector
+                            // gas, address, argsOffset, argsSize, retOffset, retSize
+                            tmp := staticcall(
+                                sub(gas(), 10000),
+                                to,
+                                add(resolvedArgs, 60),
+                                add(4, mul(sub(mload(resolvedArgs), 1), 32)),
+                                add(add(mem, 32), mul(offset, 32)),
+                                mul(len, 32)
+                            )
+                        }
                     }
                 } else if (opcode == OPCODE_CALL) {
                     // tmp is reused here as VALUE to limit stack overgrowth
