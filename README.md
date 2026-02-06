@@ -192,7 +192,7 @@ this
 //native balance
 balance(someAddress)
 block.timestamp
-```is 
+``` 
 
 ## Output
 The convention for output is to emit [KeyValue events](https://github.com/Isentropy/brevity/blob/7c971ad85372e23ae9d0b08a25233062a34c7802/contracts/BrevityInterpreter.sol#L13). You can collect the emitted key/value from the TransactionReceipt to a map with [getKeyValues](https://github.com/Isentropy/brevity/blob/7c971ad85372e23ae9d0b08a25233062a34c7802/tslib/utils.ts#L36). This Brevity code calls emitKeyValue()
