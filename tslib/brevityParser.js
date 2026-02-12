@@ -15,6 +15,7 @@ const OPCODE_CMP_BRANCH = 3;
 const OPCODE_JUMP = 4;
 const OPCODE_LOG = 10;
 const OPCODE_DUMPMEM = 11;
+const OPCODE_TSTORE = 12;
 const OPCODE_MSTORE_R0 = 128;
 // const OPCODE_MSTORE_R1 = 129;
 // ...
@@ -39,6 +40,7 @@ const QUANTITY_BALANCE = 0x31;
 const QUANTITY_CALLER = 0x33;
 const QUANTITY_CALLVALUE = 0x34;
 const QUANTITY_BLOCKTIMESTAMP = 0x42;
+const QUANTITY_TLOAD = 0x5C;
 //const QUANTITY_R0 = 128;
 const BIT255_NOTLITERAL = BigInt(1) << BigInt(255);
 const BIT254_NOTMEM = BigInt(1) << BigInt(254);
@@ -64,6 +66,7 @@ const KW_CLEARMEMSTACK = 'clearMemStack';
 const KW_CLEARPARAMS = 'clearParams';
 const KW_UNCHECKED = 'uncheckedArithmatic';
 const KW_CHECKED = 'checkedArithmatic';
+const KW_TSET = 'tset';
 const PREPROC_ADDITIONAL_CONFIGFLAGS = 'ADDITIONAL_CONFIGFLAGS';
 // minus 1 in 32 byte 2s compliment
 const BN_MINUS1 = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF');
@@ -77,6 +80,7 @@ const ZeroArgQuantityKWs = new Map([
 const OneArgQuantityKWs = new Map([
     ['balance', QUANTITY_BALANCE],
     ['!', QUANTITY_OP_NOT],
+    ['tget', QUANTITY_TLOAD],
 ]);
 const TwoArgQuantityKWs = new Map([
     ['+', QUANTITY_OP_ADD],
@@ -97,7 +101,7 @@ const TwoArgKwsRegex = new RegExp(Array.from(TwoArgQuantityKWs.keys())
     .sort((a, b) => b.length - a.length)
     .map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
     .join('|'));
-const SOLO_KWS = [KW_CHECKED, KW_UNCHECKED, KW_REVERT, KW_RETURN, KW_GOTO, KW_IF, KW_CALL, KW_SEND, KW_STATICCALL, KW_DELEGATECALL, KW_VAR, KW_DUMPMEM];
+const SOLO_KWS = [KW_CHECKED, KW_UNCHECKED, KW_REVERT, KW_RETURN, KW_GOTO, KW_IF, KW_CALL, KW_SEND, KW_STATICCALL, KW_DELEGATECALL, KW_VAR, KW_DUMPMEM, KW_TSET];
 const KWS = new Set([...ZeroArgQuantityKWs.keys()].concat([...OneArgQuantityKWs.keys()]).concat([...TwoArgQuantityKWs.keys()]).concat(SOLO_KWS));
 /*
 like JSON.parse for maps but allows k/v wo "
@@ -120,15 +124,6 @@ function parseMap(map) {
     return rslt;
 }
 class ParsingContext {
-    constructor() {
-        this.preprocessorSymbols = new Map();
-        this.memAddressNames = new Map();
-        this.jumppointNames = new Map();
-        this.quantityEncodedToIndex = new Map();
-        this.quantites = [];
-        this.lineNumber = 1;
-        this.uncheckedArithmatic = false;
-    }
     quantityIndex(q) {
         //console.log(`quantityIndex ${JSON.stringify(q, null, 2)}`)
         const k = JSON.stringify(q);
@@ -140,6 +135,15 @@ class ParsingContext {
         this.quantites.push(q);
         this.quantityEncodedToIndex.set(k, idx);
         return BigInt(idx) | BIT254_NOTMEM | BIT255_NOTLITERAL | (this.uncheckedArithmatic ? BIT128_UNCHECKED : BigInt(0));
+    }
+    constructor() {
+        this.preprocessorSymbols = new Map();
+        this.memAddressNames = new Map();
+        this.jumppointNames = new Map();
+        this.quantityEncodedToIndex = new Map();
+        this.quantites = [];
+        this.lineNumber = 1;
+        this.uncheckedArithmatic = false;
     }
 }
 function toBytes32(n) {
@@ -398,6 +402,18 @@ class BrevityParser {
             args: callArgs
         };
     }
+    findTopLevelComma(s) {
+        let depth = 0;
+        for (let i = 0; i < s.length; i++) {
+            if (s[i] === '(')
+                depth++;
+            else if (s[i] === ')')
+                depth--;
+            else if (s[i] === ',' && depth === 0)
+                return i;
+        }
+        return -1;
+    }
     isFunctionCall(s) {
         return s.startsWith(KW_CALL) || s.startsWith(KW_DELEGATECALL) || s.startsWith(KW_STATICCALL) || s.startsWith(KW_SEND);
     }
@@ -535,6 +551,20 @@ class BrevityParser {
                     return this.encodeJump(dest);
                 };
                 instructions.push(instLazy);
+                continue;
+            }
+            if (line.startsWith(KW_TSET + '(')) {
+                const inner = line.substring(KW_TSET.length + 1, line.length - 1);
+                const commaPos = this.findTopLevelComma(inner);
+                if (commaPos === -1)
+                    throw Error(`${parsingContext.lineNumber}: tset requires 2 arguments`);
+                instructions.push({
+                    opcode: OPCODE_TSTORE,
+                    args: [
+                        toBytes32(this.parseQuantity(inner.substring(0, commaPos), parsingContext)),
+                        toBytes32(this.parseQuantity(inner.substring(commaPos + 1), parsingContext))
+                    ]
+                });
                 continue;
             }
             if (this.isFunctionCall(line)) {

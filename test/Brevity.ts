@@ -233,6 +233,27 @@ describe("Brevity", function () {
         .to.emit(brevityInterpreter, "KeyValue").withArgs(0, BigInt(MAXUINT256) * 2n & BigInt(MAXUINT256))
     })
 
+    it("tset and tget", async function () {
+      const { brevityParser, brevityInterpreter } = await loadFixture(fixture);
+      const script = [
+        'emitKeyValue := emitKeyValue(uint256,uint256)',
+        'tset(7, 42)',
+        'tset(8, 100)',
+        'var a = tget(7)',
+        'var b = tget(8)',
+        'CALL this.emitKeyValue(0, a)',
+        'CALL this.emitKeyValue(1, b)',
+        'tset(7, a + b)',
+        'var c = tget(7)',
+        'CALL this.emitKeyValue(2, c)',
+      ].join('\n')
+      const o = brevityParser.parseBrevityScript(script)
+      await expect(brevityInterpreter.run(o))
+        .to.emit(brevityInterpreter, "KeyValue").withArgs(0, 42)
+        .and.to.emit(brevityInterpreter, "KeyValue").withArgs(1, 100)
+        .and.to.emit(brevityInterpreter, "KeyValue").withArgs(2, 142)
+    })
+
     it("Switch from unchecked back to checked reverts", async function () {
       const { brevityParser, brevityInterpreter } = await loadFixture(fixture);
       const script = [

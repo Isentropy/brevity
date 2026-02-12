@@ -91,6 +91,11 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
         if (quantityType == QUANTITY_OP_NOT) {
             return ~r1;
         }
+        if (quantityType == QUANTITY_TLOAD) {
+            uint val;
+            assembly { val := tload(r1) }
+            return val;
+        }
         // 2 arg OPs
         uint r2 = _resolve(uint(q.args[1]), mem, quantities);
         if(qWord & BIT128_UNCHECKED_ARITHMATIC != 0) {
@@ -284,6 +289,10 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
                     mem,
                     p.quantities
                 );
+            } else if (opcode == OPCODE_TSTORE) {
+                uint key = _resolve(uint(args[0]), mem, p.quantities);
+                uint val = _resolve(uint(args[1]), mem, p.quantities);
+                assembly { tstore(key, val) }
             } else if (opcode == OPCODE_DUMPMEM) {
                 try IDebugTools(address(this)).printMem(mem, 0, mem.length) {
                      

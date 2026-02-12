@@ -1,6 +1,6 @@
 {
   "name": "@isentropy/brevity-lang",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "repository": "https://github.com/Isentropy/brevity.git",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"

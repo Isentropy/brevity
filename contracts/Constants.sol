@@ -20,6 +20,8 @@ uint8 constant OPCODE_JUMP = 4;
 //uint8 constant OPCODE_LOG = 10;
 // console.log all of mem for debugging. no args
 uint8 constant OPCODE_DUMPMEM = 11;
+// args: key (Quantity), value (Quantity)
+uint8 constant OPCODE_TSTORE = 12;
 // opcodes above 128 refer to memAddress := opcode - 128
 // write q to mem[memAddress]
 // args: q (Quantity)
@@ -66,6 +68,7 @@ uint8 constant QUANTITY_BALANCE = 0x31;
 uint8 constant QUANTITY_CALLER = 0x33;
 uint8 constant QUANTITY_CALLVALUE = 0x34;
 uint8 constant QUANTITY_BLOCKTIMESTAMP = 0x42;
+uint8 constant QUANTITY_TLOAD = 0x5C;
 
 // config flags
 // this tells interpreterer to run the whole script in Uniswap4 unlock() as a callback

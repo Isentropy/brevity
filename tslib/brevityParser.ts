@@ -15,6 +15,7 @@ const OPCODE_CMP_BRANCH = 3;
 const OPCODE_JUMP = 4;
 const OPCODE_LOG = 10;
 const OPCODE_DUMPMEM = 11;
+const OPCODE_TSTORE = 12;
 
 const OPCODE_MSTORE_R0 = 128;
 // const OPCODE_MSTORE_R1 = 129;
@@ -43,6 +44,7 @@ const QUANTITY_CALLER = 0x33;
 const QUANTITY_CALLVALUE = 0x34;
 
 const QUANTITY_BLOCKTIMESTAMP = 0x42;
+const QUANTITY_TLOAD = 0x5C;
 
 //const QUANTITY_R0 = 128;
 const BIT255_NOTLITERAL = BigInt(1) << BigInt(255)
@@ -70,6 +72,7 @@ const KW_CLEARMEMSTACK = 'clearMemStack'
 const KW_CLEARPARAMS = 'clearParams'
 const KW_UNCHECKED = 'uncheckedArithmatic'                      
 const KW_CHECKED = 'checkedArithmatic'
+const KW_TSET = 'tset'
 
 const PREPROC_ADDITIONAL_CONFIGFLAGS = 'ADDITIONAL_CONFIGFLAGS'
 
@@ -87,6 +90,7 @@ const ZeroArgQuantityKWs = new Map<string, number>([
 const OneArgQuantityKWs = new Map<string, number>([
     ['balance', QUANTITY_BALANCE],
     ['!', QUANTITY_OP_NOT],
+    ['tget', QUANTITY_TLOAD],
 ]);
 
 const TwoArgQuantityKWs = new Map<string, number>([
@@ -109,7 +113,7 @@ const TwoArgKwsRegex = new RegExp(Array.from(TwoArgQuantityKWs.keys())
     .map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
     .join('|'));
 
- const SOLO_KWS = [KW_CHECKED, KW_UNCHECKED, KW_REVERT, KW_RETURN, KW_GOTO, KW_IF, KW_CALL, KW_SEND, KW_STATICCALL, KW_DELEGATECALL, KW_VAR, KW_DUMPMEM]
+ const SOLO_KWS = [KW_CHECKED, KW_UNCHECKED, KW_REVERT, KW_RETURN, KW_GOTO, KW_IF, KW_CALL, KW_SEND, KW_STATICCALL, KW_DELEGATECALL, KW_VAR, KW_DUMPMEM, KW_TSET]
 
 const KWS: Set<string> = new Set<string>([...ZeroArgQuantityKWs.keys()].concat([...OneArgQuantityKWs.keys()]).concat([...TwoArgQuantityKWs.keys()]).concat(SOLO_KWS))
 
@@ -446,6 +450,16 @@ export class BrevityParser {
     }
 
 
+    private findTopLevelComma(s: string): number {
+        let depth = 0
+        for (let i = 0; i < s.length; i++) {
+            if (s[i] === '(') depth++
+            else if (s[i] === ')') depth--
+            else if (s[i] === ',' && depth === 0) return i
+        }
+        return -1
+    }
+
     private isFunctionCall(s: string) {
         return s.startsWith(KW_CALL) || s.startsWith(KW_DELEGATECALL) || s.startsWith(KW_STATICCALL) || s.startsWith(KW_SEND)
     }
@@ -579,6 +593,19 @@ export class BrevityParser {
                     return this.encodeJump(dest)
                 }
                 instructions.push(instLazy)
+                continue
+            }
+            if (line.startsWith(KW_TSET + '(')) {
+                const inner = line.substring(KW_TSET.length + 1, line.length - 1)
+                const commaPos = this.findTopLevelComma(inner)
+                if (commaPos === -1) throw Error(`${parsingContext.lineNumber}: tset requires 2 arguments`)
+                instructions.push({
+                    opcode: OPCODE_TSTORE,
+                    args: [
+                        toBytes32(this.parseQuantity(inner.substring(0, commaPos), parsingContext)),
+                        toBytes32(this.parseQuantity(inner.substring(commaPos + 1), parsingContext))
+                    ]
+                })
                 continue
             }
             if (this.isFunctionCall(line)) {

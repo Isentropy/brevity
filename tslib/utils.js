@@ -1,6 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.signMetaTx = exports.estimateGas = exports.getKeyValues = exports.bytesMemoryObject = void 0;
+exports.bytesMemoryObject = bytesMemoryObject;
+exports.getKeyValues = getKeyValues;
+exports.estimateGas = estimateGas;
+exports.signMetaTx = signMetaTx;
 const typechain_types_1 = require("../typechain-types");
 const ethers_1 = require("ethers");
 const METATX_TYPES = {
@@ -33,7 +36,6 @@ function bytesMemoryObject(data) {
     }
     return rslt;
 }
-exports.bytesMemoryObject = bytesMemoryObject;
 function getKeyValues(receipt, interpreter) {
     const events = new Map();
     const addr = interpreter.target.toLowerCase();
@@ -49,7 +51,6 @@ function getKeyValues(receipt, interpreter) {
     }
     return events;
 }
-exports.getKeyValues = getKeyValues;
 async function estimateGas(brevityInterpreter, o, from, value = BigInt(0)) {
     const runGas = await brevityInterpreter.getFunction("run").estimateGas(o, { from, value });
     const noopGas = await brevityInterpreter.getFunction("noop").estimateGas(o, { from, value });
@@ -57,7 +58,6 @@ async function estimateGas(brevityInterpreter, o, from, value = BigInt(0)) {
         throw Error();
     console.log(`Brevity gas: total = ${runGas}, calldata = ${noopGas}, execution = ${runGas - noopGas}`);
 }
-exports.estimateGas = estimateGas;
 async function signMetaTx(signer, brevityInterpreterAddress, chainId, output, deadline) {
     const domain = {
         name: 'Brev',
@@ -77,4 +77,3 @@ async function signMetaTx(signer, brevityInterpreterAddress, chainId, output, de
     const sig = await signer.signTypedData(domain, METATX_TYPES, v);
     return sig;
 }
-exports.signMetaTx = signMetaTx;
