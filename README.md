@@ -10,7 +10,7 @@ It's deliberately bare bones.  You can CALL and STATICCALL, put variables on a m
 
 #### Please Note
 
-Brevity is **NOT YET AUDITED** and in development and alpha. Use at your own risk. We welcome code review and design comments. Note that the [LICENSE](LICENSE) limits commerical use. For commercial inquires, please email info@isentropy.com. 
+Brevity has not been officially audited, but Claude Code found no smart contract vulnerabilities. Use at your own risk! We welcome code review and design comments. Note that the [LICENSE](LICENSE) limits commerical use. For commercial inquires, please email info@isentropy.com. 
 
 THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
@@ -234,6 +234,20 @@ dumpMem
 ```
 uncheckedArithmatic
 checkedArithmatic
+```
+
+### Transient storage with tset and tget
+[Transient storage](https://eips.ethereum.org/EIPS/eip-1153) persists only for the duration of a transaction and is cheaper than regular storage. Brevity exposes the EVM `TSTORE` and `TLOAD` opcodes via `tset` and `tget`.
+
+`tset(key, value)` stores a value at a transient storage key. `tget(key)` is a Quantity that reads from a transient storage key.
+```
+tset(7, 42)
+tset(8, 100)
+var a = tget(7)
+var b = tget(8)
+// tget is a Quantity, so it can be used in expressions
+tset(7, a + b)
+var c = tget(7)
 ```
 
 ### Variable length types
