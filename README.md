@@ -14,6 +14,9 @@ Brevity has not been officially audited, but Claude Code found no smart contract
 
 THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+### How do I integrate Brevity?
+You can extend [BrevityInterpreter](contracts/BrevityInterpreter.sol), [clone](https://github.com/Isentropy/brevity/blob/d272a26652f4540237c56af3f8f496566f2bbfff/contracts/CloneFactory.sol#L27) an implementation such as [OwnedBrevityInterpreter](contracts/OwnedBrevityInterpreter.sol), or DELEGATECALL to an implementation. 
+
 ## A language-in-a-language!? Why?
 
 Imagine you want to run a multi-step DeFi workflow that does some DeFi actions (swap, liquid stake, flash loan, etc) according to a program, and reverts if some conditions aren't met. Let's compare writing this in a custom Solidity smart contract vs running a Brevity script on a Brevity Interpreter smart contract:
