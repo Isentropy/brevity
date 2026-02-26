@@ -1,10 +1,10 @@
-# Brevity, an EVM-interpreted scripting language for workflows
+# Brevity, an expressive, sandboxed scripting language for EVM workflows
 
 Copyright 2024 -2026 Isentropy LLC
 
 Brevity is a compact, full featured script that's passed entirely in calldata. The script is run on one general purpose smart contract, the Brevity Interpreter. Brevity scripts can run new logic without deploying new smart contracts. 
 
-Brevity is the perfect instruction format to pass to bridges and callbacks like [UniswapV4's unlock()](https://docs.uniswap.org/contracts/v4/guides/unlock-callback) (eg for flash loans), which expect instructions in calldata.
+Brevity is a great interface to AI finance. Claude Code can write useful Brevity scripts just by reading this README! Brevity is also the most full-featured payload to bridges and callbacks like [UniswapV4's unlock()](https://docs.uniswap.org/contracts/v4/guides/unlock-callback) (eg for flash loans), which expect instructions in calldata.
 
 It's deliberately bare bones.  You can CALL and STATICCALL, put variables on a memory stack, do arithmatic, and do flow control. **Brevity has no operations to directly manipulate storage.** It can only manipulate storage via CALLs to exposed functions. Brevity has no code blocks, no subroutines. It does not allow direct manipulation of EVM stack registers.
 
