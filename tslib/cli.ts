@@ -1,8 +1,10 @@
-import { AddressLike, BigNumberish, BytesLike, JsonRpcProvider, parseEther, Provider, Signer, toBeHex, Wallet } from "ethers"
+import { AddressLike, BigNumberish, BytesLike, FetchRequest, JsonRpcProvider, parseEther, Provider, Signer, toBeHex, Wallet } from "ethers"
+import * as http from "http"
+import * as https from "https"
 import { BrevityParser, BrevityParserConfig } from "./brevityParser"
 import { readFileSync, writeFileSync } from 'fs'
 import { parse } from "path"
-import { BrevityInterpreter__factory, CloneFactory__factory, IBrevityInterpreter__factory, OwnedBrevityInterpreter__factory, TestToken__factory } from "../typechain-types"
+import { BrevityInterpreter__factory, CloneFactory__factory, IBrevityInterpreter__factory, OwnedBrevityInterpreter__factory, TestToken__factory, Uniswap4FlashBrevityInterpreter__factory } from "../typechain-types"
 import { bytesMemoryObject, estimateGas, signMetaTx } from "./utils"
 import { writeFile } from "fs/promises"
 import { argv } from "process"
@@ -23,6 +25,7 @@ _______________
 -t | --target <address> : target Brevity Interpreter address
 -r | --rpc <rpcUrl> : RPC URL
 -p | --prepend <script text> : prepend script text lines. multiple prepends appended in order
+--proxy <socks://host:port> : SOCKS proxy for RPC connections
 -h | --help : help
 
 commands
@@ -48,6 +51,45 @@ METATXKEY : the key that pays for TX (need for command "runMeta")
 
 
 
+async function makeProxiedProvider(rpcUrl: string, proxyUrl: string): Promise<JsonRpcProvider> {
+    // @ts-ignore - socks-proxy-agent uses package.json "exports" which needs moduleResolution node16/bundler
+    const { SocksProxyAgent } = await import("socks-proxy-agent")
+    const agent = new SocksProxyAgent(proxyUrl)
+    const fetchReq = new FetchRequest(rpcUrl)
+    fetchReq.getUrlFunc = (req: FetchRequest) => {
+        return new Promise((resolve, reject) => {
+            const url = new URL(req.url)
+            const mod = url.protocol === 'https:' ? https : http
+            const postData = req.body ? Buffer.from(req.body) : undefined
+            const options = {
+                hostname: url.hostname,
+                port: url.port || (url.protocol === 'https:' ? 443 : 80),
+                path: url.pathname + url.search,
+                method: req.method || 'POST',
+                headers: { 'content-type': 'application/json' },
+                agent,
+            }
+            const r = mod.request(options, (res) => {
+                const chunks: Buffer[] = []
+                res.on('data', (chunk: Buffer) => chunks.push(chunk))
+                res.on('end', () => {
+                    const body = Buffer.concat(chunks)
+                    resolve({
+                        statusCode: res.statusCode || 0,
+                        statusMessage: res.statusMessage || '',
+                        headers: res.headers as Record<string, string>,
+                        body,
+                    } as any)
+                })
+            })
+            r.on('error', reject)
+            if (postData) r.write(postData)
+            r.end()
+        })
+    }
+    return new JsonRpcProvider(fetchReq)
+}
+
 async function cli() {
     let inputScript: string | undefined
     let outputFile: string | undefined
@@ -57,6 +99,8 @@ async function cli() {
     let signer: Signer | undefined
     let metaTxPayer: Signer | undefined
     let targetAddress : string | undefined
+    let proxyUrl: string | undefined
+    let rpcUrl: string | undefined
     let value : BigNumberish  = 0
     let i = 2
     let prepend = ''
@@ -73,7 +117,9 @@ async function cli() {
         } else if (process.argv[i] == '-t' || process.argv[i] == '--target') {
             targetAddress = process.argv[++i]
         } else if (process.argv[i] == '-r' || process.argv[i] == '--rpc') {
-            provider = new JsonRpcProvider(process.argv[++i])
+            rpcUrl = process.argv[++i]
+        } else if (process.argv[i] == '--proxy') {
+            proxyUrl = process.argv[++i]
         } else if (process.argv[i] == '-v' || process.argv[i] == '--value') {
             value = process.argv[++i]
             if(value.toLowerCase().endsWith('eth')) value = parseEther(value.substring(0, value.length - 3))
@@ -85,6 +131,9 @@ async function cli() {
     }
     inputScript = prepend + (infile ? readFileSync(infile, { encoding: 'utf-8' }) : '')
 
+    if (rpcUrl) {
+        provider = proxyUrl ? await makeProxiedProvider(rpcUrl, proxyUrl) : new JsonRpcProvider(rpcUrl)
+    }
 
     const cmd = process.argv[i]
     if(!cmd || cmd == '-h' || cmd == '--help') {
@@ -112,10 +161,13 @@ async function cli() {
             console.error(`No signer specified. Put private key in PRVKEY envvar`)
             process.exit(1)
         }
-        const factory = new OwnedBrevityInterpreter__factory(signer)
+        // Monad
+        const poolManager = "0x188d586ddcf52439676ca21a244753fa19f9ea8e"
+        //const factory = new OwnedBrevityInterpreter__factory(signer)
+        const factory = new Uniswap4FlashBrevityInterpreter__factory(signer)
         // owner can be passed using -t target
         const owner = targetAddress ? targetAddress : await signer.getAddress()
-        const rslt = await factory.deploy(owner)
+        const rslt = await factory.deploy(owner, poolManager)
         console.log(`OwnedBrevityInterpreter deployed at ${await rslt.getAddress()} , owner = ${owner}, in txHash ${rslt.deploymentTransaction()?.hash}`)
         process.exit(0)
     }
@@ -179,6 +231,7 @@ async function cli() {
         console.error(`No signer specified. Put private key in PRVKEY envvar`)
         process.exit(1)
     }
+    const signerAddress = await signer.getAddress()
     const targetInterpreter =  IBrevityInterpreter__factory.connect(targetAddress, txPayer)
     if (cmd == 'run') {
         const resp = await targetInterpreter.run(compiled, {value})
@@ -187,13 +240,13 @@ async function cli() {
         const network = await provider.getNetwork()
         const deadline: number = Math.floor(((new Date()).getTime()/1000) + 3600)
         const sig = await signMetaTx(signer, targetAddress, network.chainId, compiled, deadline)
-        const resp = await targetInterpreter.runMeta(compiled, deadline, sig)
+        const resp = await targetInterpreter.runMeta(compiled, deadline, signerAddress, sig)
         console.log(`Submitted runMeta txHash ${resp.hash}`)        
     } else if (cmd == 'signMeta') {
         const network = await provider.getNetwork()
         const deadline: number = Math.floor(((new Date()).getTime()/1000) + 3600)
         const sig = await signMetaTx(signer, targetAddress, network.chainId, compiled, deadline)
-        const tx = await targetInterpreter.getFunction("runMeta").populateTransaction(compiled, deadline, sig)
+        const tx = await targetInterpreter.getFunction("runMeta").populateTransaction(compiled, deadline, signerAddress, sig)
         console.log(tx.data)
     } else if (cmd == 'signFactoryMeta') {
         // experimental, for bridging

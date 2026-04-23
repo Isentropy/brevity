@@ -1,10 +1,8 @@
 pragma solidity ^0.8.27;
 pragma abicoder v2;
-import "./IBrevityInterpreter.sol";
-import "./Constants.sol";
 import "@openzeppelin/contracts/utils/Nonces.sol";
+import "./IBrevityInterpreter.sol";
 import "./IDebugTools.sol";
-
 abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
 
     function version() public pure returns (uint) {
@@ -120,7 +118,7 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
         if (quantityType == QUANTITY_OP_XOR) return r1 ^ r2;
         if (quantityType == QUANTITY_OP_SHL) return r1 << r2;
         if (quantityType == QUANTITY_OP_SHR) return r1 >> r2;
-        revert("unknown quantityType");
+        revert UnknownQuantityType(quantityType);
     }
 
 
@@ -134,12 +132,15 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
         require(requestedFlags & this.supportedConfigFlags() == requestedFlags, UnsupportedConfigFlags      (requestedFlags & ~this.supportedConfigFlags()));
     }
 
-    function _beforeCall(address to, uint value, uint[] memory resolvedArgs) internal virtual {}
+    function _beforeCall(address runner, address to, uint value, uint[] memory resolvedArgs) internal virtual {}
+
     function _afterRun(
-        uint config,
-        Instruction[] calldata instructions,
-        Quantity[] calldata quantities
+        Program calldata p,
+        address runner
     ) internal virtual {}
+    
+    // allow writes to transient storage from script
+    function _allowTstore() internal virtual returns (bool) { return true; }
     /*
     config is: uint128 flags, uint64 requiredBrevityVersion (or 0 for none), uint64 memSize 
     */
@@ -148,7 +149,8 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
     } 
 
     function _run(
-        Program calldata p
+        Program calldata p,
+        address runner
     ) internal virtual {
         uint pc = 0;
         //uint steps = 0;
@@ -212,7 +214,7 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
                 } else if (opcode == OPCODE_CALL) {
                     // tmp is reused here as VALUE to limit stack overgrowth
                     tmp = _resolve(uint(args[2]), mem, p.quantities);
-                    _beforeCall(to, tmp, resolvedArgs);
+                    _beforeCall(runner, to, tmp, resolvedArgs);
                     //if no function selector, it's just eth end wo data
                     if (resolvedArgs.length == 0) {
                         assembly {
@@ -290,6 +292,7 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
                     p.quantities
                 );
             } else if (opcode == OPCODE_TSTORE) {
+                require( _allowTstore(), NotPermitted(pc, opcode));
                 uint key = _resolve(uint(args[0]), mem, p.quantities);
                 uint val = _resolve(uint(args[1]), mem, p.quantities);
                 assembly { tstore(key, val) }
@@ -305,7 +308,7 @@ abstract contract BrevityInterpreter is IBrevityInterpreter, Nonces {
             //console.log("op", opcode, "gasUsed", gasBefore - gasleft());
             pc++;
         }
-        _afterRun(p.config, p.instructions, p.quantities);
+        _afterRun(p, runner);
     }
 
 }

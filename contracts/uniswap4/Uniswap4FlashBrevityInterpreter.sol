@@ -18,17 +18,18 @@ contract Uniswap4FlashBrevityInterpreter is DebugTools,
     }
 
     function supportedConfigFlags() public virtual override pure returns (uint128) {
-        return CONFIGFLAG_UNISWAP4UNLOCK;
-    } 
+        return CONFIGFLAG_UNISWAP4UNLOCK | super.supportedConfigFlags();
+    }
 
     function _run(
-        Program calldata p
+        Program calldata p,
+        address runner
     ) internal virtual override {
         //top uint128 is flags
         if((p.config >> 128) & CONFIGFLAG_UNISWAP4UNLOCK != 0) {
-            poolManager.unlock(abi.encode(p));
+            poolManager.unlock(abi.encode(runner, p));
         } else {
-            super._run(p);
+            super._run(p, runner);
         }
     }
 
@@ -36,12 +37,15 @@ contract Uniswap4FlashBrevityInterpreter is DebugTools,
         bytes calldata data
     ) internal virtual override returns (bytes memory) {
         Program calldata p;
+        address runner;
         assembly {
-            // decode in calldata. its already abi.encoded
-            p := add(data.offset, 32)
+            // first 32b contain runner
+            runner := calldataload(data.offset)
+            // program starts in offset 64. decode in calldata. its already abi.encoded
+            p := add(data.offset, 64)
         }
         //console.log("pre run");
-        super._run(p);
+        super._run(p, runner);
         //console.log("run");
         return "";
     }

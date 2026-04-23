@@ -5,23 +5,18 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./DebugTools.sol";
+import "./PermissionedBrevityInterpreter.sol";
 
-contract OwnedBrevityInterpreter is EIP712, BrevityInterpreter {
-
-    event NewOwner(address indexed newOwner);
-    error NotOwner();
-    error OwnerAlreadySet();
-    error TransferFailed(address erc20, address from, address to, uint amount);
-
-    modifier onlyOwner() {
-        // msg.sender == address(this) allows self-calls
-        require(msg.sender == owner || msg.sender == address(this), NotOwner());
-        _;
-    }
+contract OwnedBrevityInterpreter is PermissionedBrevityInterpreter {
 
     address public owner;
-    constructor(address owner_) EIP712("Brev", "1") {
+
+    constructor(address owner_) {
         setOwner(owner_);
+    }
+
+    function _admin() internal virtual override returns (address) {
+        return owner;
     }
 
     function setOwner(address owner_) public {
@@ -30,35 +25,16 @@ contract OwnedBrevityInterpreter is EIP712, BrevityInterpreter {
         emit NewOwner(owner_);
     }
 
-    function run(Program calldata p) external payable virtual override {
-        _validateConfig(p.config);
-        require(owner == msg.sender, NotOwner());
-        _run(p);
-    }
-
-    function runMeta(
-        Program calldata p,
-        uint deadline,
-        bytes calldata sig) external payable virtual override {
-        _validateConfig(p.config);
-        //arrays hashed per https://github.com/ethereum/EIPs/blob/master/EIPS/eip-712.md
-        require(deadline >= block.timestamp, "expired");
-        bytes32 structHash = keccak256(abi.encode(_PROGRAM_TYPEHASH, p.config, _encodeInstructionsArray(p.instructions), _encodeQuantityArray(p.quantities), _useNonce(owner), deadline));
-        bytes32 hash = _hashTypedDataV4(structHash);
-        require(owner == ECDSA.recover(hash, sig), "invalid signature");
-        _run(p);
-    }
-
-    function withdraw(address token, uint amount) public onlyOwner {
+    function withdraw(address token, uint amount) public onlyAdmin {
         _withdraw(token, amount);
     }
 
-    function withdrawAll(address token) public onlyOwner {
+    function withdrawAll(address token) public onlyAdmin {
         uint bal = this.withdrawableBalance(token);
         _withdraw(token, bal);
     }
 
-    function withdrawAllMulti(address[] calldata tokens) public onlyOwner {
+    function withdrawAllMulti(address[] calldata tokens) public onlyAdmin {
         for(uint i=0; i < tokens.length; i++) {
             withdrawAll(tokens[i]);
         }
@@ -79,16 +55,6 @@ contract OwnedBrevityInterpreter is EIP712, BrevityInterpreter {
                 TransferFailed(token, address(this), owner, amount)
             );
         }
-    }
-
-    
-    function noop(Program calldata p) public payable {}
-
-    receive() payable external {}
-
-    // solhint-disable-next-line func-name-mixedcase
-    function DOMAIN_SEPARATOR() external view returns (bytes32) {
-        return _domainSeparatorV4();
     }
 
 }

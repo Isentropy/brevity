@@ -2,8 +2,6 @@ pragma solidity ^0.8.27;
 pragma abicoder v2;
 
 import "./Constants.sol";
-import "@openzeppelin/contracts/utils/Nonces.sol";
-
 
 interface IBrevityInterpreter {
     event KeyValue(uint key, uint val);
@@ -16,6 +14,7 @@ interface IBrevityInterpreter {
     function runMeta(
         Program calldata p,
         uint deadline,
+        address runner,
         bytes calldata sig
     ) external payable;
     function nonces(address signer) external view returns (uint256);

@@ -138,7 +138,7 @@ describe("Brevity", function () {
       const net = await owner.provider.getNetwork()
       const deadline =  3600 + Math.floor(new Date().getTime()/1000)
       const sig = await signMetaTx(owner, bi, net.chainId, o, deadline)
-      const tx=  await brevityInterpreter.runMeta(o, deadline, sig)
+      const tx=  await brevityInterpreter.runMeta(o, deadline, await owner.getAddress(), sig)
       const tr = await tx.wait()
       if(!tr) throw Error()
       console.log(`MetaTx gas: total = ${tr.gasUsed}`)

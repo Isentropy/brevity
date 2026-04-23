@@ -1,3 +1,5 @@
+pragma solidity ^0.8.27;
+
 /* 
      args:
      returnMemAddressOffset: uint128, returnMemAddressLen: uint128 (packed as 1 uint256)
@@ -117,3 +119,4 @@ error Reverted(uint pc);
 error CallFailed(uint pc);
 error BadJump(uint pc, uint jumpDest);
 error UnknownQuantityType(uint qType);
+error Expired();

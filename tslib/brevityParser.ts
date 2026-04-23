@@ -106,7 +106,8 @@ const TwoArgQuantityKWs = new Map<string, number>([
     ['<<', QUANTITY_OP_SHL],
     ['>>', QUANTITY_OP_SHR],
     ['%', QUANTITY_OP_MOD],
-    ['==', QUANTITY_OP_EQ]
+    ['==', QUANTITY_OP_EQ],
+    ['!=', -1]  // desugared to !(a == b) in parseQuantity
 ]);
 const TwoArgKwsRegex = new RegExp(Array.from(TwoArgQuantityKWs.keys())
     .sort((a, b) => b.length - a.length)
@@ -280,6 +281,18 @@ export class BrevityParser {
         }
         const [opPos, op] = this.findFirstValidOpCharacter(q)
         if (opPos !== -1) {
+            if (op === '!=') {
+                // desugar a != b into !(a == b)
+                const eqQuantity: Quantity = {
+                    quantityType: QUANTITY_OP_EQ,
+                    args: [toBytes32(this.parseQuantity(q.substring(0, opPos), parsingContext)), toBytes32(this.parseQuantity(q.substring(opPos + op.length, q.length), parsingContext))]
+                }
+                const notQuantity: Quantity = {
+                    quantityType: QUANTITY_OP_NOT,
+                    args: [toBytes32(parsingContext.quantityIndex(eqQuantity))]
+                }
+                return parsingContext.quantityIndex(notQuantity)
+            }
             const twoArg: Quantity = {
                 quantityType: TwoArgQuantityKWs.get(op)!,
                 args: [toBytes32(this.parseQuantity(q.substring(0, opPos), parsingContext)), toBytes32(this.parseQuantity(q.substring(opPos + op.length, q.length), parsingContext))]

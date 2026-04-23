@@ -95,7 +95,8 @@ const TwoArgQuantityKWs = new Map([
     ['<<', QUANTITY_OP_SHL],
     ['>>', QUANTITY_OP_SHR],
     ['%', QUANTITY_OP_MOD],
-    ['==', QUANTITY_OP_EQ]
+    ['==', QUANTITY_OP_EQ],
+    ['!=', -1] // desugared to !(a == b) in parseQuantity
 ]);
 const TwoArgKwsRegex = new RegExp(Array.from(TwoArgQuantityKWs.keys())
     .sort((a, b) => b.length - a.length)
@@ -124,6 +125,15 @@ function parseMap(map) {
     return rslt;
 }
 class ParsingContext {
+    constructor() {
+        this.preprocessorSymbols = new Map();
+        this.memAddressNames = new Map();
+        this.jumppointNames = new Map();
+        this.quantityEncodedToIndex = new Map();
+        this.quantites = [];
+        this.lineNumber = 1;
+        this.uncheckedArithmatic = false;
+    }
     quantityIndex(q) {
         //console.log(`quantityIndex ${JSON.stringify(q, null, 2)}`)
         const k = JSON.stringify(q);
@@ -135,15 +145,6 @@ class ParsingContext {
         this.quantites.push(q);
         this.quantityEncodedToIndex.set(k, idx);
         return BigInt(idx) | BIT254_NOTMEM | BIT255_NOTLITERAL | (this.uncheckedArithmatic ? BIT128_UNCHECKED : BigInt(0));
-    }
-    constructor() {
-        this.preprocessorSymbols = new Map();
-        this.memAddressNames = new Map();
-        this.jumppointNames = new Map();
-        this.quantityEncodedToIndex = new Map();
-        this.quantites = [];
-        this.lineNumber = 1;
-        this.uncheckedArithmatic = false;
     }
 }
 function toBytes32(n) {
@@ -223,6 +224,18 @@ class BrevityParser {
         }
         const [opPos, op] = this.findFirstValidOpCharacter(q);
         if (opPos !== -1) {
+            if (op === '!=') {
+                // desugar a != b into !(a == b)
+                const eqQuantity = {
+                    quantityType: QUANTITY_OP_EQ,
+                    args: [toBytes32(this.parseQuantity(q.substring(0, opPos), parsingContext)), toBytes32(this.parseQuantity(q.substring(opPos + op.length, q.length), parsingContext))]
+                };
+                const notQuantity = {
+                    quantityType: QUANTITY_OP_NOT,
+                    args: [toBytes32(parsingContext.quantityIndex(eqQuantity))]
+                };
+                return parsingContext.quantityIndex(notQuantity);
+            }
             const twoArg = {
                 quantityType: TwoArgQuantityKWs.get(op),
                 args: [toBytes32(this.parseQuantity(q.substring(0, opPos), parsingContext)), toBytes32(this.parseQuantity(q.substring(opPos + op.length, q.length), parsingContext))]

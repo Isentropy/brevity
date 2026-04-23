@@ -1,6 +1,6 @@
 {
   "name": "@isentropy/brevity-lang",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "repository": "https://github.com/Isentropy/brevity.git",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
@@ -31,6 +31,7 @@
     "@uniswap/v4-core": "^1.0.2",
     "@uniswap/v4-periphery": "^1.0.3",
     "ethers": "^6.13.4",
+    "socks-proxy-agent": "^10.0.0",
     "tsx": "^4.20.3"
   }
 }

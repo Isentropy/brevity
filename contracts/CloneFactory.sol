@@ -36,7 +36,7 @@ contract CloneFactory {
         bytes32 newSalt = keccak256(abi.encodePacked(salt, owner));
         address payable clone = payable(Clones.predictDeterministicAddress(implementation, newSalt, address(this)));
         if(!isContract(clone)) cloneDeterministic(implementation, salt, owner);
-        IBrevityInterpreter(clone).runMeta{value: msg.value}(p, deadline, sig);
+        IBrevityInterpreter(clone).runMeta{value: msg.value}(p, deadline, owner, sig);
         return clone;
     }
     
